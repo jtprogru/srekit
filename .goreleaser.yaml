@@ -70,10 +70,10 @@ homebrew_casks:
       owner: jtprogru
       name: homebrew-tap
       branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Casks
     homepage: "https://github.com/jtprogru/srekit"
     description: "Generator of SRE text artifacts: tasks, licenses, postmortems, RFCs"
-    binary: srekit
     hooks:
       post:
         install: |
