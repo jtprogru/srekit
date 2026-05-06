@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+---
+version: "3"
+
+vars:
+  BINARY_NAME: srekit
+  GOPATH:
+    sh: echo $GOPATH
+
+tasks:
+  default:
+    cmds: [task --list]
+    silent: true
+
+  run:
+    desc: Run via go run
+    cmds: ["go run main.go {{ .CLI_ARGS }}"]
+
+  tidy:
+    cmds: ["go mod tidy"]
+
+  build:
+    desc: Build binary into ./dist
+    cmds:
+      - "go mod download"
+      - "CGO_ENABLED=0 go build -o ./dist/{{ .BINARY_NAME }} main.go"
+
+  fmt:
+    cmds: ["gofmt -s -w ."]
+
+  vet:
+    cmds: ["go vet ./..."]
+
+  test:
+    cmds: ["go test --short -coverprofile=cover.out -v ./..."]
+
+  lint:
+    cmds: ["golangci-lint -v run"]
+
+  install:
+    cmds: ["go install"]
