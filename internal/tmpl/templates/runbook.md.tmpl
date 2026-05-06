@@ -1,0 +1,64 @@
+---
+id: {{ .ID }}
+creation_date: {{ .Now }}
+type: runbook
+service: {{ .Service }}
+alert: {{ .Alert }}
+tags:
+- runbook
+- oncall
+---
+
+# Runbook — {{ .Title }}
+
+- **Service:** {{ .Service }}
+- **Alert:** {{ .Alert }}
+- **Owner team:** _fill in_
+- **On-call escalation:** _fill in_
+
+## Symptoms
+
+_What does the user / monitoring see? Concrete signals: alert firing, dashboard panel, log pattern._
+
+## Severity & SLO impact
+
+- Customer impact:
+- SLO at risk:
+- Page or no-page:
+
+## Diagnose
+
+1. Check the dashboard: _link_
+2. Check recent deploys: _link_
+3. Look at logs:
+
+```
+# example query
+```
+
+4. Common causes (most → least likely):
+   - …
+   - …
+
+## Mitigate
+
+> Stop the bleeding first; investigate later.
+
+1. **Immediate:** _action_
+2. **Rollback:** _command / link_
+3. **Failover:** _steps_
+
+## Verify
+
+- [ ] Alert resolved
+- [ ] Error rate back to baseline
+- [ ] No follow-up alerts in 15 min
+
+## After the fact
+
+- File a postmortem if SEV ≥ _level_.
+- Update this runbook with anything that surprised you.
+
+## References
+
+-

@@ -19,7 +19,8 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:     "srekit",
-	Short:   "Генератор текстовых артефактов SRE: задачи, лицензии и т.п.",
+	Short:   "Generator of SRE text artifacts: tasks, licenses, postmortems, RFCs, runbooks",
+	Long:    `srekit generates text artifacts SREs deal with daily — task notes, licenses, postmortems, RFCs, runbooks, changelogs — all from embedded templates.`,
 	Version: Version,
 }
 
@@ -52,6 +53,7 @@ func initConfig() {
 		viper.SetConfigName(".srekit")
 		viper.SetConfigType("yaml")
 	}
+	viper.SetEnvPrefix("SREKIT")
 	viper.AutomaticEnv()
 	_ = viper.ReadInConfig()
 }

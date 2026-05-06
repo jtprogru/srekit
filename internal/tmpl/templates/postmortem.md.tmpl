@@ -1,0 +1,75 @@
+---
+id: {{ .ID }}
+creation_date: {{ .Now }}
+type: postmortem
+severity: {{ .Severity }}
+owner: {{ .Owner }}
+tags:
+- postmortem
+- incident
+---
+
+# Postmortem — {{ .Title }}
+
+- **Severity:** {{ .Severity }}
+- **Owner:** {{ .Owner }}
+- **Started:** {{ .Start }}
+- **Resolved:** {{ .End }}
+- **Duration:** _<fill after timeline>_
+
+## Summary
+
+_One paragraph: what happened, who was affected, how it was mitigated._
+
+## Impact
+
+- Customer-facing impact:
+- SLO/SLI burn:
+- Internal impact:
+
+## Timeline
+
+(All times UTC.)
+
+| Time | Event |
+|------|-------|
+| {{ .Start }} | Incident started |
+| | |
+| {{ .End }} | Incident resolved |
+
+## Root Cause
+
+_What broke, and why. Use 5 Whys if it helps._
+
+## Detection
+
+- How was it detected?
+- Time to detect:
+- Could it have been detected sooner?
+
+## Resolution
+
+- What stopped the bleeding?
+- What was the long-term fix?
+
+## What went well
+
+-
+
+## What went wrong
+
+-
+
+## Where we got lucky
+
+-
+
+## Action items
+
+| # | Action | Owner | Priority | Due |
+|---|--------|-------|----------|-----|
+| 1 |        |       | P1       |     |
+
+## Lessons learned
+
+-
