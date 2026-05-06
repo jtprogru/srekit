@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -28,7 +29,7 @@ var taskCmd = &cobra.Command{
 	Long:  "Generate a markdown SRE task note with YAML front matter, ready for an interview / investigation log.",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if taskTitle == "" {
-			return fmt.Errorf("--title is required")
+			return errors.New("--title is required")
 		}
 		now := time.Now().Format(taskTimeFormat)
 		data := struct {

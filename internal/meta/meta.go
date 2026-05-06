@@ -1,12 +1,39 @@
 package meta
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/viper"
 )
+
+type Repo struct {
+	Owner string
+	Name  string
+}
+
+func (r Repo) Slug() string { return r.Owner + "/" + r.Name }
+
+var (
+	githubSSHRe   = regexp.MustCompile(`^git@github\.com:([^/]+)/(.+?)(?:\.git)?$`)
+	githubHTTPSRe = regexp.MustCompile(`^https?://github\.com/([^/]+)/(.+?)(?:\.git)?/?$`)
+)
+
+func DetectRepo() (Repo, error) {
+	url, err := gitRunner("config", "--get", "remote.origin.url")
+	if err != nil || url == "" {
+		return Repo{}, errors.New("no git remote.origin.url configured")
+	}
+	for _, re := range []*regexp.Regexp{githubSSHRe, githubHTTPSRe} {
+		if m := re.FindStringSubmatch(url); m != nil {
+			return Repo{Owner: m[1], Name: m[2]}, nil
+		}
+	}
+	return Repo{}, fmt.Errorf("unrecognized git remote URL: %s", url)
+}
 
 type Author struct {
 	Name  string
@@ -22,10 +49,10 @@ func Resolve(flagName, flagEmail string) (Author, error) {
 		a.Email = firstNonEmpty(viper.GetString("email"), gitConfig("user.email"))
 	}
 	if a.Name == "" {
-		return a, fmt.Errorf("author is not set: pass --author, set SREKIT_AUTHOR, or configure git user.name")
+		return a, errors.New("author is not set: pass --author, set SREKIT_AUTHOR, or configure git user.name")
 	}
 	if a.Email == "" {
-		return a, fmt.Errorf("email is not set: pass --email, set SREKIT_EMAIL, or configure git user.email")
+		return a, errors.New("email is not set: pass --email, set SREKIT_EMAIL, or configure git user.email")
 	}
 	return a, nil
 }

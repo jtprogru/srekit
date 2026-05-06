@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-type tplData struct{ Title string }
-
 func TestRenderStdout(t *testing.T) {
 	var out bytes.Buffer
 	err := Render(&out, "task.md.tmpl", struct {

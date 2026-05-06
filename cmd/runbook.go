@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -26,7 +27,7 @@ var runbookCmd = &cobra.Command{
 	Long:  "Generate a runbook with Symptoms / Diagnose / Mitigate / Verify sections.",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if rbTitle == "" {
-			return fmt.Errorf("--title is required")
+			return errors.New("--title is required")
 		}
 		data := struct {
 			ID, Title, Service, Alert, Now string

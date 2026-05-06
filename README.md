@@ -75,7 +75,27 @@ srekit runbook --title "p99 latency spike" --service api-gw --alert APIHighLaten
 ### `srekit changelog` — `CHANGELOG.md` в формате Keep a Changelog
 
 ```bash
-srekit changelog --out CHANGELOG.md
+srekit changelog --out CHANGELOG.md                    # репо детектится из git remote
+srekit changelog --repo jtprogru/srekit --version 0.2.0
+```
+
+### `srekit oncall-report` — недельный отчёт дежурного
+
+```bash
+srekit oncall-report --team platform                    # период по умолчанию — текущая неделя
+srekit oncall-report --team platform --start 2026-05-04 --end 2026-05-10
+```
+
+### `srekit slo` — SLO/SLI документ
+
+```bash
+srekit slo --service api-gw --target 99.95% --window 30d --latency 200ms
+```
+
+### `srekit retro` — шаблон ретро
+
+```bash
+srekit retro --team platform --sprint 2026-W19
 ```
 
 ### `srekit completion` — shell autocomplete

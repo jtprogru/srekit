@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -27,7 +28,7 @@ var postmortemCmd = &cobra.Command{
 	Short: "Generate a Google SRE-style postmortem template",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if pmTitle == "" {
-			return fmt.Errorf("--title is required")
+			return errors.New("--title is required")
 		}
 		now := time.Now().Format(time.RFC3339)
 		data := struct {

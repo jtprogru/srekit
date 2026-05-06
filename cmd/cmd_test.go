@@ -117,16 +117,49 @@ func TestRunbook(t *testing.T) {
 }
 
 func TestChangelog(t *testing.T) {
-	viper.Reset()
-	viper.Set("author", "Test Person")
-	viper.Set("email", "t@example.com")
-	t.Cleanup(viper.Reset)
-	out, err := runCLI(t, "changelog", "--stdout")
+	out, err := runCLI(t, "changelog", "--stdout", "--repo", "jtprogru/srekit", "--version", "0.1.0")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(out, "Keep a Changelog") {
 		t.Fatalf("changelog body wrong: %s", out)
+	}
+	if !strings.Contains(out, "github.com/jtprogru/srekit/compare/v0.1.0...HEAD") {
+		t.Fatalf("repo not interpolated: %s", out)
+	}
+}
+
+func TestOncallReport(t *testing.T) {
+	viper.Reset()
+	viper.Set("author", "Test Person")
+	viper.Set("email", "t@example.com")
+	t.Cleanup(viper.Reset)
+	out, err := runCLI(t, "oncall-report", "--team", "platform", "--start", "2026-05-04", "--end", "2026-05-10", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "On-call report — platform") || !strings.Contains(out, "2026-05-04") {
+		t.Fatalf("oncall body wrong: %s", out)
+	}
+}
+
+func TestSLO(t *testing.T) {
+	out, err := runCLI(t, "slo", "--service", "api-gw", "--target", "99.95%", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "SLO — api-gw") || !strings.Contains(out, "99.95%") {
+		t.Fatalf("slo body wrong: %s", out)
+	}
+}
+
+func TestRetro(t *testing.T) {
+	out, err := runCLI(t, "retro", "--team", "platform", "--sprint", "2026-W19", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Retro — platform / 2026-W19") {
+		t.Fatalf("retro body wrong: %s", out)
 	}
 }
 

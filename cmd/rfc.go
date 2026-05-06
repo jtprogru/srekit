@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -36,7 +37,7 @@ var rfcCmd = &cobra.Command{
 	Long:  "Generate an RFC (a.k.a. ADR) document with Context / Decision / Alternatives / Consequences sections.",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if rfcTitle == "" {
-			return fmt.Errorf("--title is required")
+			return errors.New("--title is required")
 		}
 		if !allowedRFCStatus[rfcStatus] {
 			return fmt.Errorf("invalid --status %q (proposed, accepted, rejected, superseded, deprecated)", rfcStatus)

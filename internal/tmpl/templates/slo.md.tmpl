@@ -1,0 +1,71 @@
+---
+id: {{ .ID }}
+creation_date: {{ .Now }}
+type: slo
+service: {{ .Service }}
+tags:
+- slo
+- sli
+- reliability
+---
+
+# SLO — {{ .Service }}
+
+## Service overview
+
+- **Service:** {{ .Service }}
+- **Owner team:** _fill in_
+- **Tier:** _T0 / T1 / T2_
+- **User journey covered:** _what user-facing capability this SLO protects_
+
+## SLI definition
+
+> A good SLI is a ratio of good events to total valid events.
+
+- **Good events:** _e.g. HTTP 2xx/3xx/4xx (excluding 401/403) responses with latency < {{ .LatencyTarget }}_
+- **Valid events:** _e.g. all HTTP requests to /api/* excluding health checks_
+- **Bad events:** _all valid events that are not good_
+
+### PromQL example
+
+```promql
+sum(rate(http_requests_total{service="{{ .Service }}",code!~"5.."}[5m]))
+/
+sum(rate(http_requests_total{service="{{ .Service }}"}[5m]))
+```
+
+## SLO target
+
+| SLI | Target | Window | Notes |
+|-----|--------|--------|-------|
+| Availability | **{{ .Target }}** | {{ .Window }} | rolling |
+| Latency (p99) | < {{ .LatencyTarget }} | {{ .Window }} | rolling |
+
+## Error budget
+
+- Window: {{ .Window }}
+- Budget: `(1 − {{ .Target }}) × window_seconds` = _calculate_
+- Burn-rate alerts:
+  - **Fast burn:** 14.4× over 1h (page)
+  - **Slow burn:** 6× over 6h (ticket)
+
+## Consequences of budget exhaustion
+
+- Freeze on non-critical changes for the affected service.
+- Reliability work prioritized over features.
+
+## Dependencies
+
+- Upstream services this SLO depends on:
+  -
+- Downstream consumers protected by this SLO:
+  -
+
+## Review cadence
+
+- Quarterly SLO review.
+- Recompute target after every major architectural change.
+
+## References
+
+-

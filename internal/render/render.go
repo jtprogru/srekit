@@ -60,7 +60,7 @@ func Render(stdout io.Writer, tmplName string, data any, opts Options) error {
 		}
 	}
 
-	if err := os.WriteFile(target, buf.Bytes(), 0o644); err != nil {
+	if err := os.WriteFile(target, buf.Bytes(), 0o600); err != nil {
 		return err
 	}
 	fmt.Fprintf(stdout, "wrote %s\n", target)

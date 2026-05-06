@@ -10,28 +10,36 @@ import (
 )
 
 var (
-	chAuthor string
-	chEmail  string
-	chOut    string
-	chStdout bool
-	chForce  bool
-	chDry    bool
+	chRepo    string
+	chVersion string
+	chOut     string
+	chStdout  bool
+	chForce   bool
+	chDry     bool
 )
 
 var changelogCmd = &cobra.Command{
 	Use:   "changelog",
 	Short: "Generate a CHANGELOG.md scaffold (Keep a Changelog format)",
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		author, err := meta.Resolve(chAuthor, chEmail)
-		if err != nil {
-			return err
+		repo := chRepo
+		if repo == "" {
+			r, err := meta.DetectRepo()
+			if err != nil {
+				repo = "OWNER/REPO"
+				cmd.PrintErrf("warning: could not detect repo from git remote (%v); using placeholder %q. Pass --repo to override.\n", err, repo)
+			} else {
+				repo = r.Slug()
+			}
 		}
 		data := struct {
-			Today  string
-			Author meta.Author
+			Today          string
+			Repo           string
+			InitialVersion string
 		}{
-			Today:  time.Now().Format("2006-01-02"),
-			Author: author,
+			Today:          time.Now().Format("2006-01-02"),
+			Repo:           repo,
+			InitialVersion: chVersion,
 		}
 		return render.Render(cmd.OutOrStdout(), "changelog.md.tmpl", data, render.Options{
 			Out:     chOut,
@@ -44,8 +52,8 @@ var changelogCmd = &cobra.Command{
 }
 
 func init() {
-	changelogCmd.Flags().StringVar(&chAuthor, "author", "", "GitHub username or full name (used in compare links)")
-	changelogCmd.Flags().StringVar(&chEmail, "email", "", "author email")
+	changelogCmd.Flags().StringVar(&chRepo, "repo", "", "OWNER/REPO for compare links (default: detect from git remote)")
+	changelogCmd.Flags().StringVar(&chVersion, "version", "0.1.0", "initial version label")
 	changelogCmd.Flags().StringVar(&chOut, "out", "", "write to file (default: CHANGELOG.md)")
 	changelogCmd.Flags().BoolVar(&chStdout, "stdout", false, "print to stdout")
 	changelogCmd.Flags().BoolVar(&chForce, "force", false, "overwrite existing CHANGELOG.md")
