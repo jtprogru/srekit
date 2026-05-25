@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
-
-	"github.com/spf13/viper"
 )
 
 type Repo struct {
@@ -40,13 +38,19 @@ type Author struct {
 	Email string
 }
 
-func Resolve(flagName, flagEmail string) (Author, error) {
+// Lookup is the minimal viper surface Resolve needs. Pass viper.GetViper()
+// in production code, or a fresh *viper.Viper in tests for isolation.
+type Lookup interface {
+	GetString(key string) string
+}
+
+func Resolve(v Lookup, flagName, flagEmail string) (Author, error) {
 	a := Author{Name: flagName, Email: flagEmail}
 	if a.Name == "" {
-		a.Name = firstNonEmpty(viper.GetString("author"), viper.GetString("full_name"), gitConfig("user.name"))
+		a.Name = firstNonEmpty(v.GetString("author"), v.GetString("full_name"), gitConfig("user.name"))
 	}
 	if a.Email == "" {
-		a.Email = firstNonEmpty(viper.GetString("email"), gitConfig("user.email"))
+		a.Email = firstNonEmpty(v.GetString("email"), gitConfig("user.email"))
 	}
 	if a.Name == "" {
 		return a, errors.New("author is not set: pass --author, set SREKIT_AUTHOR, or configure git user.name")

@@ -11,14 +11,16 @@ import (
 func runCLI(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 	var out bytes.Buffer
-	rootCmd.SetOut(&out)
-	rootCmd.SetErr(&out)
-	rootCmd.SetArgs(args)
-	err := rootCmd.Execute()
+	cmd := NewRootCmd()
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+	cmd.SetArgs(args)
+	err := cmd.Execute()
 	return out.String(), err
 }
 
 func TestTaskStdout(t *testing.T) {
+	t.Parallel()
 	out, err := runCLI(t, "task", "--title", "Tail latency", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -32,17 +34,26 @@ func TestTaskStdout(t *testing.T) {
 }
 
 func TestTaskRequiresTitle(t *testing.T) {
+	t.Parallel()
 	_, err := runCLI(t, "task", "--title=", "--stdout")
 	if err == nil {
 		t.Fatal("expected error when --title is empty")
 	}
 }
 
-func TestLicenseWTFPLDefault(t *testing.T) {
+// withViper temporarily seeds the global viper for tests that go through
+// meta.Resolve(viper.GetViper(), ...). It is not parallel-safe.
+func withViper(t *testing.T, kv map[string]string) {
+	t.Helper()
 	viper.Reset()
-	viper.Set("author", "Test Person")
-	viper.Set("email", "t@example.com")
+	for k, v := range kv {
+		viper.Set(k, v)
+	}
 	t.Cleanup(viper.Reset)
+}
+
+func TestLicenseWTFPLDefault(t *testing.T) {
+	withViper(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
 
 	out, err := runCLI(t, "license", "--stdout", "--year", "2026")
 	if err != nil {
@@ -57,10 +68,7 @@ func TestLicenseWTFPLDefault(t *testing.T) {
 }
 
 func TestLicenseMIT(t *testing.T) {
-	viper.Reset()
-	viper.Set("author", "Test Person")
-	viper.Set("email", "t@example.com")
-	t.Cleanup(viper.Reset)
+	withViper(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
 
 	out, err := runCLI(t, "license", "--type", "mit", "--stdout", "--year", "2026")
 	if err != nil {
@@ -72,10 +80,7 @@ func TestLicenseMIT(t *testing.T) {
 }
 
 func TestLicenseUnknownType(t *testing.T) {
-	viper.Reset()
-	viper.Set("author", "x")
-	viper.Set("email", "x@x")
-	t.Cleanup(viper.Reset)
+	withViper(t, map[string]string{"author": "x", "email": "x@x"})
 	_, err := runCLI(t, "license", "--type", "gpl", "--stdout")
 	if err == nil {
 		t.Fatal("expected error for unknown license type")
@@ -83,6 +88,7 @@ func TestLicenseUnknownType(t *testing.T) {
 }
 
 func TestPostmortem(t *testing.T) {
+	t.Parallel()
 	out, err := runCLI(t, "postmortem", "--title", "API outage", "--severity", "SEV-1", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -93,10 +99,7 @@ func TestPostmortem(t *testing.T) {
 }
 
 func TestRFC(t *testing.T) {
-	viper.Reset()
-	viper.Set("author", "Test Person")
-	viper.Set("email", "t@example.com")
-	t.Cleanup(viper.Reset)
+	withViper(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
 	out, err := runCLI(t, "rfc", "--title", "Migrate to gRPC", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -107,6 +110,7 @@ func TestRFC(t *testing.T) {
 }
 
 func TestRunbook(t *testing.T) {
+	t.Parallel()
 	out, err := runCLI(t, "runbook", "--title", "p99 latency spike", "--service", "api-gw", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -117,6 +121,7 @@ func TestRunbook(t *testing.T) {
 }
 
 func TestChangelog(t *testing.T) {
+	t.Parallel()
 	out, err := runCLI(t, "changelog", "--stdout", "--repo", "jtprogru/srekit", "--version", "0.1.0")
 	if err != nil {
 		t.Fatal(err)
@@ -130,10 +135,7 @@ func TestChangelog(t *testing.T) {
 }
 
 func TestOncallReport(t *testing.T) {
-	viper.Reset()
-	viper.Set("author", "Test Person")
-	viper.Set("email", "t@example.com")
-	t.Cleanup(viper.Reset)
+	withViper(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
 	out, err := runCLI(t, "oncall-report", "--team", "platform", "--start", "2026-05-04", "--end", "2026-05-10", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -144,6 +146,7 @@ func TestOncallReport(t *testing.T) {
 }
 
 func TestSLO(t *testing.T) {
+	t.Parallel()
 	out, err := runCLI(t, "slo", "--service", "api-gw", "--target", "99.95%", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -154,6 +157,7 @@ func TestSLO(t *testing.T) {
 }
 
 func TestRetro(t *testing.T) {
+	t.Parallel()
 	out, err := runCLI(t, "retro", "--team", "platform", "--sprint", "2026-W19", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -164,6 +168,7 @@ func TestRetro(t *testing.T) {
 }
 
 func TestSretaskAlias(t *testing.T) {
+	t.Parallel()
 	out, err := runCLI(t, "sretask", "--title", "alias works", "--stdout")
 	if err != nil {
 		t.Fatal(err)
