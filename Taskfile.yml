@@ -14,7 +14,7 @@ tasks:
 
   run:
     desc: Run via go run
-    cmds: ["go run main.go {{ .CLI_ARGS }}"]
+    cmds: ["go run . {{ .CLI_ARGS }}"]
 
   tidy:
     cmds: ["go mod tidy"]
@@ -23,7 +23,7 @@ tasks:
     desc: Build binary into ./dist
     cmds:
       - "go mod download"
-      - "CGO_ENABLED=0 go build -o ./dist/{{ .BINARY_NAME }} main.go"
+      - "CGO_ENABLED=0 go build -o ./dist/{{ .BINARY_NAME }} ."
 
   fmt:
     cmds: ["gofmt -s -w ."]

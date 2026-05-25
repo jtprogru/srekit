@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/jtprogru/srekit/internal/cliflags"
@@ -23,11 +25,9 @@ func newChangelogCmd() *cobra.Command {
 			if repo == "" {
 				r, err := meta.DetectRepo()
 				if err != nil {
-					repo = "OWNER/REPO"
-					cmd.PrintErrf("warning: could not detect repo from git remote (%v); using placeholder %q. Pass --repo to override.\n", err, repo)
-				} else {
-					repo = r.Slug()
+					return fmt.Errorf("could not detect repo from git remote: %w (pass --repo OWNER/REPO)", err)
 				}
+				repo = r.Slug()
 			}
 			data := struct {
 				Today          string
