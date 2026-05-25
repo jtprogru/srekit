@@ -24,9 +24,10 @@ var (
 const taskTimeFormat = "2006-01-02T15:04:05"
 
 var taskCmd = &cobra.Command{
-	Use:   "task",
-	Short: "Generate a markdown SRE task note",
-	Long:  "Generate a markdown SRE task note with YAML front matter, ready for an interview / investigation log.",
+	Use:     "task",
+	Aliases: []string{"sretask"},
+	Short:   "Generate a markdown SRE task note",
+	Long:    "Generate a markdown SRE task note with YAML front matter, ready for an interview / investigation log.",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if taskTitle == "" {
 			return errors.New("--title is required")
@@ -51,22 +52,12 @@ var taskCmd = &cobra.Command{
 	},
 }
 
-var sretaskAlias = &cobra.Command{
-	Use:    "sretask",
-	Short:  "Alias of `task` (kept for gch users)",
-	Hidden: true,
-	RunE:   taskCmd.RunE,
-}
-
 func init() {
-	for _, c := range []*cobra.Command{taskCmd, sretaskAlias} {
-		c.Flags().StringVarP(&taskTitle, "title", "T", "", "task title (required)")
-		c.Flags().StringVarP(&taskPath, "path", "P", "./", "directory for default output file")
-		c.Flags().StringVar(&taskOut, "out", "", "explicit output file path")
-		c.Flags().BoolVar(&taskStdout, "stdout", false, "print to stdout instead of writing a file")
-		c.Flags().BoolVar(&taskForce, "force", false, "overwrite existing file")
-		c.Flags().BoolVar(&taskDry, "dry-run", false, "print result, do not write a file")
-	}
+	taskCmd.Flags().StringVarP(&taskTitle, "title", "T", "", "task title (required)")
+	taskCmd.Flags().StringVarP(&taskPath, "path", "P", "./", "directory for default output file")
+	taskCmd.Flags().StringVar(&taskOut, "out", "", "explicit output file path")
+	taskCmd.Flags().BoolVar(&taskStdout, "stdout", false, "print to stdout instead of writing a file")
+	taskCmd.Flags().BoolVar(&taskForce, "force", false, "overwrite existing file")
+	taskCmd.Flags().BoolVar(&taskDry, "dry-run", false, "print result, do not write a file")
 	rootCmd.AddCommand(taskCmd)
-	rootCmd.AddCommand(sretaskAlias)
 }

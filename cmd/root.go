@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -9,12 +8,11 @@ import (
 )
 
 var (
-	cfgFile     string
-	showVersion bool
-	Version     = "dev"
-	Commit      = "none"
-	Date        = "today"
-	BuiltBy     = "go build"
+	cfgFile string
+	Version = "dev"
+	Commit  = "none"
+	Date    = "today"
+	BuiltBy = "go build"
 )
 
 var rootCmd = &cobra.Command{
@@ -25,13 +23,6 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	if showVersion {
-		fmt.Println("srekit version:", Version)
-		fmt.Println("from commit:", Commit)
-		fmt.Println("built date:", Date)
-		fmt.Println("built by:", BuiltBy)
-		os.Exit(0)
-	}
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
@@ -40,7 +31,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.srekit.yaml)")
-	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "V", false, "Show version")
+	rootCmd.Flags().BoolP("version", "V", false, "Show version")
+	rootCmd.SetVersionTemplate(`srekit version: {{.Version}}
+from commit: ` + Commit + `
+built date: ` + Date + `
+built by: ` + BuiltBy + `
+`)
 }
 
 func initConfig() {

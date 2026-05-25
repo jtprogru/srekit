@@ -39,7 +39,11 @@ var oncallCmd = &cobra.Command{
 		start := ocStart
 		end := ocEnd
 		if start == "" || end == "" {
-			weekStart := now.AddDate(0, 0, -int(now.Weekday())+1)
+			wd := int(now.Weekday())
+			if wd == 0 {
+				wd = 7
+			}
+			weekStart := now.AddDate(0, 0, -wd+1)
 			weekEnd := weekStart.AddDate(0, 0, 6)
 			if start == "" {
 				start = weekStart.Format("2006-01-02")
