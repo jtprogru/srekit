@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/viper"
+
+	"github.com/jtprogru/srekit/internal/clock"
 )
 
 func runCLI(t *testing.T, args ...string) (string, error) {
@@ -164,6 +167,43 @@ func TestRetro(t *testing.T) {
 	}
 	if !strings.Contains(out, "Retro — platform / 2026-W19") {
 		t.Fatalf("retro body wrong: %s", out)
+	}
+}
+
+// TestOncallSundayWeekBoundary pins the wall clock to Sunday 2026-05-10 and
+// verifies the week is computed as Mon 2026-05-04 → Sun 2026-05-10. Regression
+// for the bug where Sunday's Weekday()==0 caused the formula to roll to the
+// following Monday instead.
+func TestOncallSundayWeekBoundary(t *testing.T) {
+	withViper(t, map[string]string{"author": "X", "email": "x@x"})
+	orig := clock.Now
+	t.Cleanup(func() { clock.Now = orig })
+	clock.Now = func() time.Time { return time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC) }
+
+	out, err := runCLI(t, "oncall-report", "--team", "platform", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "2026-05-04") || !strings.Contains(out, "2026-05-10") {
+		t.Fatalf("Sunday should yield Mon 2026-05-04 → Sun 2026-05-10, got: %s", out)
+	}
+}
+
+// TestChangelogMissingRepoFails locks in the #11 fix: when git remote
+// detection fails and --repo is omitted, we error instead of writing
+// "OWNER/REPO" into the file. The git mock returns an empty remote.
+func TestChangelogMissingRepoFails(t *testing.T) {
+	withViper(t, nil)
+	dir := t.TempDir()
+	// chdir into a non-git directory so DetectRepo's git invocation fails.
+	t.Chdir(dir)
+
+	_, err := runCLI(t, "changelog", "--stdout")
+	if err == nil {
+		t.Fatal("expected error when --repo is missing and remote detection fails")
+	}
+	if !strings.Contains(err.Error(), "could not detect repo") {
+		t.Fatalf("error should mention repo detection, got: %v", err)
 	}
 }
 
