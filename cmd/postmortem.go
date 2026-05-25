@@ -52,10 +52,3 @@ func newPostmortemCmd() *cobra.Command {
 	out.Bind(cmd, "write to file (default: postmortem-<slug>.md)")
 	return cmd
 }
-
-func valueOr(v, fallback string) string {
-	if v == "" {
-		return fallback
-	}
-	return v
-}
