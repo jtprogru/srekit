@@ -60,7 +60,9 @@ func Render(stdout io.Writer, tmplName string, data any, opts Options) error {
 		}
 	}
 
-	if err := os.WriteFile(target, buf.Bytes(), 0o600); err != nil {
+	// Generated artifacts are public docs (README, CHANGELOG, runbooks, RFCs);
+	// 0o644 matches the convention every other CLI generator uses.
+	if err := os.WriteFile(target, buf.Bytes(), 0o644); err != nil { //nolint:gosec // G306: see comment above
 		return err
 	}
 	fmt.Fprintf(stdout, "wrote %s\n", target)
