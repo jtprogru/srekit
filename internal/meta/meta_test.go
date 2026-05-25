@@ -6,13 +6,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-func TestResolveFlagsWin(t *testing.T) {
-	viper.Reset()
-	viper.Set("author", "Viper Author")
-	viper.Set("email", "viper@example.com")
-	t.Cleanup(viper.Reset)
+func newViper(kv map[string]string) *viper.Viper {
+	v := viper.New()
+	for k, val := range kv {
+		v.Set(k, val)
+	}
+	return v
+}
 
-	a, err := Resolve("Flag Author", "flag@example.com")
+func TestResolveFlagsWin(t *testing.T) {
+	t.Parallel()
+	v := newViper(map[string]string{"author": "Viper Author", "email": "viper@example.com"})
+
+	a, err := Resolve(v, "Flag Author", "flag@example.com")
 	if err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
@@ -22,12 +28,10 @@ func TestResolveFlagsWin(t *testing.T) {
 }
 
 func TestResolveViperFallback(t *testing.T) {
-	viper.Reset()
-	viper.Set("author", "Viper Author")
-	viper.Set("email", "viper@example.com")
-	t.Cleanup(viper.Reset)
+	t.Parallel()
+	v := newViper(map[string]string{"author": "Viper Author", "email": "viper@example.com"})
 
-	a, err := Resolve("", "")
+	a, err := Resolve(v, "", "")
 	if err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
@@ -37,9 +41,6 @@ func TestResolveViperFallback(t *testing.T) {
 }
 
 func TestResolveGitFallback(t *testing.T) {
-	viper.Reset()
-	t.Cleanup(viper.Reset)
-
 	orig := gitRunner
 	t.Cleanup(func() { gitRunner = orig })
 	gitRunner = func(args ...string) (string, error) {
@@ -52,7 +53,7 @@ func TestResolveGitFallback(t *testing.T) {
 		return "", nil
 	}
 
-	a, err := Resolve("", "")
+	a, err := Resolve(viper.New(), "", "")
 	if err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
@@ -63,11 +64,11 @@ func TestResolveGitFallback(t *testing.T) {
 
 func TestDetectRepo(t *testing.T) {
 	cases := map[string]Repo{
-		"git@github.com:jtprogru/srekit.git":         {"jtprogru", "srekit"},
-		"git@github.com:jtprogru/srekit":             {"jtprogru", "srekit"},
-		"https://github.com/jtprogru/srekit.git":     {"jtprogru", "srekit"},
-		"https://github.com/jtprogru/srekit":         {"jtprogru", "srekit"},
-		"https://github.com/foo/bar-baz/":            {"foo", "bar-baz"},
+		"git@github.com:jtprogru/srekit.git":     {"jtprogru", "srekit"},
+		"git@github.com:jtprogru/srekit":         {"jtprogru", "srekit"},
+		"https://github.com/jtprogru/srekit.git": {"jtprogru", "srekit"},
+		"https://github.com/jtprogru/srekit":     {"jtprogru", "srekit"},
+		"https://github.com/foo/bar-baz/":        {"foo", "bar-baz"},
 	}
 	orig := gitRunner
 	t.Cleanup(func() { gitRunner = orig })
@@ -93,14 +94,11 @@ func TestDetectRepo(t *testing.T) {
 }
 
 func TestResolveMissing(t *testing.T) {
-	viper.Reset()
-	t.Cleanup(viper.Reset)
-
 	orig := gitRunner
 	t.Cleanup(func() { gitRunner = orig })
 	gitRunner = func(_ ...string) (string, error) { return "", nil }
 
-	if _, err := Resolve("", ""); err == nil {
+	if _, err := Resolve(viper.New(), "", ""); err == nil {
 		t.Fatalf("expected error when nothing configured")
 	}
 }
