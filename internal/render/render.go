@@ -7,20 +7,28 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
 type Options struct {
-	Out     string
-	Stdout  bool
-	Force   bool
-	DryRun  bool
-	Default string
+	Out          string
+	Stdout       bool
+	Force        bool
+	DryRun       bool
+	Default      string
+	TemplatePath string // optional: read template from this file path instead of the embedded/loader chain
 }
 
 func Render(stdout io.Writer, tmplName string, data any, opts Options) error {
-	t, err := tmpl.Parse(tmplName)
+	var t *template.Template
+	var err error
+	if opts.TemplatePath != "" {
+		t, err = tmpl.ParseFile(opts.TemplatePath)
+	} else {
+		t, err = tmpl.Parse(tmplName)
+	}
 	if err != nil {
 		return err
 	}

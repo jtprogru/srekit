@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -9,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/jtprogru/srekit/internal/clock"
+	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
 func runCLI(t *testing.T, args ...string) (string, error) {
@@ -20,6 +23,15 @@ func runCLI(t *testing.T, args ...string) (string, error) {
 	cmd.SetArgs(args)
 	err := cmd.Execute()
 	return out.String(), err
+}
+
+// resetTmplDefault snapshots tmpl.Default and restores it after the test.
+// Use in any test that exercises --templates-dir, which mutates the
+// package-level loader. Not safe to use with t.Parallel().
+func resetTmplDefault(t *testing.T) {
+	t.Helper()
+	orig := tmpl.Default
+	t.Cleanup(func() { tmpl.Default = orig })
 }
 
 func TestTaskStdout(t *testing.T) {
@@ -245,6 +257,61 @@ func TestCapacityPlan(t *testing.T) {
 	}
 	if !strings.Contains(out, "План ёмкости (Capacity plan) — api-gw") || !strings.Contains(out, "6m") {
 		t.Fatalf("capacity body wrong: %s", out)
+	}
+}
+
+// TestTemplatesDirOverride mutates the package-level tmpl.Default, so it
+// must not be parallel and must reset Default in cleanup. Verifies that
+// --templates-dir picks up custom templates from the given directory.
+func TestTemplatesDirOverride(t *testing.T) {
+	resetTmplDefault(t)
+
+	dir := t.TempDir()
+	custom := []byte("# CUSTOM POSTMORTEM: {{ .Title }}\n")
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.md.tmpl"), custom, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "--templates-dir", dir, "postmortem", "--title", "X", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "# CUSTOM POSTMORTEM: X") {
+		t.Fatalf("expected custom template body, got: %s", out)
+	}
+}
+
+// TestTemplatesDirPartialFallback verifies that templates not present in
+// --templates-dir transparently fall back to the embedded versions.
+func TestTemplatesDirPartialFallback(t *testing.T) {
+	resetTmplDefault(t)
+
+	dir := t.TempDir() // empty — nothing to override
+	out, err := runCLI(t, "--templates-dir", dir, "rfc", "--title", "X", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "RFC-") {
+		t.Fatalf("expected embedded rfc fallback, got: %s", out)
+	}
+}
+
+// TestPerCommandTemplateOverride uses --template (single-file override) on
+// a single command. Does not touch tmpl.Default — render reads the file
+// directly via opts.TemplatePath — so this test is parallel-safe.
+func TestPerCommandTemplateOverride(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	custom := filepath.Join(dir, "my-runbook.tmpl")
+	if err := os.WriteFile(custom, []byte("# ONESHOT RUNBOOK: {{ .Title }}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "runbook", "--title", "p99 spike", "--template", custom, "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "# ONESHOT RUNBOOK: p99 spike") {
+		t.Fatalf("expected single-template override, got: %s", out)
 	}
 }
 

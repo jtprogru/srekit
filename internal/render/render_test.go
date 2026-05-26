@@ -95,6 +95,25 @@ func TestRenderFilePermissions(t *testing.T) {
 	}
 }
 
+// TestRenderTemplatePathOverride verifies that opts.TemplatePath bypasses
+// the embedded/loader chain entirely and reads the named file directly.
+func TestRenderTemplatePathOverride(t *testing.T) {
+	dir := t.TempDir()
+	tmplFile := filepath.Join(dir, "custom.tmpl")
+	if err := os.WriteFile(tmplFile, []byte("CUSTOM-OVERRIDE: {{ .Title }}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	err := Render(&out, "task.md.tmpl", struct{ Title string }{Title: "Hi"},
+		Options{Stdout: true, TemplatePath: tmplFile})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), "CUSTOM-OVERRIDE: Hi") {
+		t.Fatalf("template override not applied: %s", out.String())
+	}
+}
+
 func TestRenderDryRunNoFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
