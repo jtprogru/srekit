@@ -21,8 +21,8 @@ func NewRootCmd() *cobra.Command {
 	var cfgFile string
 	root := &cobra.Command{
 		Use:     "srekit",
-		Short:   "Generator of SRE text artifacts: tasks, postmortems, runbooks, RFCs, on-call reports, SLOs, retros, changelogs",
-		Long:    `srekit generates text artifacts SREs deal with daily — task notes, postmortems, runbooks, RFCs, on-call reports, SLOs, retros, changelogs, licenses — all from embedded templates.`,
+		Short:   "Generator of SRE text artifacts: investigations, incidents, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs",
+		Long:    `srekit generates text artifacts SREs deal with daily — investigation logs, live-incident reports, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs, licenses — all from embedded templates.`,
 		Version: Version,
 	}
 	root.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.srekit.yaml)")
@@ -35,12 +35,15 @@ built by: ` + BuiltBy + `
 	root.AddCommand(
 		newLicenseCmd(),
 		newTaskCmd(),
+		newIncidentCmd(),
 		newPostmortemCmd(),
 		newRFCCmd(),
 		newRunbookCmd(),
 		newChangelogCmd(),
 		newOncallCmd(),
 		newSLOCmd(),
+		newEBPCmd(),
+		newCapacityCmd(),
 		newRetroCmd(),
 	)
 	return root

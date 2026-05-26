@@ -207,6 +207,47 @@ func TestChangelogMissingRepoFails(t *testing.T) {
 	}
 }
 
+func TestIncidentReport(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "incident", "--title", "API down", "--severity", "SEV-1", "--lead", "alice", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Инцидент (Incident) — API down") || !strings.Contains(out, "SEV-1") || !strings.Contains(out, "alice") {
+		t.Fatalf("incident body wrong: %s", out)
+	}
+}
+
+func TestIncidentInvalidStatus(t *testing.T) {
+	t.Parallel()
+	_, err := runCLI(t, "incident", "--title", "X", "--status", "broken", "--stdout")
+	if err == nil {
+		t.Fatal("expected error on invalid status")
+	}
+}
+
+func TestErrorBudgetPolicy(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "ebp", "--service", "api-gw", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Политика бюджета ошибок (Error budget policy) — api-gw") {
+		t.Fatalf("ebp body wrong: %s", out)
+	}
+}
+
+func TestCapacityPlan(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "capacity", "--service", "api-gw", "--horizon", "6m", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "План ёмкости (Capacity plan) — api-gw") || !strings.Contains(out, "6m") {
+		t.Fatalf("capacity body wrong: %s", out)
+	}
+}
+
 func TestSretaskAlias(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "sretask", "--title", "alias works", "--stdout")
