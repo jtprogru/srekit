@@ -315,6 +315,74 @@ func TestPerCommandTemplateOverride(t *testing.T) {
 	}
 }
 
+// TestTemplatesInitScaffolds verifies that 'srekit templates init <dir> --no-git'
+// copies every embedded template and writes TEMPLATES.md.
+func TestTemplatesInitScaffolds(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	target := filepath.Join(dir, "templates")
+	out, err := runCLI(t, "templates", "init", target, "--no-git")
+	if err != nil {
+		t.Fatalf("init failed: %v (output: %s)", err, out)
+	}
+
+	// At least the SRE-doc templates we ship must be there.
+	for _, name := range []string{
+		"task.md.tmpl", "incident.md.tmpl", "postmortem.md.tmpl",
+		"runbook.md.tmpl", "rfc.md.tmpl", "slo.md.tmpl",
+		"ebp.md.tmpl", "capacity.md.tmpl",
+		"oncall.md.tmpl", "retro.md.tmpl", "changelog.md.tmpl",
+		"TEMPLATES.md",
+	} {
+		if _, err := os.Stat(filepath.Join(target, name)); err != nil {
+			t.Errorf("expected %s to be written: %v", name, err)
+		}
+	}
+	if !strings.Contains(out, "Templates scaffolded in") {
+		t.Errorf("expected friendly summary, got: %s", out)
+	}
+}
+
+// TestTemplatesInitRefusesOverwrite locks the no-clobber default.
+func TestTemplatesInitRefusesOverwrite(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := runCLI(t, "templates", "init", dir, "--no-git")
+	if err == nil {
+		t.Fatal("expected error when target contains existing template")
+	}
+	if !strings.Contains(err.Error(), "--force") {
+		t.Fatalf("error should mention --force, got: %v", err)
+	}
+	// Verify the file wasn't clobbered.
+	b, _ := os.ReadFile(filepath.Join(dir, "task.md.tmpl"))
+	if string(b) != "MINE\n" {
+		t.Fatalf("existing file was overwritten: %q", string(b))
+	}
+}
+
+// TestTemplatesInitForce overrides --force on top of an existing file.
+func TestTemplatesInitForce(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git", "--force"); err != nil {
+		t.Fatalf("init --force failed: %v", err)
+	}
+	b, _ := os.ReadFile(filepath.Join(dir, "task.md.tmpl"))
+	if !strings.Contains(string(b), "Расследование") {
+		t.Fatalf("--force should overwrite with embedded content; got: %s", string(b))
+	}
+}
+
 func TestSretaskAlias(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "sretask", "--title", "alias works", "--stdout")

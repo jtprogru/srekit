@@ -53,6 +53,7 @@ built by: ` + BuiltBy + `
 		newEBPCmd(),
 		newCapacityCmd(),
 		newRetroCmd(),
+		newTemplatesCmd(),
 	)
 	return root
 }

@@ -18,6 +18,12 @@ import (
 //go:embed templates/*.tmpl
 var FS embed.FS
 
+// DocsMD is the placeholder/FuncMap reference shipped to user templates
+// directories by `srekit templates init`.
+//
+//go:embed TEMPLATES.md
+var DocsMD []byte
+
 // Funcs is the template function map shared by every parsed template.
 // It is exported so tests can inspect or extend it; production code parses
 // through Parse, which applies it automatically.
