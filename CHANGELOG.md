@@ -11,11 +11,20 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- Custom-templates support — point `srekit` at a directory of your own templates and they override the embedded ones, with transparent per-file fallback to embedded when a template is missing in your dir. Three entry points:
+  - `srekit --templates-dir <dir> …` (per-invocation flag)
+  - `SREKIT_TEMPLATES_DIR` env / `templates_dir:` key in `~/.srekit.yaml`
+  - `srekit <cmd> --template <file>` for a one-shot single-template override
+- `srekit templates init [dir]` scaffolds a directory with every built-in template + a `TEMPLATES.md` placeholder/FuncMap reference, and runs `git init` (use `--no-git` to skip, `--force` to overwrite). Default target: `~/.srekit/templates`.
+- `internal/tmpl.Source` interface (Read by name) with `EmbedSource` and `DirSource` implementations, and a `Loader` that walks Sources in order with `fs.ErrNotExist`-as-fallthrough semantics.
+- `internal/tmpl.ParseFile(path)` for the per-command `--template` flag; applies the same FuncMap as embedded templates.
+- `internal/tmpl/TEMPLATES.md` reference doc — embedded in the binary and emitted by `templates init`.
 
 ### Changed
 
--
+- `internal/render.Options` gains `TemplatePath` (read template from an arbitrary file path instead of the loader chain).
+- `internal/cliflags.Output` gains `TemplatePath`, wired to a new `--template` flag on every command.
+- `cmd/root.go` adds persistent `--templates-dir`, expands `~`, warns to stderr on missing path / non-directory (and silently falls back to embedded). `configureTemplates` only mutates the package-level `tmpl.Default` when a dir is actually provided, keeping parallel tests race-free.
 
 ### Fixed
 

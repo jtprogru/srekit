@@ -124,6 +124,39 @@ srekit capacity --service api-gw --horizon 1y --out capacity-api-gw.md
 srekit retro --team platform --sprint 2026-W19
 ```
 
+### `srekit templates init` — твои собственные шаблоны под git
+
+```bash
+srekit templates init                # → ~/.srekit/templates
+srekit templates init ./team-templates --no-git
+```
+
+Раскладывает все встроенные шаблоны в директорию, пишет `TEMPLATES.md` со
+справочником плейсхолдеров и FuncMap, и делает `git init`. Дальше:
+
+```bash
+cd ~/.srekit/templates
+git remote add origin git@github.com:your-team/sre-templates.git
+git add . && git commit -m "initial templates" && git push -u origin main
+```
+
+Подключение директории к `srekit`:
+
+```bash
+echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+# или: export SREKIT_TEMPLATES_DIR=~/.srekit/templates
+# или: srekit --templates-dir ~/.srekit/templates …  (на одну команду)
+```
+
+Подмена точечно — только один шаблон под одну команду:
+
+```bash
+srekit runbook --title "p99 spike" --template ./oneshot-runbook.tmpl --stdout
+```
+
+Если файла нет в твоей директории, `srekit` тихо берёт встроенный — можно
+оверрайдить только то, что нужно.
+
 ### `srekit completion` — shell autocomplete
 
 ```bash
