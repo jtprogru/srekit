@@ -11,6 +11,20 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
+-
+
+### Changed
+
+-
+
+### Fixed
+
+-
+
+## [0.6.0] - 2026-05-26
+
+### Added
+
 - `srekit templates pull` — sync the configured templates directory with its git remote. `git pull --ff-only` by default (safe: fails on diverged branches); `--rebase` for users who want their local commits rebased on top. Directory is resolved from the same flag / env / yaml chain as `--templates-dir`, falling back to `~/.srekit/templates`. Output streams directly so you see exactly what git did.
 
 ### Changed
@@ -128,7 +142,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/jtprogru/srekit/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jtprogru/srekit/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/jtprogru/srekit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jtprogru/srekit/compare/v0.2.0...v0.3.0
