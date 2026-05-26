@@ -52,7 +52,7 @@ func newRFCCmd() *cobra.Command {
 				Author                          meta.Author
 			}{
 				ID:      id,
-				ShortID: id[:8],
+				ShortID: ids.Short(id, 8),
 				Title:   title,
 				Status:  status,
 				Now:     clock.Now().Format(time.RFC3339),
