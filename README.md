@@ -157,6 +157,18 @@ srekit runbook --title "p99 spike" --template ./oneshot-runbook.tmpl --stdout
 Если файла нет в твоей директории, `srekit` тихо берёт встроенный — можно
 оверрайдить только то, что нужно.
 
+### `srekit templates pull` — синхронизация с remote
+
+```bash
+srekit templates pull              # git pull --ff-only
+srekit templates pull --rebase     # если есть локальные коммиты
+```
+
+Запускает `git pull` в configured templates_dir. По умолчанию `--ff-only`,
+чтобы не получить сюрприз-merge'и. Команда вызывается явно — авто-pull
+при каждом запуске `srekit` намеренно не делается (это ломает UX и работу
+в офлайне).
+
 ### `srekit completion` — shell autocomplete
 
 ```bash

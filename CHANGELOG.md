@@ -11,11 +11,12 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- `srekit templates pull` — sync the configured templates directory with its git remote. `git pull --ff-only` by default (safe: fails on diverged branches); `--rebase` for users who want their local commits rebased on top. Directory is resolved from the same flag / env / yaml chain as `--templates-dir`, falling back to `~/.srekit/templates`. Output streams directly so you see exactly what git did.
 
 ### Changed
 
--
+- `internal/tmpl.TEMPLATES.md` (the embedded reference shipped to user template dirs) now points users at `srekit templates pull` instead of the manual `git -C <dir> pull`.
+- `cmd/root.go`: extracted `resolveTemplatesDir(cmd)` helper that both `configureTemplates` and `templates pull` use. Persistent flag storage moved from a captured local to cobra's internal flag value, accessed via `cmd.Flags().Lookup`.
 
 ### Fixed
 
