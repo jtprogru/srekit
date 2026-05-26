@@ -11,15 +11,36 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- `srekit incident` — live-incident report template (status, lead, comms, updates log). Filled during the incident, distinct from `postmortem` which is written after. `--status` is validated against `investigated | active | contained | resolved`.
+- `srekit ebp` — Error Budget Policy template with tiered actions (Yellow / Orange / Red), exceptions, and escalation.
+- `srekit capacity` — capacity planning template: baseline metrics, growth assumptions, forecast, scale-up triggers, headroom target, dependencies, cost, risks.
+- `internal/tmpl.Funcs` — `text/template` FuncMap shared by all parsed templates: `default`, `shortID`, `slugify`, `now`, `upper`, `lower`, `trim`. `now` honors `clock.Now` for test-time determinism.
+- Russian translation of all SRE-document templates with bilingual `Русский (English)` headings; body text fully Russian. Frontmatter keys, technical acronyms (SLO/SLI/RFC/ADR/PromQL/UTC/SEV), version anchors, and PromQL stay English. `changelog.md.tmpl` intentionally kept fully English to preserve Keep a Changelog tooling compatibility.
+- `## Ссылки (References)` section added to `oncall` and `postmortem` templates.
+- Frontmatter `title` field in `postmortem`, `rfc`, `runbook` (was previously only in `task`).
+- Frontmatter `modification_date` in `runbook` and `slo` (living documents).
+- RFC frontmatter ADR fields: `decision_date`, `deciders`, `supersedes`, `superseded_by`.
+- `internal/tmpl/funcs_test.go` — first test coverage for the template package; covers each FuncMap entry plus a parse sanity check on `rfc.md.tmpl`.
 
 ### Changed
 
--
+- `srekit task` rewritten as an SRE investigation log: sections Context / Hypothesis / Evidence / Findings / Action items / References. Frontmatter `type` is now `investigation`. Default output filename changed from `Tasker - <title>.md` to `investigation-<slug>.md`. The `sretask` alias still resolves.
+- `cmd/task.go` now uses `time.RFC3339` for `creation_date`/`modification_date`, matching every other command.
+- `slo.md.tmpl`: split the SLI block into separate Availability and Latency definitions, each with its own PromQL example. Service / Owner team / Tier / User journey labels moved out of `## Service overview` into a metadata list directly under the H1, matching the layout of every other template.
+- `retro.md.tmpl`: removed the duplicate `What went well / didn't go well / confused` block. Format is now just Start / Stop / Continue plus `What confused us`.
+- `postmortem.md.tmpl`: Duration placeholder normalized to italic style.
+- `rfc.md.tmpl`: short-ID rendering moved out of the cmd-side struct and into the template via `{{ shortID .ID 8 }}`.
+- `cmd/postmortem.go`, `cmd/runbook.go`, `cmd/incident.go`: stopped pre-filling field defaults via `valueOr()`. Placeholder text now lives in the templates as `{{ .Field | default "<…>" }}`, colocated with the document that displays it.
+- `task.md.tmpl` tag list: `sre` → `debug` (every artifact in this tool is "SRE", so the tag carried no information).
+- Root `--help` Short/Long updated to list `investigation`, `incident`, `ebp`, `capacity`.
+
+### Removed
+
+- `cmd/util.go` (with `valueOr`) — superseded by the template `default` func.
 
 ### Fixed
 
--
+- `slo.md.tmpl`: the example Availability PromQL counted HTTP 401/403 responses as good events, contradicting the SLI definition that explicitly excluded them. Auth failures are now excluded from both numerator and denominator.
 
 ## [0.3.0] - 2026-05-26
 

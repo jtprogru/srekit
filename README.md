@@ -1,6 +1,8 @@
 # srekit
 
-Генератор текстовых артефактов SRE: задачи, лицензии, постмортемы, RFC, runbook'и, changelog'и.
+Генератор текстовых артефактов SRE: investigation log'и, инциденты, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, capacity plans, retro, changelog'и, лицензии.
+
+Все markdown-шаблоны двуязычные: заголовки и метки в формате `Русский (English)`, тело — на русском. Технические идентификаторы (SLO/SLI/RFC/PromQL/UTC/SEV), ключи YAML frontmatter и PromQL-выражения остаются английскими. Шаблон `changelog` остаётся полностью английским, чтобы не ломать тулинг вокруг Keep a Changelog.
 
 Извлечён из [gch](https://github.com/jtprogru/gch) в рамках распиливания монолита.
 
@@ -30,14 +32,14 @@ srekit --help
 Все команды поддерживают единый набор флагов:
 `--out FILE` (записать в файл), `--stdout` (печать в stdout), `--force` (перезаписать), `--dry-run` (показать без записи).
 
-### `srekit task` — заметка для разбора SRE-задачи
+### `srekit task` — investigation log для SRE-расследования
 
 ```bash
-srekit task --title "Tail latency на api-gw" --path ./tasks
-# → ./tasks/Tasker - Tail latency на api-gw.md
+srekit task --title "Tail latency on api-gw" --path ./tasks
+# → ./tasks/investigation-tail-latency-on-api-gw.md
 ```
 
-Полная замена `gch sretask` (алиас `srekit sretask` оставлен для совместимости).
+Шаблон с секциями Context / Hypothesis / Evidence / Findings / Action items / References. Алиас `srekit sretask` оставлен для совместимости (исторически команда заменяла `gch sretask`).
 
 ### `srekit license` — LICENSE-файл (по умолчанию WTFPL)
 
@@ -57,6 +59,14 @@ srekit postmortem --title "API outage" --severity SEV-1 \
   --start 2026-05-06T08:00Z --end 2026-05-06T09:30Z \
   --owner "@oncall" --out postmortem-2026-05-06.md
 ```
+
+### `srekit incident` — «живой» инцидент-док
+
+```bash
+srekit incident --title "API down" --severity SEV-1 --lead alice --stdout
+```
+
+Шаблон для заполнения **во время** инцидента (статус, лид, коммс, лог апдейтов) — в отличие от постмортема, который пишется после. Статусы: `investigated | active | contained | resolved`.
 
 ### `srekit rfc` — RFC / ADR
 
@@ -91,6 +101,22 @@ srekit oncall-report --team platform --start 2026-05-04 --end 2026-05-10
 ```bash
 srekit slo --service api-gw --target 99.95% --window 30d --latency 200ms
 ```
+
+### `srekit ebp` — Error Budget Policy
+
+```bash
+srekit ebp --service api-gw --out ebp-api-gw.md
+```
+
+Политика, что команда делает при сгорании бюджета ошибок: triggered actions по уровням (Yellow / Orange / Red), исключения, эскалация.
+
+### `srekit capacity` — план ёмкости
+
+```bash
+srekit capacity --service api-gw --horizon 1y --out capacity-api-gw.md
+```
+
+Шаблон capacity planning: baseline, допущения роста, прогноз, триггеры скейла, headroom, зависимости, стоимость, риски.
 
 ### `srekit retro` — шаблон ретро
 
