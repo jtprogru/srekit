@@ -18,6 +18,8 @@ var FS embed.FS
 // Funcs is the template function map shared by every parsed template.
 // It is exported so tests can inspect or extend it; production code parses
 // through Parse, which applies it automatically.
+//
+//nolint:gochecknoglobals // intentional package-level registry shared by every Parse() call
 var Funcs = template.FuncMap{
 	"default": func(def, val string) string {
 		if val == "" {
