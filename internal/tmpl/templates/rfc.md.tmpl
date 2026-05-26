@@ -1,46 +1,53 @@
 ---
 id: {{ .ID }}
 creation_date: {{ .Now }}
+decision_date:
 status: {{ .Status }}
 type: rfc
+title: {{ .Title }}
+deciders: []
+supersedes:
+superseded_by:
 tags:
 - rfc
 - adr
 ---
 
-# RFC-{{ .ShortID }} — {{ .Title }}
+# RFC-{{ shortID .ID 8 }} — {{ .Title }}
 
-- **Status:** {{ .Status }}
-- **Author:** {{ .Author.Name }} <{{ .Author.Email }}>
-- **Date:** {{ .Now }}
+- **Статус (Status):** {{ .Status }}
+- **Автор (Author):** {{ .Author.Name }} <{{ .Author.Email }}>
+- **Принимающие решение (Deciders):** _имена людей, чья подпись нужна_
+- **Создан (Created):** {{ .Now }}
+- **Решено (Decided):** _заполнить, когда статус станет accepted / rejected_
 
-## Context
+## Контекст (Context)
 
-_What is the problem? What forces are at play (technical, organizational, political)?_
+_В чём проблема? Какие силы в игре (технические, организационные, политические)?_
 
-## Decision
+## Решение (Decision)
 
-_What we are going to do. Be concrete._
+_Что мы собираемся сделать. Будь конкретен._
 
-## Alternatives considered
+## Рассмотренные альтернативы (Alternatives considered)
 
-1. **Option A** — _why not_
-2. **Option B** — _why not_
+1. **Вариант A** — _почему нет_
+2. **Вариант B** — _почему нет_
 
-## Consequences
+## Последствия (Consequences)
 
-### Positive
-
--
-
-### Negative
+### Плюсы (Positive)
 
 -
 
-### Neutral / follow-up
+### Минусы (Negative)
 
 -
 
-## References
+### Нейтральное / последующее (Neutral / follow-up)
+
+-
+
+## Ссылки (References)
 
 -

@@ -33,8 +33,8 @@ func newRunbookCmd() *cobra.Command {
 			}{
 				ID:      ids.UUID(),
 				Title:   title,
-				Service: valueOr(service, "<service name>"),
-				Alert:   valueOr(alert, "<alert name>"),
+				Service: service,
+				Alert:   alert,
 				Now:     clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("runbook-%s.md", ids.Slug(title))

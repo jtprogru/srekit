@@ -16,7 +16,7 @@ func TestRenderStdout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "# Tasker - Hello") {
+	if !strings.Contains(out.String(), "# Расследование (Investigation) — Hello") {
 		t.Fatalf("missing title in output: %s", out.String())
 	}
 }

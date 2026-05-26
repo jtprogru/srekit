@@ -1,7 +1,9 @@
 ---
 id: {{ .ID }}
 creation_date: {{ .Now }}
+modification_date: {{ .Now }}
 type: runbook
+title: {{ .Title }}
 service: {{ .Service }}
 alert: {{ .Alert }}
 tags:
@@ -9,56 +11,56 @@ tags:
 - oncall
 ---
 
-# Runbook — {{ .Title }}
+# Рунбук (Runbook) — {{ .Title }}
 
-- **Service:** {{ .Service }}
-- **Alert:** {{ .Alert }}
-- **Owner team:** _fill in_
-- **On-call escalation:** _fill in_
+- **Сервис (Service):** {{ .Service | default "<service name>" }}
+- **Алерт (Alert):** {{ .Alert | default "<alert name>" }}
+- **Команда-владелец (Owner team):** _заполнить_
+- **Эскалация дежурным (On-call escalation):** _заполнить_
 
-## Symptoms
+## Симптомы (Symptoms)
 
-_What does the user / monitoring see? Concrete signals: alert firing, dashboard panel, log pattern._
+_Что видит пользователь / мониторинг? Конкретные сигналы: горящий алерт, панель дашборда, паттерн в логах._
 
-## Severity & SLO impact
+## Тяжесть и влияние на SLO (Severity & SLO impact)
 
-- Customer impact:
-- SLO at risk:
-- Page or no-page:
+- Влияние на пользователей:
+- Какой SLO под угрозой:
+- Будить пейджером или нет:
 
-## Diagnose
+## Диагностика (Diagnose)
 
-1. Check the dashboard: _link_
-2. Check recent deploys: _link_
-3. Look at logs:
+1. Открыть дашборд: _ссылка_
+2. Проверить недавние деплои: _ссылка_
+3. Посмотреть логи:
 
 ```
-# example query
+# пример запроса
 ```
 
-4. Common causes (most → least likely):
+4. Частые причины (от самой вероятной к наименее):
    - …
    - …
 
-## Mitigate
+## Смягчение (Mitigate)
 
-> Stop the bleeding first; investigate later.
+> Сначала останови «кровотечение» — разбираться будем потом.
 
-1. **Immediate:** _action_
-2. **Rollback:** _command / link_
-3. **Failover:** _steps_
+1. **Немедленно (Immediate):** _действие_
+2. **Откат (Rollback):** _команда / ссылка_
+3. **Переключение (Failover):** _шаги_
 
-## Verify
+## Проверка (Verify)
 
-- [ ] Alert resolved
-- [ ] Error rate back to baseline
-- [ ] No follow-up alerts in 15 min
+- [ ] Алерт погас
+- [ ] Уровень ошибок вернулся к базовой линии
+- [ ] Нет повторных алертов в течение 15 минут
 
-## After the fact
+## Постфактум (After the fact)
 
-- File a postmortem if SEV ≥ _level_.
-- Update this runbook with anything that surprised you.
+- Заводим постмортем, если SEV ≥ _уровень_.
+- Обнови этот рунбук всем, что удивило.
 
-## References
+## Ссылки (References)
 
 -

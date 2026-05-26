@@ -28,7 +28,7 @@ func TestTaskStdout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "# Tasker - Tail latency") {
+	if !strings.Contains(out, "# Расследование (Investigation) — Tail latency") {
 		t.Fatalf("missing rendered title: %s", out)
 	}
 	if !strings.Contains(out, "tags:") {
@@ -96,7 +96,7 @@ func TestPostmortem(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "Postmortem — API outage") || !strings.Contains(out, "SEV-1") {
+	if !strings.Contains(out, "Постмортем (Postmortem) — API outage") || !strings.Contains(out, "SEV-1") {
 		t.Fatalf("postmortem body wrong: %s", out)
 	}
 }
@@ -118,7 +118,7 @@ func TestRunbook(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "Runbook — p99 latency spike") || !strings.Contains(out, "api-gw") {
+	if !strings.Contains(out, "Рунбук (Runbook) — p99 latency spike") || !strings.Contains(out, "api-gw") {
 		t.Fatalf("runbook body wrong: %s", out)
 	}
 }
@@ -143,7 +143,7 @@ func TestOncallReport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "On-call report — platform") || !strings.Contains(out, "2026-05-04") {
+	if !strings.Contains(out, "Отчёт по дежурству (On-call report) — platform") || !strings.Contains(out, "2026-05-04") {
 		t.Fatalf("oncall body wrong: %s", out)
 	}
 }
@@ -165,7 +165,7 @@ func TestRetro(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "Retro — platform / 2026-W19") {
+	if !strings.Contains(out, "Ретро (Retro) — platform / 2026-W19") {
 		t.Fatalf("retro body wrong: %s", out)
 	}
 }

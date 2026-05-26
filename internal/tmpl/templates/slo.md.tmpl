@@ -1,6 +1,7 @@
 ---
 id: {{ .ID }}
 creation_date: {{ .Now }}
+modification_date: {{ .Now }}
 type: slo
 service: {{ .Service }}
 tags:
@@ -11,61 +12,73 @@ tags:
 
 # SLO — {{ .Service }}
 
-## Service overview
+- **Сервис (Service):** {{ .Service }}
+- **Команда-владелец (Owner team):** _заполнить_
+- **Тир (Tier):** _T0 / T1 / T2_
+- **Покрываемое пользовательское действие (User journey):** _какую пользовательскую возможность защищает этот SLO_
 
-- **Service:** {{ .Service }}
-- **Owner team:** _fill in_
-- **Tier:** _T0 / T1 / T2_
-- **User journey covered:** _what user-facing capability this SLO protects_
+## Определение SLI (SLI definition)
 
-## SLI definition
+> Хороший SLI — это отношение хороших событий ко всем валидным событиям.
 
-> A good SLI is a ratio of good events to total valid events.
+### Availability SLI
 
-- **Good events:** _e.g. HTTP 2xx/3xx/4xx (excluding 401/403) responses with latency < {{ .LatencyTarget }}_
-- **Valid events:** _e.g. all HTTP requests to /api/* excluding health checks_
-- **Bad events:** _all valid events that are not good_
-
-### PromQL example
+- **Хорошие события (Good):** _HTTP 2xx/3xx/4xx ответы (исключая 401/403) на /api/*_
+- **Валидные события (Valid):** _все HTTP-запросы к /api/* кроме 401/403 и health-чеков_
+- **Плохие события (Bad):** _все валидные, что не попали в «хорошие»_
 
 ```promql
-sum(rate(http_requests_total{service="{{ .Service }}",code!~"5.."}[5m]))
+# 401/403 исключены и из числителя, и из знаменателя — это пользовательские
+# ошибки, не сигнал ненадёжности сервиса.
+sum(rate(http_requests_total{service="{{ .Service }}",code!~"5..",code!~"401|403"}[5m]))
 /
-sum(rate(http_requests_total{service="{{ .Service }}"}[5m]))
+sum(rate(http_requests_total{service="{{ .Service }}",code!~"401|403"}[5m]))
 ```
 
-## SLO target
+### Latency SLI
 
-| SLI | Target | Window | Notes |
-|-----|--------|--------|-------|
-| Availability | **{{ .Target }}** | {{ .Window }} | rolling |
-| Latency (p99) | < {{ .LatencyTarget }} | {{ .Window }} | rolling |
+- **Хорошие события (Good):** _запросы, обслуженные быстрее {{ .LatencyTarget }}_
+- **Валидные события (Valid):** _все HTTP-запросы к /api/* кроме health-чеков_
 
-## Error budget
+```promql
+# Замени значение le="..." на свой latency-таргет в секундах.
+sum(rate(http_request_duration_seconds_bucket{service="{{ .Service }}",le="0.3"}[5m]))
+/
+sum(rate(http_request_duration_seconds_count{service="{{ .Service }}"}[5m]))
+```
 
-- Window: {{ .Window }}
-- Budget: `(1 − {{ .Target }}) × window_seconds` = _calculate_
-- Burn-rate alerts:
-  - **Fast burn:** 14.4× over 1h (page)
-  - **Slow burn:** 6× over 6h (ticket)
+## Цель SLO (SLO target)
 
-## Consequences of budget exhaustion
+| SLI | Цель | Окно | Заметки |
+|-----|------|------|---------|
+| Availability | **{{ .Target }}** | {{ .Window }} | скользящее |
+| Latency (p99) | < {{ .LatencyTarget }} | {{ .Window }} | скользящее |
 
-- Freeze on non-critical changes for the affected service.
-- Reliability work prioritized over features.
+## Бюджет ошибок (Error budget)
 
-## Dependencies
+- Окно: {{ .Window }}
+- Бюджет: `(1 − {{ .Target }}) × window_seconds` = _посчитать_
+- Burn-rate алерты:
+  - **Быстрое сгорание (Fast burn):** 14.4× за 1ч (пейджер)
+  - **Медленное сгорание (Slow burn):** 6× за 6ч (тикет)
 
-- Upstream services this SLO depends on:
+## Последствия истощения бюджета (Consequences of budget exhaustion)
+
+- Заморозка некритичных изменений в затронутом сервисе.
+- Приоритет надёжностной работы над фичами.
+
+## Зависимости (Dependencies)
+
+- Upstream-сервисы, от которых зависит этот SLO:
   -
-- Downstream consumers protected by this SLO:
+- Downstream-потребители, которых защищает этот SLO:
   -
 
-## Review cadence
+## Регулярность пересмотра (Review cadence)
 
-- Quarterly SLO review.
-- Recompute target after every major architectural change.
+- Ежеквартальный пересмотр SLO.
+- Пересчёт цели после каждого крупного архитектурного изменения.
 
-## References
+## Ссылки (References)
 
 -

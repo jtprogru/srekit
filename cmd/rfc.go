@@ -46,17 +46,15 @@ func newRFCCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			id := ids.UUID()
 			data := struct {
-				ID, ShortID, Title, Status, Now string
-				Author                          meta.Author
+				ID, Title, Status, Now string
+				Author                 meta.Author
 			}{
-				ID:      id,
-				ShortID: ids.Short(id, 8),
-				Title:   title,
-				Status:  status,
-				Now:     clock.Now().Format(time.RFC3339),
-				Author:  a,
+				ID:     ids.UUID(),
+				Title:  title,
+				Status: status,
+				Now:    clock.Now().Format(time.RFC3339),
+				Author: a,
 			}
 			def := fmt.Sprintf("rfc-%s.md", ids.Slug(title))
 			return render.Render(cmd.OutOrStdout(), "rfc.md.tmpl", data, out.RenderOptions(def))

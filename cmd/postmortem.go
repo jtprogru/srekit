@@ -35,9 +35,9 @@ func newPostmortemCmd() *cobra.Command {
 				ID:       ids.UUID(),
 				Title:    title,
 				Severity: severity,
-				Start:    valueOr(start, "<start time>"),
-				End:      valueOr(end, "<end time>"),
-				Owner:    valueOr(owner, "<incident owner>"),
+				Start:    start,
+				End:      end,
+				Owner:    owner,
 				Now:      clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("postmortem-%s.md", ids.Slug(title))

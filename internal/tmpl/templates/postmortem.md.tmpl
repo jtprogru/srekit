@@ -2,6 +2,7 @@
 id: {{ .ID }}
 creation_date: {{ .Now }}
 type: postmortem
+title: {{ .Title }}
 severity: {{ .Severity }}
 owner: {{ .Owner }}
 tags:
@@ -9,67 +10,71 @@ tags:
 - incident
 ---
 
-# Postmortem — {{ .Title }}
+# Постмортем (Postmortem) — {{ .Title }}
 
-- **Severity:** {{ .Severity }}
-- **Owner:** {{ .Owner }}
-- **Started:** {{ .Start }}
-- **Resolved:** {{ .End }}
-- **Duration:** _<fill after timeline>_
+- **Тяжесть (Severity):** {{ .Severity }}
+- **Ответственный (Owner):** {{ .Owner | default "<incident owner>" }}
+- **Начало (Started):** {{ .Start | default "<start time>" }}
+- **Конец (Resolved):** {{ .End | default "<end time>" }}
+- **Длительность (Duration):** _заполнить после составления хронологии_
 
-## Summary
+## Краткое описание (Summary)
 
-_One paragraph: what happened, who was affected, how it was mitigated._
+_Один абзац: что произошло, кого затронуло, как смягчили._
 
-## Impact
+## Влияние (Impact)
 
-- Customer-facing impact:
-- SLO/SLI burn:
-- Internal impact:
+- Влияние на пользователей:
+- Расход SLO / SLI:
+- Внутреннее влияние:
 
-## Timeline
+## Хронология (Timeline)
 
-(All times UTC.)
+(Все времена в UTC.)
 
-| Time | Event |
-|------|-------|
-| {{ .Start }} | Incident started |
+| Время | Событие |
+|-------|---------|
+| {{ .Start }} | Инцидент начался |
 | | |
-| {{ .End }} | Incident resolved |
+| {{ .End }} | Инцидент разрешён |
 
-## Root Cause
+## Корневая причина (Root Cause)
 
-_What broke, and why. Use 5 Whys if it helps._
+_Что сломалось и почему. Если помогает — используй технику «5 почему»._
 
-## Detection
+## Обнаружение (Detection)
 
-- How was it detected?
-- Time to detect:
-- Could it have been detected sooner?
+- Как обнаружили?
+- Время до обнаружения:
+- Можно было обнаружить раньше?
 
-## Resolution
+## Разрешение (Resolution)
 
-- What stopped the bleeding?
-- What was the long-term fix?
+- Что остановило «кровотечение»?
+- Каков долгосрочный фикс?
 
-## What went well
-
--
-
-## What went wrong
+## Что сработало хорошо (What went well)
 
 -
 
-## Where we got lucky
+## Что пошло не так (What went wrong)
 
 -
 
-## Action items
+## Где нам повезло (Where we got lucky)
 
-| # | Action | Owner | Priority | Due |
-|---|--------|-------|----------|-----|
-| 1 |        |       | P1       |     |
+-
 
-## Lessons learned
+## Задачи (Action items)
+
+| # | Действие | Ответственный | Приоритет | Срок |
+|---|----------|---------------|-----------|------|
+| 1 |          |               | P1        |      |
+
+## Извлечённые уроки (Lessons learned)
+
+-
+
+## Ссылки (References)
 
 -
