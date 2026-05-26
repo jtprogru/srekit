@@ -11,6 +11,20 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
+-
+
+### Changed
+
+-
+
+### Fixed
+
+-
+
+## [0.4.0] - 2026-05-26
+
+### Added
+
 - `srekit incident` — live-incident report template (status, lead, comms, updates log). Filled during the incident, distinct from `postmortem` which is written after. `--status` is validated against `investigated | active | contained | resolved`.
 - `srekit ebp` — Error Budget Policy template with tiered actions (Yellow / Orange / Red), exceptions, and escalation.
 - `srekit capacity` — capacity planning template: baseline metrics, growth assumptions, forecast, scale-up triggers, headroom target, dependencies, cost, risks.
@@ -90,7 +104,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/jtprogru/srekit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jtprogru/srekit/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jtprogru/srekit/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jtprogru/srekit/releases/tag/v0.1.0
