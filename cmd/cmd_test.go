@@ -281,17 +281,18 @@ func TestTemplatesDirOverride(t *testing.T) {
 }
 
 // TestTemplatesDirPartialFallback verifies that templates not present in
-// --templates-dir transparently fall back to the embedded versions.
+// --templates-dir transparently fall back to the embedded versions. Uses
+// postmortem because it has no author/email dependency that CI runners lack.
 func TestTemplatesDirPartialFallback(t *testing.T) {
 	resetTmplDefault(t)
 
 	dir := t.TempDir() // empty — nothing to override
-	out, err := runCLI(t, "--templates-dir", dir, "rfc", "--title", "X", "--stdout")
+	out, err := runCLI(t, "--templates-dir", dir, "postmortem", "--title", "X", "--stdout")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out, "RFC-") {
-		t.Fatalf("expected embedded rfc fallback, got: %s", out)
+	if !strings.Contains(out, "Постмортем") {
+		t.Fatalf("expected embedded postmortem fallback, got: %s", out)
 	}
 }
 

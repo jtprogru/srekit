@@ -75,7 +75,8 @@ func runTemplatesInit(cmd *cobra.Command, dir string, force, noGit bool) error {
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(target, b, 0o644); err != nil {
+		// Templates are public scaffolding — 0o644 matches render.go's convention.
+		if err := os.WriteFile(target, b, 0o644); err != nil { //nolint:gosec // G306: same rationale as internal/render
 			return fmt.Errorf("write %s: %w", target, err)
 		}
 		written++
@@ -84,7 +85,7 @@ func runTemplatesInit(cmd *cobra.Command, dir string, force, noGit bool) error {
 	// TEMPLATES.md is a reference doc — we always overwrite it on init so it
 	// stays in sync with the binary's understanding of placeholders/FuncMap.
 	docsTarget := filepath.Join(dir, "TEMPLATES.md")
-	if err := os.WriteFile(docsTarget, tmpl.DocsMD, 0o644); err != nil {
+	if err := os.WriteFile(docsTarget, tmpl.DocsMD, 0o644); err != nil { //nolint:gosec // G306: same rationale as internal/render
 		return fmt.Errorf("write %s: %w", docsTarget, err)
 	}
 
@@ -119,7 +120,7 @@ func gitInit(cmd *cobra.Command, dir string) error {
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
-	git := exec.Command("git", "init", "--initial-branch=main", dir)
+	git := exec.CommandContext(cmd.Context(), "git", "init", "--initial-branch=main", dir)
 	git.Stdout = cmd.OutOrStdout()
 	git.Stderr = cmd.ErrOrStderr()
 	if err := git.Run(); err != nil {
