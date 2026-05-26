@@ -9,6 +9,26 @@ func TestUUIDIsRFC4122(t *testing.T) {
 	}
 }
 
+func TestShort(t *testing.T) {
+	cases := []struct {
+		in   string
+		n    int
+		want string
+	}{
+		{"abcdef", 3, "abc"},
+		{"abc", 5, "abc"},
+		{"abc", 3, "abc"},
+		{"", 8, ""},
+		{"abcdef", 0, ""},
+		{"abcdef", -1, ""},
+	}
+	for _, c := range cases {
+		if got := Short(c.in, c.n); got != c.want {
+			t.Errorf("Short(%q, %d) = %q, want %q", c.in, c.n, got, c.want)
+		}
+	}
+}
+
 func TestSlug(t *testing.T) {
 	cases := map[string]string{
 		"Hello World":                 "hello-world",
