@@ -19,9 +19,10 @@ func newTemplatesCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "templates",
 		Short: "Manage the custom templates directory",
-		Long:  "Scaffold and (later) sync a custom templates directory that overrides the embedded templates.",
+		Long:  "Scaffold or sync a custom templates directory that overrides the embedded templates.",
 	}
 	c.AddCommand(newTemplatesInitCmd())
+	c.AddCommand(newTemplatesPullCmd())
 	return c
 }
 
@@ -110,6 +111,65 @@ func runTemplatesInit(cmd *cobra.Command, dir string, force, noGit bool) error {
 	fmt.Fprintln(out, "Then point srekit at this directory:")
 	fmt.Fprintf(out, "  echo 'templates_dir: %s' >> ~/.srekit.yaml\n", dir)
 	fmt.Fprintln(out, "  # or: export SREKIT_TEMPLATES_DIR="+dir)
+	return nil
+}
+
+func newTemplatesPullCmd() *cobra.Command {
+	var rebase bool
+	cmd := &cobra.Command{
+		Use:   "pull",
+		Short: "git pull the templates directory from its remote",
+		Long: `Sync the custom templates directory with its git remote. Uses
+'git pull --ff-only' by default (safe: fails on diverged branches);
+pass --rebase to rebase local commits on top instead.
+
+The directory is resolved from --templates-dir / SREKIT_TEMPLATES_DIR /
+templates_dir: in ~/.srekit.yaml, falling back to ~/.srekit/templates.`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return runTemplatesPull(cmd, rebase)
+		},
+	}
+	cmd.Flags().BoolVar(&rebase, "rebase", false, "use 'git pull --rebase' instead of --ff-only")
+	return cmd
+}
+
+func runTemplatesPull(cmd *cobra.Command, rebase bool) error {
+	dir, err := resolveTemplatesDir(cmd)
+	if err != nil {
+		return err
+	}
+	if dir == "" {
+		// Nothing configured — fall back to the conventional default location.
+		dir, err = expandHome(defaultTemplatesDir)
+		if err != nil {
+			return err
+		}
+	}
+	if info, err := os.Stat(dir); err != nil {
+		return fmt.Errorf("templates dir %s: %w (run 'srekit templates init' first)", dir, err)
+	} else if !info.IsDir() {
+		return fmt.Errorf("%s is not a directory", dir)
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("%s is not a git repository (re-run 'srekit templates init' without --no-git, or 'git init' it yourself)", dir)
+		}
+		return err
+	}
+
+	args := []string{"-C", dir, "pull"}
+	if rebase {
+		args = append(args, "--rebase")
+	} else {
+		args = append(args, "--ff-only")
+	}
+	git := exec.CommandContext(cmd.Context(), "git", args...)
+	git.Stdout = cmd.OutOrStdout()
+	git.Stderr = cmd.ErrOrStderr()
+	if err := git.Run(); err != nil {
+		return fmt.Errorf("git pull failed: %w", err)
+	}
 	return nil
 }
 

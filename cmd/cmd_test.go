@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -381,6 +382,81 @@ func TestTemplatesInitForce(t *testing.T) {
 	b, _ := os.ReadFile(filepath.Join(dir, "task.md.tmpl"))
 	if !strings.Contains(string(b), "Расследование") {
 		t.Fatalf("--force should overwrite with embedded content; got: %s", string(b))
+	}
+}
+
+// TestTemplatesPullRejectsNonGitDir verifies the friendly error message when
+// the configured templates directory exists but isn't a git repo.
+func TestTemplatesPullRejectsNonGitDir(t *testing.T) {
+	resetTmplDefault(t)
+
+	dir := t.TempDir() // exists, but no .git/
+	_, err := runCLI(t, "--templates-dir", dir, "templates", "pull")
+	if err == nil {
+		t.Fatal("expected error when dir is not a git repo")
+	}
+	if !strings.Contains(err.Error(), "not a git repository") {
+		t.Fatalf("error should mention 'not a git repository', got: %v", err)
+	}
+}
+
+// TestTemplatesPullSyncsFromRemote spins up a local bare git remote, clones
+// it into a fake user-templates dir, pushes a change from a separate source
+// repo, then runs 'srekit templates pull' to verify the change reaches the
+// user dir. Skips if git is unavailable.
+func TestTemplatesPullSyncsFromRemote(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	resetTmplDefault(t)
+
+	base := t.TempDir()
+	remote := filepath.Join(base, "remote.git")
+	src := filepath.Join(base, "src")
+	user := filepath.Join(base, "user-templates")
+
+	gitEnv := append(os.Environ(),
+		"GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=t@test",
+		"GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=t@test",
+	)
+	runGit := func(args ...string) {
+		t.Helper()
+		c := exec.CommandContext(t.Context(), "git", args...)
+		c.Env = gitEnv
+		if out, err := c.CombinedOutput(); err != nil {
+			t.Fatalf("git %v failed: %v\n%s", args, err, out)
+		}
+	}
+
+	runGit("init", "--bare", "--initial-branch=main", remote)
+	runGit("init", "--initial-branch=main", src)
+	if err := os.WriteFile(filepath.Join(src, "task.md.tmpl"), []byte("v1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit("-C", src, "add", ".")
+	runGit("-C", src, "commit", "-m", "init")
+	runGit("-C", src, "remote", "add", "origin", remote)
+	runGit("-C", src, "push", "-u", "origin", "main")
+	runGit("clone", remote, user)
+
+	// Sanity-check the initial clone.
+	if b, _ := os.ReadFile(filepath.Join(user, "task.md.tmpl")); string(b) != "v1\n" {
+		t.Fatalf("clone produced %q, expected v1", string(b))
+	}
+
+	// Source pushes an update.
+	if err := os.WriteFile(filepath.Join(src, "task.md.tmpl"), []byte("v2\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit("-C", src, "commit", "-am", "v2")
+	runGit("-C", src, "push", "origin", "main")
+
+	out, err := runCLI(t, "--templates-dir", user, "templates", "pull")
+	if err != nil {
+		t.Fatalf("pull failed: %v (output: %s)", err, out)
+	}
+	if b, _ := os.ReadFile(filepath.Join(user, "task.md.tmpl")); string(b) != "v2\n" {
+		t.Fatalf("pull did not sync to v2: %q", string(b))
 	}
 }
 

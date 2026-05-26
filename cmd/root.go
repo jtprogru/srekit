@@ -22,18 +22,18 @@ var (
 // Tests use it to get an isolated cobra.Command per test; production calls
 // Execute, which additionally wires the ~/.srekit.yaml + env config loader.
 func NewRootCmd() *cobra.Command {
-	var cfgFile, templatesDir string
+	var cfgFile string
 	root := &cobra.Command{
 		Use:     "srekit",
 		Short:   "Generator of SRE text artifacts: investigations, incidents, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs",
 		Long:    `srekit generates text artifacts SREs deal with daily — investigation logs, live-incident reports, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs, licenses — all from embedded templates.`,
 		Version: Version,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			return configureTemplates(cmd, templatesDir)
+			return configureTemplates(cmd)
 		},
 	}
 	root.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.srekit.yaml)")
-	root.PersistentFlags().StringVar(&templatesDir, "templates-dir", "", "directory of custom templates (missing files fall back to embedded)")
+	root.PersistentFlags().String("templates-dir", "", "directory of custom templates (missing files fall back to embedded)")
 	root.Flags().BoolP("version", "V", false, "Show version")
 	root.SetVersionTemplate(`srekit version: {{.Version}}
 from commit: ` + Commit + `
@@ -89,32 +89,45 @@ func initConfig(cfgFile string) {
 	_ = viper.ReadInConfig()
 }
 
-// configureTemplates installs a DirSource on tmpl.Default if the user provided
-// --templates-dir, SREKIT_TEMPLATES_DIR, or templates_dir: in ~/.srekit.yaml.
-// Common case (no custom dir) leaves tmpl.Default untouched — that keeps
-// parallel tests race-free on the package-level Default.
-func configureTemplates(cmd *cobra.Command, flagValue string) error {
-	dir := flagValue
+// resolveTemplatesDir returns the templates directory configured via
+// --templates-dir, SREKIT_TEMPLATES_DIR, or templates_dir: in ~/.srekit.yaml,
+// in that order of precedence. Expands a leading ~. Returns "" if no source
+// is configured.
+func resolveTemplatesDir(cmd *cobra.Command) (string, error) {
+	var dir string
+	if f := cmd.Flags().Lookup("templates-dir"); f != nil {
+		dir = f.Value.String()
+	}
 	if dir == "" {
 		dir = viper.GetString("templates_dir")
 	}
 	if dir == "" {
-		return nil
+		return "", nil
 	}
-	expanded, err := expandHome(dir)
+	return expandHome(dir)
+}
+
+// configureTemplates installs a DirSource on tmpl.Default if the user
+// configured one. The common case (no custom dir) leaves tmpl.Default
+// untouched — keeps parallel tests race-free on the package-level Default.
+func configureTemplates(cmd *cobra.Command) error {
+	dir, err := resolveTemplatesDir(cmd)
 	if err != nil {
 		return fmt.Errorf("--templates-dir: %w", err)
 	}
-	info, err := os.Stat(expanded)
+	if dir == "" {
+		return nil
+	}
+	info, err := os.Stat(dir)
 	if err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: templates dir %s: %v (falling back to embedded)\n", expanded, err)
+		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: templates dir %s: %v (falling back to embedded)\n", dir, err)
 		return nil
 	}
 	if !info.IsDir() {
-		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: %s is not a directory (falling back to embedded)\n", expanded)
+		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: %s is not a directory (falling back to embedded)\n", dir)
 		return nil
 	}
-	tmpl.Default = &tmpl.Loader{Sources: []tmpl.Source{tmpl.DirSource{Dir: expanded}, tmpl.EmbedSource{}}}
+	tmpl.Default = &tmpl.Loader{Sources: []tmpl.Source{tmpl.DirSource{Dir: dir}, tmpl.EmbedSource{}}}
 	return nil
 }
 

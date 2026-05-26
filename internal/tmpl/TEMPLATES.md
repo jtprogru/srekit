@@ -41,12 +41,12 @@ git push -u origin main
 Чтобы стянуть обновления от команды:
 
 ```bash
-git -C ~/.srekit/templates pull
+srekit templates pull              # git pull --ff-only в configured templates_dir
+srekit templates pull --rebase     # если есть локальные коммиты
 ```
 
-(Автоматический pull при каждом вызове `srekit` намеренно не делается —
-это убивает UX и ломает работу в офлайне. В Phase 3 будет
-`srekit templates pull` как явная команда.)
+Авто-pull при каждом запуске `srekit` намеренно не делается — это убивает
+UX и работу в офлайне. Команда вызывается явно.
 
 ## Синтаксис шаблонов
 
