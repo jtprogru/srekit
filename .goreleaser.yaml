@@ -64,6 +64,14 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 
+# We ship via Homebrew cask (not formula) deliberately. The standard
+# Homebrew convention is brew formula for CLI binaries, cask for GUI/.app,
+# so the strictly-correct move would be to flip this to `brews:`. We keep
+# cask because existing users installed via `brew install --cask srekit`
+# and migrating them would mean a broken upgrade path. The post-install
+# xattr hook is the price of staying on cask: Gatekeeper quarantines
+# unsigned downloaded binaries on macOS, and stripping com.apple.quarantine
+# is what makes the CLI runnable without a manual right-click-open.
 homebrew_casks:
   - name: srekit
     repository:
@@ -73,7 +81,7 @@ homebrew_casks:
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Casks
     homepage: "https://github.com/jtprogru/srekit"
-    description: "Generator of SRE text artifacts: tasks, licenses, postmortems, RFCs"
+    description: "Generator of SRE text artifacts: tasks, postmortems, runbooks, RFCs, on-call reports, SLOs, retros, changelogs"
     hooks:
       post:
         install: |
