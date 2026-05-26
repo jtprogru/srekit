@@ -11,6 +11,20 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
+-
+
+### Changed
+
+-
+
+### Fixed
+
+-
+
+## [0.5.0] - 2026-05-26
+
+### Added
+
 - Custom-templates support — point `srekit` at a directory of your own templates and they override the embedded ones, with transparent per-file fallback to embedded when a template is missing in your dir. Three entry points:
   - `srekit --templates-dir <dir> …` (per-invocation flag)
   - `SREKIT_TEMPLATES_DIR` env / `templates_dir:` key in `~/.srekit.yaml`
@@ -113,7 +127,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/jtprogru/srekit/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/jtprogru/srekit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/jtprogru/srekit/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/jtprogru/srekit/compare/v0.1.0...v0.2.0
