@@ -12,6 +12,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 ### Added
 
 - `srekit config init` — interactive (TTY) / non-interactive (`--yes`, piped stdin) scaffolder for `~/.srekit.yaml`. Defaults pulled from `git config user.name` / `user.email`. Flags: `--author`, `--email`, `--templates-dir`, `--force`, `--yes`. Honors the root `--config FILE` for a custom target path. Writes with `0o600` and refuses to overwrite without `--force`. The `templates_dir:` key is emitted as a commented-out hint when unset, so the embedded-only default keeps working.
+- `.github/dependabot.yml` — weekly updates for Go modules and GitHub Actions. Actions grouped into a single PR; `chore(deps)` / `chore(ci)` commit-message prefixes to match the existing log style.
 
 ### Changed
 
