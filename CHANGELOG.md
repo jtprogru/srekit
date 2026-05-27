@@ -11,8 +11,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
-- `srekit templates upgrade [dir]` — additive upgrade of a custom templates directory against the binary's embedded set. Copies in any template that's missing in the user dir, leaves customized files alone (run `templates diff` to inspect, or pass `--force` to overwrite), and always refreshes `TEMPLATES.md`. `--dry-run` previews changes without touching the filesystem. Closes the `init` → `pull` → `diff` → `upgrade` loop; a true three-way merge against git history is left for v1.0.
-- `srekit templates list [dir]` — walks the embedded set and the user dir, classifying each `*.tmpl` as `identical` / `customized` / `user-only` / `embedded-only`. Table by default; `--json` emits a sorted array (camelCase keys: `name`, `status`, `userPath`); `--filter STATE` narrows the output. Works without a configured user dir (shows the embedded set as `embedded-only`). Note: the JSON shape here uses camelCase, distinct from the generator `--json` PascalCase contract — a v1.0 cleanup item.
+-
 
 ### Changed
 
@@ -21,6 +20,13 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 ### Fixed
 
 -
+
+## [0.9.0] - 2026-05-27
+
+### Added
+
+- `srekit templates upgrade [dir]` — additive upgrade of a custom templates directory against the binary's embedded set. Copies in any template that's missing in the user dir, leaves customized files alone (run `templates diff` to inspect, or pass `--force` to overwrite), and always refreshes `TEMPLATES.md`. `--dry-run` previews changes without touching the filesystem. Closes the `init` → `pull` → `diff` → `upgrade` loop; a true three-way merge against git history is left for v1.0.
+- `srekit templates list [dir]` — walks the embedded set and the user dir, classifying each `*.tmpl` as `identical` / `customized` / `user-only` / `embedded-only`. Table by default; `--json` emits a sorted array (camelCase keys: `name`, `status`, `userPath`); `--filter STATE` narrows the output. Works without a configured user dir (shows the embedded set as `embedded-only`). Note: the JSON shape here uses camelCase, distinct from the generator `--json` PascalCase contract — a v1.0 cleanup item.
 
 ## [0.8.0] - 2026-05-27
 
