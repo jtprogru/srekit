@@ -940,6 +940,31 @@ func TestTemplatesUpgradeDryRun(t *testing.T) {
 	}
 }
 
+// TestTemplatesInitRespectsConfiguredDir locks in the fix where 'templates
+// init' without a positional arg used to ignore templates_dir from viper
+// and unconditionally scaffold ~/.srekit/templates. It must now resolve
+// the configured directory the same way every other subcommand does.
+func TestTemplatesInitRespectsConfiguredDir(t *testing.T) {
+	resetTmplDefault(t)
+	// Pre-stage an existing empty dir so configureTemplates (the root
+	// PersistentPreRunE) doesn't warn about a missing path.
+	dir := filepath.Join(t.TempDir(), "configured-templates")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	withViper(t, map[string]string{"templates_dir": dir})
+
+	if _, err := runCLI(t, "templates", "init", "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	// Files should land in the configured dir, not in defaultTemplatesDir.
+	for _, name := range []string{"task.md.tmpl", "TEMPLATES.md"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Errorf("expected %s in configured dir, got: %v", name, err)
+		}
+	}
+}
+
 // TestTemplatesInitSeedsSnapshot verifies init writes the .srekit-embedded
 // sidecar so the next upgrade has a merge base.
 func TestTemplatesInitSeedsSnapshot(t *testing.T) {

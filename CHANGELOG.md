@@ -19,7 +19,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Fixed
 
--
+- `srekit templates init` without a positional `[dir]` argument now respects the configured templates directory (`--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` in `~/.srekit.yaml`), falling back to `~/.srekit/templates` only when nothing is configured. Previously it ignored the config and unconditionally scaffolded into `~/.srekit/templates`, leading to a "ghost" directory that no other subcommand read from.
 
 ## [0.10.0] - 2026-05-27
 

@@ -413,15 +413,28 @@ func newTemplatesInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [dir]",
 		Short: "Scaffold a custom templates directory from the built-in templates",
-		Long: `Copy every built-in template into <dir> (default: ~/.srekit/templates),
-write TEMPLATES.md with the placeholder/FuncMap reference, and run
-git init in the directory (unless --no-git). Refuses to overwrite
-existing files unless --force is set.`,
+		Long: `Copy every built-in template into <dir>, write TEMPLATES.md with
+the placeholder/FuncMap reference, and run git init in the directory
+(unless --no-git). Refuses to overwrite existing files unless --force.
+
+When [dir] is omitted, the target is resolved in the same order every
+other 'templates' subcommand uses: --templates-dir / SREKIT_TEMPLATES_DIR
+/ templates_dir: in ~/.srekit.yaml, falling back to ~/.srekit/templates.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dir := defaultTemplatesDir
+			var dir string
 			if len(args) == 1 {
 				dir = args[0]
+			} else {
+				resolved, err := resolveTemplatesDir(cmd)
+				if err != nil {
+					return err
+				}
+				if resolved != "" {
+					dir = resolved
+				} else {
+					dir = defaultTemplatesDir
+				}
 			}
 			expanded, err := expandHome(dir)
 			if err != nil {
