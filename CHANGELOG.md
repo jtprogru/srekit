@@ -11,9 +11,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
-- `srekit config init` — interactive (TTY) / non-interactive (`--yes`, piped stdin) scaffolder for `~/.srekit.yaml`. Defaults pulled from `git config user.name` / `user.email`. Flags: `--author`, `--email`, `--templates-dir`, `--force`, `--yes`. Honors the root `--config FILE` for a custom target path. Writes with `0o600` and refuses to overwrite without `--force`. The `templates_dir:` key is emitted as a commented-out hint when unset, so the embedded-only default keeps working.
-- `.github/dependabot.yml` — weekly updates for Go modules and GitHub Actions. Actions grouped into a single PR; `chore(deps)` / `chore(ci)` commit-message prefixes to match the existing log style.
-- `--json` flag on every generator command. Short-circuits the template and emits the data payload as indented JSON (default sink: stdout; `--out FILE` writes to a file). Field names are PascalCase — they match what the templates see, so `srekit postmortem --title X --severity SEV-1 --json | jq '.Severity'` works without translation. With `--json` the markdown default path is *not* used, so a JSON payload never lands in a `.md` file by accident.
+-
 
 ### Changed
 
@@ -22,6 +20,19 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 ### Fixed
 
 -
+
+## [0.8.0] - 2026-05-27
+
+### Added
+
+- `srekit config init` — interactive (TTY) / non-interactive (`--yes`, piped stdin) scaffolder for `~/.srekit.yaml`. Defaults pulled from `git config user.name` / `user.email`. Flags: `--author`, `--email`, `--templates-dir`, `--force`, `--yes`. Honors the root `--config FILE` for a custom target path. Writes with `0o600` and refuses to overwrite without `--force`. The `templates_dir:` key is emitted as a commented-out hint when unset, so the embedded-only default keeps working.
+- `.github/dependabot.yml` — weekly updates for Go modules and GitHub Actions. Actions grouped into a single PR; `chore(deps)` / `chore(ci)` commit-message prefixes to match the existing log style.
+- `--json` flag on every generator command. Short-circuits the template and emits the data payload as indented JSON (default sink: stdout; `--out FILE` writes to a file). Field names are PascalCase — they match what the templates see, so `srekit postmortem --title X --severity SEV-1 --json | jq '.Severity'` works without translation. With `--json` the markdown default path is *not* used, so a JSON payload never lands in a `.md` file by accident.
+
+### Changed
+
+- `golangci-lint` CI pin bumped from `v2.10` to `v2.12` to match the local toolchain. Removes a version skew where the older gosec ruleset flagged `cmd/config.go` for G703/G705 false positives on a CLI generator whose contract is exactly "write user input to a user-named file."
+- `Taskfile.yml` — added `test:race`, `release:dry`, and a `ci` umbrella (lint + race tests) for a one-shot pre-push check.
 
 ## [0.7.0] - 2026-05-27
 
