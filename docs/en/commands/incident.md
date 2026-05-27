@@ -1,8 +1,6 @@
 # srekit incident
 
-Generate a **live-incident report** — the doc you fill in *during* an active
-incident (status, lead, communications, update log). Distinct from
-[`srekit postmortem`](postmortem.md), which is written *after*.
+Generate a **live-incident report** — the doc you fill in *during* an active incident (status, lead, communications, update log). Distinct from [`srekit postmortem`](postmortem.md), which is written *after*.
 
 ## Synopsis
 
@@ -21,8 +19,7 @@ srekit incident --title TITLE [flags]
 | `--comms` | no | Communications channel (Slack room, status page) |
 | `--start` | no | Start timestamp (e.g. `2026-05-06T08:00Z`) |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `incident-<slug-of-title>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `incident-<slug-of-title>.md`.
 
 ## Examples
 
@@ -57,7 +54,5 @@ struct {
 
 ## See also
 
-- [`srekit postmortem`](postmortem.md) — the after-action report you write
-  once the incident closes.
-- [`srekit runbook`](runbook.md) — the operational playbook you reach for
-  before incidents.
+- [`srekit postmortem`](postmortem.md) — the after-action report you write once the incident closes.
+- [`srekit runbook`](runbook.md) — the operational playbook you reach for before incidents.

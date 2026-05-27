@@ -15,8 +15,7 @@ srekit retro --team NAME [flags]
 | `--team` | да | Имя команды |
 | `--sprint` | нет | Идентификатор спринта (например `2026-W19`). Default: сегодняшняя дата. |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя
-файла: `retro-<slug-of-team>-<sprint>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `retro-<slug-of-team>-<sprint>.md`.
 
 ## Примеры
 
@@ -50,6 +49,5 @@ struct {
 
 ## См. также
 
-- [`srekit oncall-report`](oncall-report.md) — недельная гранулярность vs
-  sprint-гранулярность.
+- [`srekit oncall-report`](oncall-report.md) — недельная гранулярность vs sprint-гранулярность.
 - [`srekit postmortem`](postmortem.md) — per-incident ретро.

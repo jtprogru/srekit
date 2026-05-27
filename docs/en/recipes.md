@@ -1,7 +1,6 @@
 # Recipes
 
-Concrete workflows that combine srekit with real tooling. Each recipe
-is copy-pasteable; adjust paths, team names, and IDs to your context.
+Concrete workflows that combine srekit with real tooling. Each recipe is copy-pasteable; adjust paths, team names, and IDs to your context.
 
 ---
 
@@ -102,23 +101,20 @@ Then `srekit templates upgrade` to 3-way-merge them in.
 
 ## Use a different identity per project
 
-`~/.srekit.yaml` has your personal identity; in a work repo's
-`.envrc` (via direnv):
+`~/.srekit.yaml` has your personal identity; in a work repo's `.envrc` (via direnv):
 
 ```bash
 export SREKIT_AUTHOR="Mikhail Savin"
 export SREKIT_EMAIL="m.savin@work.example.com"
 ```
 
-`cd` into the work repo and srekit auto-picks up the work identity for
-license / RFC / on-call docs.
+`cd` into the work repo and srekit auto-picks up the work identity for license / RFC / on-call docs.
 
 ---
 
 ## Pin srekit version per project
 
-Some teams want all engineers to use the same srekit version for
-reproducibility. Pin in a project script:
+Some teams want all engineers to use the same srekit version for reproducibility. Pin in a project script:
 
 ```bash
 #!/usr/bin/env bash
@@ -136,8 +132,7 @@ exec srekit "$@"
 
 ## Two repos, one templates source
 
-Common for multi-repo orgs: one shared `sre-templates` repo, many
-consumers.
+Common for multi-repo orgs: one shared `sre-templates` repo, many consumers.
 
 ```bash
 # In each repo's setup:
@@ -152,6 +147,5 @@ srekit templates pull
 
 ## See also
 
-- [Custom templates workflow](guides/custom-templates.md) — the
-  longer narrative.
+- [Custom templates workflow](guides/custom-templates.md) — the longer narrative.
 - [JSON output](guides/json-output.md) — pipeline patterns.

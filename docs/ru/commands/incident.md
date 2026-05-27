@@ -1,9 +1,6 @@
 # srekit incident
 
-Сгенерировать **live-incident report** — документ, который заполняется
-*во время* активного инцидента (статус, лид, коммуникации, лог апдейтов).
-Отличается от [`srekit postmortem`](postmortem.md), который пишется
-*после*.
+Сгенерировать **live-incident report** — документ, который заполняется *во время* активного инцидента (статус, лид, коммуникации, лог апдейтов). Отличается от [`srekit postmortem`](postmortem.md), который пишется *после*.
 
 ## Синопсис
 
@@ -22,8 +19,7 @@ srekit incident --title TITLE [flags]
 | `--comms` | нет | Канал коммуникаций (Slack room, status page) |
 | `--start` | нет | Timestamp начала (например `2026-05-06T08:00Z`) |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default
-имя файла: `incident-<slug-of-title>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `incident-<slug-of-title>.md`.
 
 ## Примеры
 

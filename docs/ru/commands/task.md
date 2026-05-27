@@ -1,9 +1,6 @@
 # srekit task
 
-Сгенерировать **investigation log** — структурированный артефакт для
-ведения цепочки гипотез и доказательств, когда охотишься за tail-latency
-спайком, флэйковым тестом или любой open-ended SRE-загадкой. Скрытый
-алиас: `srekit sretask` (оставлен для миграции с `gch sretask`).
+Сгенерировать **investigation log** — структурированный артефакт для ведения цепочки гипотез и доказательств, когда охотишься за tail-latency спайком, флэйковым тестом или любой open-ended SRE-загадкой. Скрытый алиас: `srekit sretask` (оставлен для миграции с `gch sretask`).
 
 ## Синопсис
 
@@ -18,14 +15,11 @@ srekit task --title TITLE [flags]
 | `--title` | да | Тема расследования; идёт в H1 и в default-имя файла |
 | `--path DIR` | нет | Директория для записи (default: текущая) |
 
-Плюс [общие output-флаги](index.md#shared-output-flags): `--out`,
-`--stdout`, `--force`, `--dry-run`, `--template`, `--json`.
+Плюс [общие output-флаги](index.md#shared-output-flags): `--out`, `--stdout`, `--force`, `--dry-run`, `--template`, `--json`.
 
 ## Default имя файла
 
-Если ни `--out`, ни `--stdout` не передан — пишется в
-`<path>/Tasker - <title>.md` (slug-нормализованное, регистр title
-сохраняется).
+Если ни `--out`, ни `--stdout` не передан — пишется в `<path>/Tasker - <title>.md` (slug-нормализованное, регистр title сохраняется).
 
 ## Примеры
 
@@ -56,14 +50,9 @@ struct {
 }
 ```
 
-Секции после рендеринга: YAML front matter (`title`, `tags`,
-`creation_date`, `id`) → `Контекст / Context`, `Гипотеза / Hypothesis`,
-`Доказательства / Evidence`, `Выводы / Findings`, `Дальнейшие действия /
-Action items`, `Ссылки / References`.
+Секции после рендеринга: YAML front matter (`title`, `tags`, `creation_date`, `id`) → `Контекст / Context`, `Гипотеза / Hypothesis`, `Доказательства / Evidence`, `Выводы / Findings`, `Дальнейшие действия / Action items`, `Ссылки / References`.
 
 ## См. также
 
-- [Кастомные шаблоны](../guides/custom-templates.md) — переопределить
-  embedded-шаблон своим.
-- [JSON-вывод](../guides/json-output.md) — пайплайны `--json` в другие
-  тулзы.
+- [Кастомные шаблоны](../guides/custom-templates.md) — переопределить embedded-шаблон своим.
+- [JSON-вывод](../guides/json-output.md) — пайплайны `--json` в другие тулзы.

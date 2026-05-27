@@ -1,7 +1,6 @@
 # srekit slo
 
-Сгенерировать **SLO / SLI документ** для сервиса: цель, окно, latency
-budget, с embedded PromQL-примером.
+Сгенерировать **SLO / SLI документ** для сервиса: цель, окно, latency budget, с embedded PromQL-примером.
 
 ## Синопсис
 
@@ -18,8 +17,7 @@ srekit slo --service NAME [flags]
 | `--window` | нет | Rolling window (например `30d`). Default: `30d` |
 | `--latency` | нет | Latency budget (например `300ms`). Default: `300ms` |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя
-файла: `slo-<slug-of-service>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `slo-<slug-of-service>.md`.
 
 ## Примеры
 

@@ -1,12 +1,10 @@
 # srekit config
 
-Управление `~/.srekit.yaml` — опциональная user-конфигурация с
-identity автора и опциональной default templates dir.
+Управление `~/.srekit.yaml` — опциональная user-конфигурация с identity автора и опциональной default templates dir.
 
 ## `config init` {#config-init}
 
-Провести пользователя через заполнение `~/.srekit.yaml` интерактивно
-(TTY) или non-interactively (`--yes`, piped stdin).
+Провести пользователя через заполнение `~/.srekit.yaml` интерактивно (TTY) или non-interactively (`--yes`, piped stdin).
 
 ```bash
 srekit config init                          # интерактив
@@ -27,9 +25,7 @@ srekit --config ./my.yaml config init       # кастомный путь (че�
 
 ### Defaults
 
-Если флаг опущен, srekit заполняет default из `git config user.name` /
-`git config user.email`. Если ни флага, ни git config, и команда
-non-interactive — падаем с ошибкой, не пишем невалидный файл.
+Если флаг опущен, srekit заполняет default из `git config user.name` / `git config user.email`. Если ни флага, ни git config, и команда non-interactive — падаем с ошибкой, не пишем невалидный файл.
 
 ### Вывод
 
@@ -42,19 +38,13 @@ email: jtprogru@gmail.com
 # templates_dir: ~/.srekit/templates  # optional; uncomment to override embedded templates
 ```
 
-Mode `0o600` (user-only). `templates_dir:` идёт как закомментированный
-hint когда не задан — раскомментируй чтобы включить, или передай
-`--templates-dir PATH` на init чтобы записать сразу.
+Mode `0o600` (user-only). `templates_dir:` идёт как закомментированный hint когда не задан — раскомментируй чтобы включить, или передай `--templates-dir PATH` на init чтобы записать сразу.
 
 ### Целевой путь
 
-Default `~/.srekit.yaml`. Если передать `--config FILE` на root
-(`srekit --config FILE config init`) — файл будет записан туда. Удобно
-для multi-tenant setups или CI scratch.
+Default `~/.srekit.yaml`. Если передать `--config FILE` на root (`srekit --config FILE config init`) — файл будет записан туда. Удобно для multi-tenant setups или CI scratch.
 
 ## См. также
 
-- [Конфигурация](../guides/configuration.md) — как `~/.srekit.yaml`
-  участвует в общей resolution-цепочке.
-- [`srekit templates init`](templates.md#templates-init) — для скаффолда
-  собственно директории шаблонов.
+- [Конфигурация](../guides/configuration.md) — как `~/.srekit.yaml` участвует в общей resolution-цепочке.
+- [`srekit templates init`](templates.md#templates-init) — для скаффолда собственно директории шаблонов.

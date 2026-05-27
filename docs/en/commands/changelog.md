@@ -1,7 +1,6 @@
 # srekit changelog
 
-Scaffold a `CHANGELOG.md` in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
-format. Auto-detects the GitHub repo from `git config remote.origin.url`.
+Scaffold a `CHANGELOG.md` in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. Auto-detects the GitHub repo from `git config remote.origin.url`.
 
 ## Synopsis
 
@@ -16,8 +15,7 @@ srekit changelog [flags]
 | `--repo` | no | `<owner>/<name>` slug. If omitted, srekit reads `git config remote.origin.url` and parses GitHub SSH or HTTPS URLs. |
 | `--version` | no | Initial version anchor (e.g. `0.1.0`). Default: `0.1.0`. |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `CHANGELOG.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `CHANGELOG.md`.
 
 ## Examples
 
@@ -34,8 +32,7 @@ Explicit:
 srekit changelog --repo jtprogru/srekit --version 0.1.0 --out CHANGELOG.md
 ```
 
-Outside a git repo, omitting `--repo` is an error (no silent
-`OWNER/REPO` placeholder — that bit users in v0.2):
+Outside a git repo, omitting `--repo` is an error (no silent `OWNER/REPO` placeholder — that bit users in v0.2):
 
 ```bash
 srekit changelog --stdout
@@ -44,10 +41,7 @@ srekit changelog --stdout
 
 ## Output
 
-The scaffold pre-renders compare links pointing at
-`github.com/<repo>/compare/v<version>...HEAD` and includes the
-`[Unreleased]` / `[<version>]` skeleton with `Added` / `Changed` / `Fixed`
-subsections.
+The scaffold pre-renders compare links pointing at `github.com/<repo>/compare/v<version>...HEAD` and includes the `[Unreleased]` / `[<version>]` skeleton with `Added` / `Changed` / `Fixed` subsections.
 
 ## Template shape
 
@@ -61,5 +55,4 @@ struct {
 
 ## See also
 
-- [`srekit rfc`](rfc.md), [`srekit postmortem`](postmortem.md) — the docs
-  whose history feeds the changelog.
+- [`srekit rfc`](rfc.md), [`srekit postmortem`](postmortem.md) — the docs whose history feeds the changelog.

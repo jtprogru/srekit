@@ -1,7 +1,6 @@
 # srekit ebp
 
-Generate an **Error Budget Policy** with tiered actions (Yellow / Orange /
-Red), exceptions, and escalation paths. Pairs with [`srekit slo`](slo.md).
+Generate an **Error Budget Policy** with tiered actions (Yellow / Orange / Red), exceptions, and escalation paths. Pairs with [`srekit slo`](slo.md).
 
 ## Synopsis
 
@@ -16,8 +15,7 @@ srekit ebp --service NAME [flags]
 | `--service` | yes | Service this policy applies to |
 | `--owner` | no | Policy owner (team or individual) |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `ebp-<slug-of-service>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `ebp-<slug-of-service>.md`.
 
 ## Examples
 

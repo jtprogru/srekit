@@ -1,8 +1,6 @@
 # srekit license
 
-Generate a `LICENSE` file (default: WTFPL). Author and email are resolved
-from flags / env / yaml / `git config` in that order. Hidden alias:
-`srekit lic`.
+Generate a `LICENSE` file (default: WTFPL). Author and email are resolved from flags / env / yaml / `git config` in that order. Hidden alias: `srekit lic`.
 
 ## Synopsis
 
@@ -19,9 +17,7 @@ srekit license [flags]
 | `--author` | no | Override author name |
 | `--email` | no | Override author email |
 
-Plus the [shared output flags](index.md#shared-output-flags). By default
-this command prints to **stdout** (it has no default file path) — pass
-`--out LICENSE` to write the file.
+Plus the [shared output flags](index.md#shared-output-flags). By default this command prints to **stdout** (it has no default file path) — pass `--out LICENSE` to write the file.
 
 ## Examples
 
@@ -59,9 +55,7 @@ If `--author` is not set, srekit walks (first match wins):
 1. `SREKIT_AUTHOR` env / `author:` in `~/.srekit.yaml` / `full_name:` in yaml
 2. `git config user.name`
 
-Same chain for `--email` with `SREKIT_EMAIL` / `email:` / `git config user.email`.
-If both are still empty, the command fails with a clear "set --author or
-configure git user.name" error.
+Same chain for `--email` with `SREKIT_EMAIL` / `email:` / `git config user.email`. If both are still empty, the command fails with a clear "set --author or configure git user.name" error.
 
 ## Template shape
 

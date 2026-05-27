@@ -1,8 +1,6 @@
 # srekit oncall-report
 
-Generate a **weekly on-call report** for a team — pages table, toil
-breakdown, alert hygiene. Period defaults to the current Monday–Sunday
-week.
+Generate a **weekly on-call report** for a team — pages table, toil breakdown, alert hygiene. Period defaults to the current Monday–Sunday week.
 
 ## Synopsis
 
@@ -20,8 +18,7 @@ srekit oncall-report --team NAME [flags]
 | `--author` | no | On-caller name (defaults to git config / yaml chain) |
 | `--email` | no | On-caller email |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `oncall-<slug-of-team>-<start>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `oncall-<slug-of-team>-<start>.md`.
 
 ## Examples
 
@@ -41,13 +38,9 @@ srekit oncall-report --team platform \
 
 ## Week boundary
 
-The default period uses Monday as the start. Sunday is the end. The
-underlying clock is `internal/clock.Now` (overridable for tests; the
-production binary uses wall-clock `time.Now()`).
+The default period uses Monday as the start. Sunday is the end. The underlying clock is `internal/clock.Now` (overridable for tests; the production binary uses wall-clock `time.Now()`).
 
-If you ran the report on Sunday 2026-05-10, you'd get
-`2026-05-04 → 2026-05-10` — a regression test pins this exact boundary
-behavior.
+If you ran the report on Sunday 2026-05-10, you'd get `2026-05-04 → 2026-05-10` — a regression test pins this exact boundary behavior.
 
 ## Section structure
 

@@ -1,8 +1,6 @@
 # srekit postmortem
 
-Сгенерировать **постмортем** в стиле Google SRE: severity, timeline,
-impact, detection / mitigation / root cause, action items, lessons.
-Билингвальные заголовки.
+Сгенерировать **постмортем** в стиле Google SRE: severity, timeline, impact, detection / mitigation / root cause, action items, lessons. Билингвальные заголовки.
 
 ## Синопсис
 
@@ -20,8 +18,7 @@ srekit postmortem --title TITLE [flags]
 | `--end` | нет | Конец инцидента |
 | `--owner` | нет | Владелец постмортема (тот, кто пишет) |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя
-файла: `postmortem-<slug-of-title>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `postmortem-<slug-of-title>.md`.
 
 ## Примеры
 

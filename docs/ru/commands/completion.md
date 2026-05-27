@@ -1,7 +1,6 @@
 # srekit completion
 
-Сгенерировать shell-автодополнение. Предоставляется cobra; поддерживает
-`bash`, `zsh`, `fish`, `powershell`.
+Сгенерировать shell-автодополнение. Предоставляется cobra; поддерживает `bash`, `zsh`, `fish`, `powershell`.
 
 ## Синопсис
 
@@ -12,8 +11,7 @@ srekit completion fish
 srekit completion powershell
 ```
 
-Каждая подкоманда печатает скрипт в stdout; перенаправляешь в нужное
-место для своего шелла.
+Каждая подкоманда печатает скрипт в stdout; перенаправляешь в нужное место для своего шелла.
 
 ## Примеры
 
@@ -53,5 +51,4 @@ srekit completion powershell
 
 ## См. также
 
-- [Cobra completion docs](https://github.com/spf13/cobra/blob/main/site/content/completions/_index.md) —
-  детали underlying механизма.
+- [Cobra completion docs](https://github.com/spf13/cobra/blob/main/site/content/completions/_index.md) — детали underlying механизма.

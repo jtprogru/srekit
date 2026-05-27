@@ -1,8 +1,6 @@
 # srekit license
 
-Сгенерировать `LICENSE`-файл (default: WTFPL). Author и email резолвятся
-из флагов / env / yaml / `git config` в этом порядке. Скрытый алиас:
-`srekit lic`.
+Сгенерировать `LICENSE`-файл (default: WTFPL). Author и email резолвятся из флагов / env / yaml / `git config` в этом порядке. Скрытый алиас: `srekit lic`.
 
 ## Синопсис
 
@@ -19,9 +17,7 @@ srekit license [flags]
 | `--author` | нет | Переопределить имя автора |
 | `--email` | нет | Переопределить email |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). По умолчанию
-эта команда печатает в **stdout** (default-пути нет) — передай
-`--out LICENSE` чтобы записать в файл.
+Плюс [общие output-флаги](index.md#shared-output-flags). По умолчанию эта команда печатает в **stdout** (default-пути нет) — передай `--out LICENSE` чтобы записать в файл.
 
 ## Примеры
 
@@ -59,9 +55,7 @@ SREKIT_AUTHOR="Alice Example" SREKIT_EMAIL=alice@example.com \
 1. `SREKIT_AUTHOR` env / `author:` в `~/.srekit.yaml` / `full_name:` в yaml
 2. `git config user.name`
 
-Та же цепочка для `--email` с `SREKIT_EMAIL` / `email:` / `git config user.email`.
-Если оба пустые — команда падает с понятной ошибкой "set --author or
-configure git user.name".
+Та же цепочка для `--email` с `SREKIT_EMAIL` / `email:` / `git config user.email`. Если оба пустые — команда падает с понятной ошибкой "set --author or configure git user.name".
 
 ## Структура данных для шаблона
 

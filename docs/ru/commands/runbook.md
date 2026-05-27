@@ -1,8 +1,6 @@
 # srekit runbook
 
-Сгенерировать **runbook** — operational playbook, к которому дежурный
-обращается, когда сработал алерт. Секции: Symptoms, Diagnose, Mitigate,
-Verify, Escalate.
+Сгенерировать **runbook** — operational playbook, к которому дежурный обращается, когда сработал алерт. Секции: Symptoms, Diagnose, Mitigate, Verify, Escalate.
 
 ## Синопсис
 
@@ -18,8 +16,7 @@ srekit runbook --title TITLE [flags]
 | `--service` | нет | Сервис, к которому относится runbook |
 | `--alert` | нет | Имя / id конкретного алерта |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя
-файла: `runbook-<slug-of-title>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `runbook-<slug-of-title>.md`.
 
 ## Примеры
 

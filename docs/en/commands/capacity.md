@@ -1,7 +1,6 @@
 # srekit capacity
 
-Generate a **capacity plan**: baseline metrics, growth assumptions,
-forecast, scale-up triggers, headroom targets, dependencies, cost, risks.
+Generate a **capacity plan**: baseline metrics, growth assumptions, forecast, scale-up triggers, headroom targets, dependencies, cost, risks.
 
 ## Synopsis
 
@@ -16,8 +15,7 @@ srekit capacity --service NAME [flags]
 | `--service` | yes | Service the plan covers |
 | `--horizon` | no | Planning horizon (e.g. `3m`, `6m`, `1y`). Default: `6m` |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `capacity-<slug-of-service>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `capacity-<slug-of-service>.md`.
 
 ## Examples
 
@@ -54,7 +52,5 @@ struct {
 
 ## See also
 
-- [`srekit slo`](slo.md) — capacity constraints often follow from latency
-  SLOs.
-- [`srekit rfc`](rfc.md) — file an RFC when capacity choices need broad
-  buy-in.
+- [`srekit slo`](slo.md) — capacity constraints often follow from latency SLOs.
+- [`srekit rfc`](rfc.md) — file an RFC when capacity choices need broad buy-in.

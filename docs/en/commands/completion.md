@@ -1,7 +1,6 @@
 # srekit completion
 
-Generate shell autocomplete scripts. Provided by cobra; supports `bash`,
-`zsh`, `fish`, and `powershell`.
+Generate shell autocomplete scripts. Provided by cobra; supports `bash`, `zsh`, `fish`, and `powershell`.
 
 ## Synopsis
 
@@ -12,8 +11,7 @@ srekit completion fish
 srekit completion powershell
 ```
 
-Each subcommand emits the script to stdout; redirect into the right
-location for your shell.
+Each subcommand emits the script to stdout; redirect into the right location for your shell.
 
 ## Examples
 
@@ -53,5 +51,4 @@ location for your shell.
 
 ## See also
 
-- [Cobra's completion docs](https://github.com/spf13/cobra/blob/main/site/content/completions/_index.md)
-  for details on the underlying mechanism.
+- [Cobra's completion docs](https://github.com/spf13/cobra/blob/main/site/content/completions/_index.md) for details on the underlying mechanism.

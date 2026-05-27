@@ -35,16 +35,14 @@ srekit --version
 
 ## 2. One-time configuration
 
-Generators that record an author (`license`, `rfc`, `oncall-report`) resolve
-the identity in this order:
+Generators that record an author (`license`, `rfc`, `oncall-report`) resolve the identity in this order:
 
 1. `--author` / `--email` flags
 2. `SREKIT_AUTHOR` / `SREKIT_EMAIL` env vars
 3. `author:` / `email:` in `~/.srekit.yaml`
 4. `git config user.name` / `git config user.email`
 
-If your global `git config` is already set, **you can skip configuration
-entirely**. To opt in to a yaml file:
+If your global `git config` is already set, **you can skip configuration entirely**. To opt in to a yaml file:
 
 ```bash
 srekit config init
@@ -54,14 +52,11 @@ srekit config init
 # Wrote /Users/jtprogru/.srekit.yaml
 ```
 
-`srekit config init --yes` runs without prompts, using flag values and `git
-config` defaults. See [Configuration & precedence](guides/configuration.md)
-for the full picture.
+`srekit config init --yes` runs without prompts, using flag values and `git config` defaults. See [Configuration & precedence](guides/configuration.md) for the full picture.
 
 ## 3. Your first artifact
 
-A postmortem is a good starter — it exercises author resolution, title-based
-filenames, and the `--out` / `--stdout` flags:
+A postmortem is a good starter — it exercises author resolution, title-based filenames, and the `--out` / `--stdout` flags:
 
 ```bash
 srekit postmortem --title "API outage" --severity SEV-1 --stdout
@@ -76,9 +71,7 @@ srekit postmortem --title "API outage" --severity SEV-1 \
   --out postmortem-2026-05-06.md
 ```
 
-Inspect it — every section is pre-filled with bilingual headings (`Постмортем
-(Postmortem)`) and SRE-canonical fields (severity, timeline, impact, root
-cause, action items).
+Inspect it — every section is pre-filled with bilingual headings (`Постмортем (Postmortem)`) and SRE-canonical fields (severity, timeline, impact, root cause, action items).
 
 ## 4. The unified flag set
 
@@ -93,20 +86,13 @@ Every generator command supports the same output flags:
 | `--template FILE` | use this template file instead of the embedded one |
 | `--json` | emit the template data payload as JSON instead of rendering |
 
-If you pass neither `--out` nor `--stdout`, each command has a sensible
-default filename (e.g. `Tasker - <title>.md` for `srekit task`, `oncall-<team>-<start>.md`
-for the on-call report).
+If you pass neither `--out` nor `--stdout`, each command has a sensible default filename (e.g. `Tasker - <title>.md` for `srekit task`, `oncall-<team>-<start>.md` for the on-call report).
 
 ## 5. What's next
 
 You now have enough to use srekit day-to-day. To go deeper:
 
-- **[Custom templates workflow](guides/custom-templates.md)** — fork the
-  embedded templates into your own git repo and pull/merge upstream changes
-  cleanly.
-- **[JSON output](guides/json-output.md)** — pipe generators into `jq` for
-  CI scripts and integrations.
-- **[Commands overview](commands/index.md)** — full reference for every
-  subcommand and flag.
-- **[Recipes](../recipes.md)** — concrete workflows that combine srekit
-  with your tooling.
+- **[Custom templates workflow](guides/custom-templates.md)** — fork the embedded templates into your own git repo and pull/merge upstream changes cleanly.
+- **[JSON output](guides/json-output.md)** — pipe generators into `jq` for CI scripts and integrations.
+- **[Commands overview](commands/index.md)** — full reference for every subcommand and flag.
+- **[Recipes](../recipes.md)** — concrete workflows that combine srekit with your tooling.

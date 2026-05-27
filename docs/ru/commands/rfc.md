@@ -1,7 +1,6 @@
 # srekit rfc
 
-Сгенерировать **RFC / ADR** скаффолд с секциями Context, Decision,
-Alternatives, Consequences, References. Поле status валидируется.
+Сгенерировать **RFC / ADR** скаффолд с секциями Context, Decision, Alternatives, Consequences, References. Поле status валидируется.
 
 ## Синопсис
 
@@ -18,8 +17,7 @@ srekit rfc --title TITLE [flags]
 | `--author` | нет | Переопределить автора (резолв как у [`license`](license.md#author-resolution)) |
 | `--email` | нет | Переопределить email |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя
-файла: `rfc-<slug-of-title>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `rfc-<slug-of-title>.md`.
 
 ## Примеры
 

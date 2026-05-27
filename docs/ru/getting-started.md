@@ -35,16 +35,14 @@ srekit --version
 
 ## 2. Разовая настройка
 
-Генераторы, которые пишут автора (`license`, `rfc`, `oncall-report`),
-резолвят личность в таком порядке:
+Генераторы, которые пишут автора (`license`, `rfc`, `oncall-report`), резолвят личность в таком порядке:
 
 1. флаги `--author` / `--email`
 2. env-переменные `SREKIT_AUTHOR` / `SREKIT_EMAIL`
 3. `author:` / `email:` в `~/.srekit.yaml`
 4. `git config user.name` / `git config user.email`
 
-Если у тебя уже выставлен глобальный `git config`, **можно не настраивать
-ничего вообще**. Если хочешь yaml-файл:
+Если у тебя уже выставлен глобальный `git config`, **можно не настраивать ничего вообще**. Если хочешь yaml-файл:
 
 ```bash
 srekit config init
@@ -54,13 +52,11 @@ srekit config init
 # Wrote /Users/jtprogru/.srekit.yaml
 ```
 
-`srekit config init --yes` идёт без промптов, использует значения из флагов
-и `git config`. Полная картина — в [Конфигурация](guides/configuration.md).
+`srekit config init --yes` идёт без промптов, использует значения из флагов и `git config`. Полная картина — в [Конфигурация](guides/configuration.md).
 
 ## 3. Первый артефакт
 
-Постмортем — хороший старт: он задействует резолв автора, имя файла из
-title и флаги `--out` / `--stdout`:
+Постмортем — хороший старт: он задействует резолв автора, имя файла из title и флаги `--out` / `--stdout`:
 
 ```bash
 srekit postmortem --title "API outage" --severity SEV-1 --stdout
@@ -75,9 +71,7 @@ srekit postmortem --title "API outage" --severity SEV-1 \
   --out postmortem-2026-05-06.md
 ```
 
-Посмотри что внутри — каждая секция предзаполнена с билингвальными
-заголовками (`Постмортем (Postmortem)`) и SRE-каноническими полями
-(severity, timeline, impact, root cause, action items).
+Посмотри что внутри — каждая секция предзаполнена с билингвальными заголовками (`Постмортем (Postmortem)`) и SRE-каноническими полями (severity, timeline, impact, root cause, action items).
 
 ## 4. Единый набор флагов
 
@@ -92,20 +86,13 @@ srekit postmortem --title "API outage" --severity SEV-1 \
 | `--template FILE` | использовать этот файл шаблона вместо embedded |
 | `--json` | отдать данные шаблона как JSON вместо рендеринга |
 
-Если не передал ни `--out`, ни `--stdout`, у каждой команды есть разумный
-default-путь (например `Tasker - <title>.md` для `srekit task`,
-`oncall-<team>-<start>.md` для отчёта дежурного).
+Если не передал ни `--out`, ни `--stdout`, у каждой команды есть разумный default-путь (например `Tasker - <title>.md` для `srekit task`, `oncall-<team>-<start>.md` для отчёта дежурного).
 
 ## 5. Дальше
 
 Этого хватит для повседневного использования. Если хочется глубже:
 
-- **[Кастомные шаблоны](guides/custom-templates.md)** — форк embedded
-  шаблонов в свой git-репо и подтягивание upstream-изменений через clean
-  merge.
-- **[JSON-вывод](guides/json-output.md)** — пайплайны генераторов в `jq`
-  для CI-скриптов и интеграций.
-- **[Обзор команд](commands/index.md)** — полный reference по каждой
-  подкоманде и флагу.
-- **[Рецепты](../recipes.md)** — конкретные сценарии, где srekit
-  совмещается с твоим тулчейном.
+- **[Кастомные шаблоны](guides/custom-templates.md)** — форк embedded шаблонов в свой git-репо и подтягивание upstream-изменений через clean merge.
+- **[JSON-вывод](guides/json-output.md)** — пайплайны генераторов в `jq` для CI-скриптов и интеграций.
+- **[Обзор команд](commands/index.md)** — полный reference по каждой подкоманде и флагу.
+- **[Рецепты](../recipes.md)** — конкретные сценарии, где srekit совмещается с твоим тулчейном.

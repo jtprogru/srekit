@@ -1,8 +1,6 @@
 # Архитектура
 
-Тур по коду для контрибьюторов и любопытных пользователей. Пин на
-[v0.10.1](https://github.com/jtprogru/srekit/tree/v0.10.1) — структура
-стабильна на эту версию.
+Тур по коду для контрибьюторов и любопытных пользователей. Пин на [v0.10.1](https://github.com/jtprogru/srekit/tree/v0.10.1) — структура стабильна на эту версию.
 
 ## Раскладка пакетов
 
@@ -34,8 +32,7 @@ srekit/
 
 ### `internal/tmpl.Source` и `Loader`
 
-Шаблоны могут приходить из binary (embedded) или из директории
-пользователя. `Source` — интерфейс:
+Шаблоны могут приходить из binary (embedded) или из директории пользователя. `Source` — интерфейс:
 
 ```go
 type Source interface {
@@ -43,50 +40,29 @@ type Source interface {
 }
 ```
 
-`EmbedSource` читает из `//go:embed templates/*.tmpl`. `DirSource{Dir}`
-читает с диска. `Loader{Sources}` идёт по ним по порядку с
-`fs.ErrNotExist`-as-fallthrough семантикой — отсутствующий файл в
-user dir прозрачно фолбэчится на embedded.
+`EmbedSource` читает из `//go:embed templates/*.tmpl`. `DirSource{Dir}` читает с диска. `Loader{Sources}` идёт по ним по порядку с `fs.ErrNotExist`-as-fallthrough семантикой — отсутствующий файл в user dir прозрачно фолбэчится на embedded.
 
-Production-код использует package-level `tmpl.Default` (`EmbedSource`
-по default; заменяется на `Loader{DirSource, EmbedSource}` когда
-сконфигурирована templates dir). Это package-level mutable state, с
-которым тесты работают через хелпер `resetTmplDefault(t)`.
+Production-код использует package-level `tmpl.Default` (`EmbedSource` по default; заменяется на `Loader{DirSource, EmbedSource}` когда сконфигурирована templates dir). Это package-level mutable state, с которым тесты работают через хелпер `resetTmplDefault(t)`.
 
 ### `internal/render.Render()`
 
-Общий рендеринг-пайплайн. Берёт имя шаблона, data-структуру и
-`render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON,
-Default}`. Зовёт `buildBody()` (короткозамыкает на JSON если
-`Options.JSON`), потом `writeBody()` (решает stdout vs file по флагам
-и `Default` имени файла).
+Общий рендеринг-пайплайн. Берёт имя шаблона, data-структуру и `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default}`. Зовёт `buildBody()` (короткозамыкает на JSON если `Options.JSON`), потом `writeBody()` (решает stdout vs file по флагам и `Default` имени файла).
 
 ### `internal/cliflags.Output`
 
-Каждый генератор-cmd содержит `Output` и зовёт `.Bind(cmd,
-"default-path-description")`. Это и даёт им единый набор флагов без
-per-command boilerplate. `RenderOptions(def)` превращает значения
-флагов в `render.Options`.
+Каждый генератор-cmd содержит `Output` и зовёт `.Bind(cmd, "default-path-description")`. Это и даёт им единый набор флагов без per-command boilerplate. `RenderOptions(def)` превращает значения флагов в `render.Options`.
 
 ### `internal/meta.Resolve` и `DetectRepo`
 
-`Resolve` идёт flag → viper → git config для `author` и `email`.
-`DetectRepo` regex-парсит `git config remote.origin.url` против
-GitHub SSH и HTTPS паттернов.
+`Resolve` идёт flag → viper → git config для `author` и `email`. `DetectRepo` regex-парсит `git config remote.origin.url` против GitHub SSH и HTTPS паттернов.
 
 ### `internal/clock.Now`
 
-`var Now func() time.Time = time.Now` indirection. Позволяет тестам
-пиннить wall clock (например regression-тест Sunday on-call boundary).
+`var Now func() time.Time = time.Now` indirection. Позволяет тестам пиннить wall clock (например regression-тест Sunday on-call boundary).
 
 ### Snapshot'ы шаблонов: `.srekit-embedded/`
 
-3-way merge в `templates upgrade` использует per-template снапшот
-"embedded content на момент последнего sync" как merge base. Сидкар
-лежит в `<user-templates-dir>/.srekit-embedded/<name>` и дописывается в
-`.gitignore` user dir, чтобы не загрязнять templates-репо. См.
-`cmd/templates.go` — `snapshotPath`, `readSnapshot`, `writeSnapshot`,
-`ensureSnapshotIgnored`, `threeWayMerge`.
+3-way merge в `templates upgrade` использует per-template снапшот "embedded content на момент последнего sync" как merge base. Сидкар лежит в `<user-templates-dir>/.srekit-embedded/<name>` и дописывается в `.gitignore` user dir, чтобы не загрязнять templates-репо. См. `cmd/templates.go` — `snapshotPath`, `readSnapshot`, `writeSnapshot`, `ensureSnapshotIgnored`, `threeWayMerge`.
 
 ## Релизный конвейер
 
@@ -127,5 +103,4 @@ Flow релиза:
 ## См. также
 
 - [Контрибьютинг](contributing.md) — local dev, Taskfile, release process.
-- [GitHub source](https://github.com/jtprogru/srekit) — читай код
-  напрямую, он небольшой.
+- [GitHub source](https://github.com/jtprogru/srekit) — читай код напрямую, он небольшой.

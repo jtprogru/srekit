@@ -1,12 +1,10 @@
 # srekit config
 
-Manage `~/.srekit.yaml` — the optional user configuration that holds
-author identity and an optional default templates directory.
+Manage `~/.srekit.yaml` — the optional user configuration that holds author identity and an optional default templates directory.
 
 ## `config init` {#config-init}
 
-Walk the user through filling in `~/.srekit.yaml` interactively (TTY)
-or non-interactively (`--yes`, piped stdin).
+Walk the user through filling in `~/.srekit.yaml` interactively (TTY) or non-interactively (`--yes`, piped stdin).
 
 ```bash
 srekit config init                          # interactive
@@ -27,10 +25,7 @@ srekit --config ./my.yaml config init       # custom path (honors root --config)
 
 ### Defaults
 
-If you omit a flag, srekit fills the default from `git config user.name`
-/ `git config user.email`. If neither flag nor `git config` is set and
-the command is non-interactive, it errors out instead of writing an
-invalid file.
+If you omit a flag, srekit fills the default from `git config user.name` / `git config user.email`. If neither flag nor `git config` is set and the command is non-interactive, it errors out instead of writing an invalid file.
 
 ### Output
 
@@ -43,19 +38,13 @@ email: jtprogru@gmail.com
 # templates_dir: ~/.srekit/templates  # optional; uncomment to override embedded templates
 ```
 
-File mode is `0o600` (user-only). `templates_dir:` is emitted as a
-commented-out hint when unset — uncomment to enable, or pass
-`--templates-dir PATH` at init time to bake in a real value.
+File mode is `0o600` (user-only). `templates_dir:` is emitted as a commented-out hint when unset — uncomment to enable, or pass `--templates-dir PATH` at init time to bake in a real value.
 
 ### Target path
 
-The default target is `~/.srekit.yaml`. If you pass `--config FILE` on
-the root command (`srekit --config FILE config init`), the file is
-written there instead — useful for multi-tenant setups or CI scratch.
+The default target is `~/.srekit.yaml`. If you pass `--config FILE` on the root command (`srekit --config FILE config init`), the file is written there instead — useful for multi-tenant setups or CI scratch.
 
 ## See also
 
-- [Configuration & precedence](../guides/configuration.md) — how
-  `~/.srekit.yaml` participates in the broader resolution chain.
-- [`srekit templates init`](templates.md#templates-init) — companion
-  for scaffolding the actual templates directory.
+- [Configuration & precedence](../guides/configuration.md) — how `~/.srekit.yaml` participates in the broader resolution chain.
+- [`srekit templates init`](templates.md#templates-init) — companion for scaffolding the actual templates directory.

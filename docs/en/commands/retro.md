@@ -15,8 +15,7 @@ srekit retro --team NAME [flags]
 | `--team` | yes | Team name |
 | `--sprint` | no | Sprint identifier (e.g. `2026-W19`). Default: today's date. |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `retro-<slug-of-team>-<sprint>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `retro-<slug-of-team>-<sprint>.md`.
 
 ## Examples
 
@@ -50,6 +49,5 @@ struct {
 
 ## See also
 
-- [`srekit oncall-report`](oncall-report.md) — weekly granularity vs
-  sprint granularity.
+- [`srekit oncall-report`](oncall-report.md) — weekly granularity vs sprint granularity.
 - [`srekit postmortem`](postmortem.md) — per-incident retros.

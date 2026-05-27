@@ -1,8 +1,6 @@
 # srekit capacity
 
-Сгенерировать **capacity plan**: baseline-метрики, допущения роста,
-forecast, триггеры масштабирования, цель по headroom, зависимости,
-стоимость, риски.
+Сгенерировать **capacity plan**: baseline-метрики, допущения роста, forecast, триггеры масштабирования, цель по headroom, зависимости, стоимость, риски.
 
 ## Синопсис
 
@@ -17,8 +15,7 @@ srekit capacity --service NAME [flags]
 | `--service` | да | Сервис, к которому относится план |
 | `--horizon` | нет | Горизонт планирования (например `3m`, `6m`, `1y`). Default: `6m` |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя
-файла: `capacity-<slug-of-service>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `capacity-<slug-of-service>.md`.
 
 ## Примеры
 
@@ -55,6 +52,5 @@ struct {
 
 ## См. также
 
-- [`srekit slo`](slo.md) — capacity-ограничения часто следуют из
-  latency-SLO.
+- [`srekit slo`](slo.md) — capacity-ограничения часто следуют из latency-SLO.
 - [`srekit rfc`](rfc.md) — RFC, когда capacity-решения требуют buy-in.

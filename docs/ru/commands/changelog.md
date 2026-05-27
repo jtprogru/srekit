@@ -1,7 +1,6 @@
 # srekit changelog
 
-Скаффолд `CHANGELOG.md` в формате [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-Автодетектит GitHub репо из `git config remote.origin.url`.
+Скаффолд `CHANGELOG.md` в формате [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Автодетектит GitHub репо из `git config remote.origin.url`.
 
 ## Синопсис
 
@@ -16,8 +15,7 @@ srekit changelog [flags]
 | `--repo` | нет | `<owner>/<name>` slug. Если не передан — srekit читает `git config remote.origin.url` и парсит GitHub SSH или HTTPS URL'ы. |
 | `--version` | нет | Начальный version anchor (например `0.1.0`). Default: `0.1.0`. |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя
-файла: `CHANGELOG.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `CHANGELOG.md`.
 
 ## Примеры
 
@@ -34,8 +32,7 @@ srekit changelog --out CHANGELOG.md
 srekit changelog --repo jtprogru/srekit --version 0.1.0 --out CHANGELOG.md
 ```
 
-Вне git-репо без `--repo` — ошибка (никакого silent `OWNER/REPO`
-плейсхолдера, который кусал юзеров в v0.2):
+Вне git-репо без `--repo` — ошибка (никакого silent `OWNER/REPO` плейсхолдера, который кусал юзеров в v0.2):
 
 ```bash
 srekit changelog --stdout
@@ -44,10 +41,7 @@ srekit changelog --stdout
 
 ## Вывод
 
-Скаффолд предрендерит compare-ссылки на
-`github.com/<repo>/compare/v<version>...HEAD` и включает скелет
-`[Unreleased]` / `[<version>]` с подсекциями `Added` / `Changed` /
-`Fixed`.
+Скаффолд предрендерит compare-ссылки на `github.com/<repo>/compare/v<version>...HEAD` и включает скелет `[Unreleased]` / `[<version>]` с подсекциями `Added` / `Changed` / `Fixed`.
 
 ## Структура данных для шаблона
 
@@ -61,5 +55,4 @@ struct {
 
 ## См. также
 
-- [`srekit rfc`](rfc.md), [`srekit postmortem`](postmortem.md) — документы,
-  история которых питает changelog.
+- [`srekit rfc`](rfc.md), [`srekit postmortem`](postmortem.md) — документы, история которых питает changelog.

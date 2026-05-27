@@ -1,8 +1,6 @@
 # srekit postmortem
 
-Generate a **postmortem** in Google-SRE style: severity, timeline, impact,
-detection / mitigation / root cause, action items, lessons. Bilingual
-headings.
+Generate a **postmortem** in Google-SRE style: severity, timeline, impact, detection / mitigation / root cause, action items, lessons. Bilingual headings.
 
 ## Synopsis
 
@@ -20,8 +18,7 @@ srekit postmortem --title TITLE [flags]
 | `--end` | no | Incident end |
 | `--owner` | no | Postmortem owner (the person writing it up) |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `postmortem-<slug-of-title>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `postmortem-<slug-of-title>.md`.
 
 ## Examples
 

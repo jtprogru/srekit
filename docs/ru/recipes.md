@@ -1,8 +1,6 @@
 # Рецепты
 
-Конкретные workflow'ы, где srekit совмещается с реальным тулчейном.
-Каждый рецепт — copy-paste; меняй пути, имена команд, ID под свой
-контекст.
+Конкретные workflow'ы, где srekit совмещается с реальным тулчейном. Каждый рецепт — copy-paste; меняй пути, имена команд, ID под свой контекст.
 
 ---
 
@@ -103,23 +101,20 @@ srekit templates diff --name-only
 
 ## Разные identity per project
 
-`~/.srekit.yaml` содержит личную identity; в `.envrc` рабочего репо
-(через direnv):
+`~/.srekit.yaml` содержит личную identity; в `.envrc` рабочего репо (через direnv):
 
 ```bash
 export SREKIT_AUTHOR="Mikhail Savin"
 export SREKIT_EMAIL="m.savin@work.example.com"
 ```
 
-`cd` в work-репо — srekit автоматом подхватит рабочую identity для
-license / RFC / on-call документов.
+`cd` в work-репо — srekit автоматом подхватит рабочую identity для license / RFC / on-call документов.
 
 ---
 
 ## Закрепить версию srekit per project
 
-Некоторые команды хотят чтобы все инженеры использовали одинаковую
-версию srekit для воспроизводимости. Закрепить в project-скрипте:
+Некоторые команды хотят чтобы все инженеры использовали одинаковую версию srekit для воспроизводимости. Закрепить в project-скрипте:
 
 ```bash
 #!/usr/bin/env bash
@@ -137,8 +132,7 @@ exec srekit "$@"
 
 ## Два репо, один источник шаблонов
 
-Часто для multi-repo организаций: один общий `sre-templates` репо,
-много consumer'ов.
+Часто для multi-repo организаций: один общий `sre-templates` репо, много consumer'ов.
 
 ```bash
 # В setup'е каждого репо:

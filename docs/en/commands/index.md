@@ -1,9 +1,6 @@
 # Commands overview
 
-srekit's surface is a flat tree of cobra subcommands. Every generator
-command produces a single artifact (a Markdown or LICENSE file) and shares
-the same output flag set; the management commands (`templates`, `config`)
-group their own subcommands.
+srekit's surface is a flat tree of cobra subcommands. Every generator command produces a single artifact (a Markdown or LICENSE file) and shares the same output flag set; the management commands (`templates`, `config`) group their own subcommands.
 
 ## Generators
 
@@ -43,10 +40,6 @@ Every generator command accepts:
 | `--template FILE` | use this template file instead of the embedded one |
 | `--json` | emit the template data payload as JSON (default sink: stdout) |
 
-The persistent flag `--templates-dir DIR` (or env `SREKIT_TEMPLATES_DIR`,
-or `templates_dir:` in `~/.srekit.yaml`) installs a custom templates
-directory whose files override the embedded ones. Missing files fall back
-transparently.
+The persistent flag `--templates-dir DIR` (or env `SREKIT_TEMPLATES_DIR`, or `templates_dir:` in `~/.srekit.yaml`) installs a custom templates directory whose files override the embedded ones. Missing files fall back transparently.
 
-See [Configuration & precedence](../guides/configuration.md) for the full
-resolution rules.
+See [Configuration & precedence](../guides/configuration.md) for the full resolution rules.

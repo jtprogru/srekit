@@ -1,7 +1,6 @@
 # srekit runbook
 
-Generate a **runbook** — the operational playbook on-call reaches for when
-an alert fires. Sections: Symptoms, Diagnose, Mitigate, Verify, Escalate.
+Generate a **runbook** — the operational playbook on-call reaches for when an alert fires. Sections: Symptoms, Diagnose, Mitigate, Verify, Escalate.
 
 ## Synopsis
 
@@ -17,8 +16,7 @@ srekit runbook --title TITLE [flags]
 | `--service` | no | Service this runbook covers |
 | `--alert` | no | Specific alert name / id |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `runbook-<slug-of-title>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `runbook-<slug-of-title>.md`.
 
 ## Examples
 
@@ -53,5 +51,4 @@ struct {
 
 ## See also
 
-- [`srekit incident`](incident.md) — the live doc you create when the
-  runbook isn't enough.
+- [`srekit incident`](incident.md) — the live doc you create when the runbook isn't enough.

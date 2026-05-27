@@ -1,8 +1,6 @@
 # Architecture
 
-A tour of the code for contributors and curious users. Pin to
-[v0.10.1](https://github.com/jtprogru/srekit/tree/v0.10.1) — the
-structure is stable as of this version.
+A tour of the code for contributors and curious users. Pin to [v0.10.1](https://github.com/jtprogru/srekit/tree/v0.10.1) — the structure is stable as of this version.
 
 ## Package layout
 
@@ -34,8 +32,7 @@ srekit/
 
 ### `internal/tmpl.Source` and `Loader`
 
-Templates can come from the binary (embedded) or from a directory the
-user controls. `Source` is the interface:
+Templates can come from the binary (embedded) or from a directory the user controls. `Source` is the interface:
 
 ```go
 type Source interface {
@@ -43,50 +40,29 @@ type Source interface {
 }
 ```
 
-`EmbedSource` reads from `//go:embed templates/*.tmpl`. `DirSource{Dir}`
-reads from a path on disk. `Loader{Sources}` walks them in order with
-`fs.ErrNotExist`-as-fallthrough semantics — so a missing file in the
-user dir transparently falls back to the embedded one.
+`EmbedSource` reads from `//go:embed templates/*.tmpl`. `DirSource{Dir}` reads from a path on disk. `Loader{Sources}` walks them in order with `fs.ErrNotExist`-as-fallthrough semantics — so a missing file in the user dir transparently falls back to the embedded one.
 
-Production code uses a package-level `tmpl.Default` (an `EmbedSource`
-by default; replaced with `Loader{DirSource, EmbedSource}` when a
-templates dir is configured). This is the package-level mutable state
-that tests work around via the `resetTmplDefault(t)` helper.
+Production code uses a package-level `tmpl.Default` (an `EmbedSource` by default; replaced with `Loader{DirSource, EmbedSource}` when a templates dir is configured). This is the package-level mutable state that tests work around via the `resetTmplDefault(t)` helper.
 
 ### `internal/render.Render()`
 
-The shared rendering pipeline. Takes the template name, the data
-struct, and `render.Options{Out, Stdout, Force, DryRun, TemplatePath,
-JSON, Default}`. Calls `buildBody()` (which short-circuits to JSON
-when `Options.JSON` is set), then `writeBody()` (which decides between
-stdout and file based on flags and the `Default` filename).
+The shared rendering pipeline. Takes the template name, the data struct, and `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default}`. Calls `buildBody()` (which short-circuits to JSON when `Options.JSON` is set), then `writeBody()` (which decides between stdout and file based on flags and the `Default` filename).
 
 ### `internal/cliflags.Output`
 
-Every generator command embeds an `Output` and calls
-`.Bind(cmd, "default-path-description")`. This is what gives them all
-the same flag set without per-command boilerplate. `RenderOptions(def)`
-turns the flag values into a `render.Options`.
+Every generator command embeds an `Output` and calls `.Bind(cmd, "default-path-description")`. This is what gives them all the same flag set without per-command boilerplate. `RenderOptions(def)` turns the flag values into a `render.Options`.
 
 ### `internal/meta.Resolve` and `DetectRepo`
 
-`Resolve` walks flag → viper → git config for `author` and `email`.
-`DetectRepo` regex-parses `git config remote.origin.url` against GitHub
-SSH and HTTPS patterns.
+`Resolve` walks flag → viper → git config for `author` and `email`. `DetectRepo` regex-parses `git config remote.origin.url` against GitHub SSH and HTTPS patterns.
 
 ### `internal/clock.Now`
 
-A `var Now func() time.Time = time.Now` indirection. Lets tests pin
-the wall clock (e.g. the Sunday on-call week boundary regression test).
+A `var Now func() time.Time = time.Now` indirection. Lets tests pin the wall clock (e.g. the Sunday on-call week boundary regression test).
 
 ### Template snapshots: `.srekit-embedded/`
 
-The 3-way merge in `templates upgrade` uses a per-template snapshot of
-"the embedded content as of the last sync" as the merge base. The
-sidecar lives at `<user-templates-dir>/.srekit-embedded/<name>` and is
-appended to the user dir's `.gitignore` so it never pollutes their
-templates repo. See `cmd/templates.go` — `snapshotPath`, `readSnapshot`,
-`writeSnapshot`, `ensureSnapshotIgnored`, `threeWayMerge`.
+The 3-way merge in `templates upgrade` uses a per-template snapshot of "the embedded content as of the last sync" as the merge base. The sidecar lives at `<user-templates-dir>/.srekit-embedded/<name>` and is appended to the user dir's `.gitignore` so it never pollutes their templates repo. See `cmd/templates.go` — `snapshotPath`, `readSnapshot`, `writeSnapshot`, `ensureSnapshotIgnored`, `threeWayMerge`.
 
 ## Release pipeline
 
@@ -126,7 +102,5 @@ The release flow:
 
 ## See also
 
-- [Contributing](contributing.md) — local dev setup, Taskfile, release
-  process.
-- [GitHub source](https://github.com/jtprogru/srekit) — read the code
-  directly; it's small.
+- [Contributing](contributing.md) — local dev setup, Taskfile, release process.
+- [GitHub source](https://github.com/jtprogru/srekit) — read the code directly; it's small.

@@ -1,10 +1,6 @@
 # Кастомные шаблоны: workflow
 
-Built-in шаблоны srekit — это разумные defaults, но любой команде
-рано или поздно хочется их доработать: принять внутреннюю терминологию,
-добавить специфичную секцию или убрать ненужную. Workflow кастомных
-шаблонов даёт это сделать, не теряя возможности забирать upstream-
-изменения из будущих релизов srekit.
+Built-in шаблоны srekit — это разумные defaults, но любой команде рано или поздно хочется их доработать: принять внутреннюю терминологию, добавить специфичную секцию или убрать ненужную. Workflow кастомных шаблонов даёт это сделать, не теряя возможности забирать upstream- изменения из будущих релизов srekit.
 
 ## Ментальная модель
 
@@ -19,10 +15,7 @@ Built-in шаблоны srekit — это разумные defaults, но люб
                                 под твоим git-remote)
 ```
 
-Сидкар `.srekit-embedded/` внутри templates dir хранит byte-exact копию
-того, что *был* embedded в последний sync. Это merge-base, который
-позволяет `templates upgrade` делать настоящий 3-way merge — не
-затаптывая твои правки и не отказываясь их трогать.
+Сидкар `.srekit-embedded/` внутри templates dir хранит byte-exact копию того, что *был* embedded в последний sync. Это merge-base, который позволяет `templates upgrade` делать настоящий 3-way merge — не затаптывая твои правки и не отказываясь их трогать.
 
 ## End-to-end
 
@@ -45,12 +38,9 @@ srekit templates init ~/.srekit/templates
 
 Несколько деталей:
 
-- `templates init` по умолчанию делает `git init` (`--no-git` чтобы
-  пропустить).
-- Сидит `.srekit-embedded/` как сидкар и дописывает его в `.gitignore`
-  чтобы он никогда не попал в team-репо шаблонов.
-- Без явного `[dir]` резолвит `--templates-dir` / `SREKIT_TEMPLATES_DIR`
-  / `templates_dir:` в yaml; fallback `~/.srekit/templates`.
+- `templates init` по умолчанию делает `git init` (`--no-git` чтобы пропустить).
+- Сидит `.srekit-embedded/` как сидкар и дописывает его в `.gitignore` чтобы он никогда не попал в team-репо шаблонов.
+- Без явного `[dir]` резолвит `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` в yaml; fallback `~/.srekit/templates`.
 
 ### 2. Подключить
 
@@ -68,9 +58,7 @@ $EDITOR runbook.md.tmpl
 git commit -am "runbook: add 'communications' section"
 ```
 
-Всё что ты меняешь — твоё. Embedded fallback кикается только для
-файлов, которых у тебя нет (например, новый шаблон, добавленный в
-будущем бинаре, которого у тебя в dir ещё нет).
+Всё что ты меняешь — твоё. Embedded fallback кикается только для файлов, которых у тебя нет (например, новый шаблон, добавленный в будущем бинаре, которого у тебя в dir ещё нет).
 
 ### 4. Провалидировать
 
@@ -83,8 +71,7 @@ srekit templates validate
 # ...
 ```
 
-Опечатка в поле шаблона (`{{ .Servce }}` вместо `{{ .Service }}`) тут
-падает с подсвеченным проблемным полем.
+Опечатка в поле шаблона (`{{ .Servce }}` вместо `{{ .Service }}`) тут падает с подсвеченным проблемным полем.
 
 ### 5. Push в team-remote
 
@@ -92,8 +79,7 @@ srekit templates validate
 git push
 ```
 
-Другие инженеры команды ставят `templates_dir:` на свежий клон того же
-remote.
+Другие инженеры команды ставят `templates_dir:` на свежий клон того же remote.
 
 ### 6. Pull team-изменений
 
@@ -106,8 +92,7 @@ srekit templates pull --rebase   # если есть локальные комм
 
 ### 7. Подтянуть новый бинарь srekit
 
-Когда `brew upgrade srekit` (или `go install ...@latest`) и новый
-бинарь несёт изменения шаблонов:
+Когда `brew upgrade srekit` (или `go install ...@latest`) и новый бинарь несёт изменения шаблонов:
 
 ```bash
 srekit templates list             # что изменилось
@@ -126,16 +111,13 @@ srekit templates upgrade          # 3-way merge новых embedded в твою 
 | Оба изменены (не пересекаясь) | Clean 3-way merge |
 | Оба изменены (пересекаясь) | Маркеры конфликта + non-zero exit |
 
-На конфликте разрешаешь `<<<<<<<` маркеры как обычный merge, commit,
-push. Снапшот уже в новом embedded — следующий `templates upgrade`
-считает твоё разрешение новой базой.
+На конфликте разрешаешь `<<<<<<<` маркеры как обычный merge, commit, push. Снапшот уже в новом embedded — следующий `templates upgrade` считает твоё разрешение новой базой.
 
 ## Сценарии восстановления
 
 ### "Я наскаффолдил не туда"
 
-Часто бывает, когда поставил `templates_dir:` но забыл передать
-соответствующий arg в `templates init`. Просто повтори:
+Часто бывает, когда поставил `templates_dir:` но забыл передать соответствующий arg в `templates init`. Просто повтори:
 
 ```bash
 srekit templates init   # учтёт templates_dir из yaml
@@ -144,8 +126,7 @@ rm -rf ~/.srekit/templates   # старый ghost
 
 ### "Я потерял .srekit-embedded сидкар"
 
-Может, удалил dir или восстановил из бэкапа без скрытых директорий. Не
-беда:
+Может, удалил dir или восстановил из бэкапа без скрытых директорий. Не беда:
 
 ```bash
 srekit templates upgrade
@@ -161,21 +142,16 @@ srekit templates init --force   # перезапишет всё embedded'ом
 
 ## Зачем нужен `templates init --no-git`
 
-Если держишь шаблоны внутри родительского репо (например в infra-репо
-по пути `infra/sre-templates/`), `git init` внутри этой поддиректории
-создаст nested-репо. Передай `--no-git`:
+Если держишь шаблоны внутри родительского репо (например в infra-репо по пути `infra/sre-templates/`), `git init` внутри этой поддиректории создаст nested-репо. Передай `--no-git`:
 
 ```bash
 srekit templates init ./infra/sre-templates --no-git
 git -C infra add sre-templates && git -C infra commit -m "vendor srekit templates"
 ```
 
-`templates pull` тогда становится "`cd infra && git pull`" — srekit pull
-не знает про родительский репо, так что просто запускай обычный git.
+`templates pull` тогда становится "`cd infra && git pull`" — srekit pull не знает про родительский репо, так что просто запускай обычный git.
 
 ## См. также
 
-- [`srekit templates`](../commands/templates.md) — полный reference по
-  подкомандам.
-- [Конфигурация](configuration.md) — как `templates_dir:` резолвится
-  через флаги / env / yaml.
+- [`srekit templates`](../commands/templates.md) — полный reference по подкомандам.
+- [Конфигурация](configuration.md) — как `templates_dir:` резолвится через флаги / env / yaml.

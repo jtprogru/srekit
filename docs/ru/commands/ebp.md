@@ -1,7 +1,6 @@
 # srekit ebp
 
-Сгенерировать **Error Budget Policy** с tiered actions (Yellow / Orange /
-Red), исключениями и путями эскалации. Парится с [`srekit slo`](slo.md).
+Сгенерировать **Error Budget Policy** с tiered actions (Yellow / Orange / Red), исключениями и путями эскалации. Парится с [`srekit slo`](slo.md).
 
 ## Синопсис
 
@@ -16,8 +15,7 @@ srekit ebp --service NAME [flags]
 | `--service` | да | Сервис, к которому применима политика |
 | `--owner` | нет | Владелец политики (команда или человек) |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя
-файла: `ebp-<slug-of-service>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `ebp-<slug-of-service>.md`.
 
 ## Примеры
 

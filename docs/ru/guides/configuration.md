@@ -1,8 +1,6 @@
 # Конфигурация
 
-srekit читает конфигурацию из четырёх источников. Большинству юзеров
-достаточно одного из них. Эта страница — authoritative source по
-"кто кого выигрывает".
+srekit читает конфигурацию из четырёх источников. Большинству юзеров достаточно одного из них. Эта страница — authoritative source по "кто кого выигрывает".
 
 ## Источники
 
@@ -15,16 +13,14 @@ srekit читает конфигурацию из четырёх источни�
 
 ## Приоритет
 
-Для каждого ключа srekit идёт по источникам в этом порядке и берёт
-первое непустое значение:
+Для каждого ключа srekit идёт по источникам в этом порядке и берёт первое непустое значение:
 
 1. Command-line флаг
 2. `SREKIT_<KEY>` env-переменная (например `SREKIT_AUTHOR`)
 3. `~/.srekit.yaml` (например `author:`)
 4. `git config <git-key>` (только для author/email)
 
-Если все четыре пустые для required-значения — команда падает с
-понятной ошибкой:
+Если все четыре пустые для required-значения — команда падает с понятной ошибкой:
 
 ```bash
 srekit license --stdout
@@ -35,8 +31,7 @@ srekit license --stdout
 
 ### Identity автора
 
-Используется: `license`, `rfc`, `oncall-report` (остальные фолбэчатся
-на "anonymous" где уместно).
+Используется: `license`, `rfc`, `oncall-report` (остальные фолбэчатся на "anonymous" где уместно).
 
 | Ключ | yaml | env | git |
 |---|---|---|---|
@@ -45,8 +40,7 @@ srekit license --stdout
 
 ### Templates directory
 
-Используется каждой `templates *` подкомандой и каждым генератором
-(через overlay-loader).
+Используется каждой `templates *` подкомандой и каждым генератором (через overlay-loader).
 
 | Ключ | yaml | env | флаг |
 |---|---|---|---|
@@ -60,8 +54,7 @@ srekit license --stdout
 |---|---|---|
 | config file | `--config FILE` | `~/.srekit.yaml` |
 
-`srekit config init` уважает `--config` тоже — передай чтобы записать
-файл в другое место.
+`srekit config init` уважает `--config` тоже — передай чтобы записать файл в другое место.
 
 ## yaml-файл
 
@@ -72,9 +65,7 @@ email: jtprogru@gmail.com
 # templates_dir: ~/.srekit/templates   # опционально
 ```
 
-Сгенерировать через [`srekit config init`](../commands/config.md).
-Файл пишется `0o600` (user-only), пути с tilde-стиль раскрытием
-(`~/foo` → `$HOME/foo`).
+Сгенерировать через [`srekit config init`](../commands/config.md). Файл пишется `0o600` (user-only), пути с tilde-стиль раскрытием (`~/foo` → `$HOME/foo`).
 
 ## Пример: per-environment override
 
@@ -95,12 +86,9 @@ srekit --templates-dir ./project-templates rfc --title "Migrate to gRPC"
 
 ## Дебаг приоритета
 
-Хочешь знать, какой источник выиграл? Запусти с теми же args и
-сравни вывод, ИЛИ просто проверь env / yaml / git config по очереди.
-Built-in команды "show resolved config" пока нет — кандидат на v1.0.
+Хочешь знать, какой источник выиграл? Запусти с теми же args и сравни вывод, ИЛИ просто проверь env / yaml / git config по очереди. Built-in команды "show resolved config" пока нет — кандидат на v1.0.
 
 ## См. также
 
-- [`srekit config init`](../commands/config.md#config-init) — записать
-  yaml-файл интерактивно.
+- [`srekit config init`](../commands/config.md#config-init) — записать yaml-файл интерактивно.
 - [Кастомные шаблоны](custom-templates.md) — end-to-end `templates_dir`.

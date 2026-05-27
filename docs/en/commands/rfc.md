@@ -1,7 +1,6 @@
 # srekit rfc
 
-Generate an **RFC / ADR** scaffold with Context, Decision, Alternatives,
-Consequences, References. Status field is validated.
+Generate an **RFC / ADR** scaffold with Context, Decision, Alternatives, Consequences, References. Status field is validated.
 
 ## Synopsis
 
@@ -18,8 +17,7 @@ srekit rfc --title TITLE [flags]
 | `--author` | no | Override author (resolved like [`license`](license.md#author-resolution)) |
 | `--email` | no | Override email |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default
-filename: `rfc-<slug-of-title>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `rfc-<slug-of-title>.md`.
 
 ## Examples
 

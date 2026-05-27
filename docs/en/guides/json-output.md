@@ -1,17 +1,12 @@
 # JSON output for pipelines
 
-Every generator command supports `--json`. The flag short-circuits the
-template engine: instead of rendering Markdown, srekit emits the
-template's data payload as indented JSON. The payload is whatever the
-underlying Go template would have seen.
+Every generator command supports `--json`. The flag short-circuits the template engine: instead of rendering Markdown, srekit emits the template's data payload as indented JSON. The payload is whatever the underlying Go template would have seen.
 
 ## Contract
 
 - Default sink is **stdout**. `--out FILE` writes the JSON there.
 - Field names are **PascalCase** (Go field names with no `json:` tags).
-- With `--json`, the Markdown default path (`Tasker - <title>.md`,
-  `postmortem-<slug>.md`, etc.) is **not** used — so JSON never
-  accidentally lands in a `.md` file.
+- With `--json`, the Markdown default path (`Tasker - <title>.md`, `postmortem-<slug>.md`, etc.) is **not** used — so JSON never accidentally lands in a `.md` file.
 
 !!! note "Two JSON contracts in v0.x"
     Generators emit **PascalCase** keys. Introspection commands
@@ -62,13 +57,11 @@ diff <(srekit slo --service api-gw --target 99.9% --json) \
 srekit oncall-report --team platform --json --out oncall.json
 ```
 
-`--dry-run` works too — prints "would write N bytes to oncall.json"
-plus the body.
+`--dry-run` works too — prints "would write N bytes to oncall.json" plus the body.
 
 ## Per-command payload shape
 
-The full Go struct passed to each template is listed on its command
-page (under "Template shape"). Here are the most-common ones:
+The full Go struct passed to each template is listed on its command page (under "Template shape"). Here are the most-common ones:
 
 ```go
 // task
@@ -87,28 +80,21 @@ struct { ID, Team, Start, End, Now string; Author struct { Name, Email string } 
 struct { ID, Service, Target, Window, Latency, Now string }
 ```
 
-`Author` is a nested object (Go struct `meta.Author{Name, Email}`),
-addressed as `.Author.Name` / `.Author.Email` in `jq`.
+`Author` is a nested object (Go struct `meta.Author{Name, Email}`), addressed as `.Author.Name` / `.Author.Email` in `jq`.
 
 ## When to use `--json`
 
-- Scripting / automation: any time you'd otherwise `grep` Markdown to
-  pluck a field, use `--json | jq` instead — far more reliable.
-- Drift checks: stash the JSON output of a previous generation and
-  diff against a new one to detect template/field changes.
-- Cross-tool integration: feed values directly into Linear, Jira, or
-  internal CLIs.
+- Scripting / automation: any time you'd otherwise `grep` Markdown to pluck a field, use `--json | jq` instead — far more reliable.
+- Drift checks: stash the JSON output of a previous generation and diff against a new one to detect template/field changes.
+- Cross-tool integration: feed values directly into Linear, Jira, or internal CLIs.
 
 ## When NOT to use `--json`
 
 - You want the rendered document — that's the default mode.
-- You want to embed the document in another file — also the default,
-  with `--stdout` to pipe.
-- You need to share with a non-engineer — Markdown reads better than
-  JSON.
+- You want to embed the document in another file — also the default, with `--stdout` to pipe.
+- You need to share with a non-engineer — Markdown reads better than JSON.
 
 ## See also
 
 - [Recipes](../recipes.md) — concrete `--json` pipelines.
-- [`templates list --json`](../commands/templates.md#templates-list)
-  — the introspection JSON (camelCase keys).
+- [`templates list --json`](../commands/templates.md#templates-list) — the introspection JSON (camelCase keys).
