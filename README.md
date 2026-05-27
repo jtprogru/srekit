@@ -213,6 +213,22 @@ srekit templates diff --no-color
 апстрима. Файлы без embedded-counterpart (твои bespoke-шаблоны)
 маркируются как `user-only`.
 
+### `srekit templates list` — что у тебя есть и в каком состоянии
+
+```bash
+srekit templates list                     # таблица (учитывает configured templates_dir)
+srekit templates list ./team-templates    # явная директория
+srekit templates list --json | jq         # для пайплайнов
+srekit templates list --filter customized # только то, что ты переопределил
+```
+
+Классификация для каждого `*.tmpl`:
+`identical` — байт-в-байт совпадает с embedded; `customized` — есть у тебя
+и отличается; `user-only` — твой bespoke без embedded-counterpart;
+`embedded-only` — зашит в бинарник, у тебя нет override. JSON-ключи —
+camelCase (`name`, `status`, `userPath`); это отличается от PascalCase
+у `--json` генераторов — нюанс будет приведён к общему знаменателю к v1.0.
+
 ### `srekit templates upgrade` — подтянуть новые embedded-шаблоны
 
 ```bash

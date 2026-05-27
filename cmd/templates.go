@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
@@ -29,7 +31,189 @@ func newTemplatesCmd() *cobra.Command {
 	c.AddCommand(newTemplatesValidateCmd())
 	c.AddCommand(newTemplatesDiffCmd())
 	c.AddCommand(newTemplatesUpgradeCmd())
+	c.AddCommand(newTemplatesListCmd())
 	return c
+}
+
+func newTemplatesListCmd() *cobra.Command {
+	var (
+		jsonOut bool
+		filter  string
+	)
+	cmd := &cobra.Command{
+		Use:   "list [dir]",
+		Short: "List templates and their state vs the embedded set",
+		Long: `Walks the configured templates directory (or [dir] if given) and the
+binary's embedded set, classifying each *.tmpl as:
+
+  identical       — user file matches embedded byte-for-byte
+  customized      — user file exists but differs from embedded
+  user-only       — user file with no embedded counterpart (your bespoke)
+  embedded-only   — shipped in the binary, user has no override
+
+Default output is a table. --json emits a sorted array suitable for
+piping into jq. Use --filter STATE to narrow to a single class.`,
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runTemplatesList(cmd, args, jsonOut, filter)
+		},
+	}
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the listing as JSON")
+	cmd.Flags().StringVar(&filter, "filter", "", "only show entries with this status (identical|customized|user-only|embedded-only)")
+	return cmd
+}
+
+type templateEntry struct {
+	Name   string `json:"name"`
+	Status string `json:"status"`
+	User   string `json:"userPath,omitempty"`
+}
+
+func runTemplatesList(cmd *cobra.Command, args []string, jsonOut bool, filter string) error {
+	switch filter {
+	case "", "identical", "customized", "user-only", "embedded-only":
+	default:
+		return fmt.Errorf("--filter must be one of: identical, customized, user-only, embedded-only (got %q)", filter)
+	}
+
+	dir, err := resolveListDir(cmd, args)
+	if err != nil {
+		return err
+	}
+
+	entries, err := classifyTemplates(dir)
+	if err != nil {
+		return err
+	}
+	if filter != "" {
+		filtered := entries[:0]
+		for _, e := range entries {
+			if e.Status == filter {
+				filtered = append(filtered, e)
+			}
+		}
+		entries = filtered
+	}
+
+	out := cmd.OutOrStdout()
+	if jsonOut {
+		b, err := json.MarshalIndent(entries, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(out, string(b))
+		return nil
+	}
+
+	if len(entries) == 0 {
+		fmt.Fprintln(out, "(no templates)")
+		return nil
+	}
+	tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "NAME\tSTATUS\tUSER PATH")
+	for _, e := range entries {
+		userPath := e.User
+		if userPath == "" {
+			userPath = "-"
+		}
+		fmt.Fprintf(tw, "%s\t%s\t%s\n", e.Name, e.Status, userPath)
+	}
+	return tw.Flush()
+}
+
+// resolveListDir returns the user templates directory if one is configured
+// or passed positionally; returns "" (with no error) when neither is set, so
+// list still works on a fresh install and shows only the embedded set.
+func resolveListDir(cmd *cobra.Command, args []string) (string, error) {
+	if len(args) == 1 {
+		return expandHome(args[0])
+	}
+	resolved, err := resolveTemplatesDir(cmd)
+	if err != nil {
+		return "", err
+	}
+	if resolved == "" {
+		return "", nil
+	}
+	info, err := os.Stat(resolved)
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return "", nil
+	case err != nil:
+		return "", fmt.Errorf("stat %s: %w", resolved, err)
+	case !info.IsDir():
+		return "", nil
+	}
+	return resolved, nil
+}
+
+func classifyTemplates(userDir string) ([]templateEntry, error) {
+	embedded := map[string][]byte{}
+	embEntries, err := fs.ReadDir(tmpl.FS, "templates")
+	if err != nil {
+		return nil, fmt.Errorf("read embedded templates: %w", err)
+	}
+	for _, e := range embEntries {
+		body, err := fs.ReadFile(tmpl.FS, "templates/"+e.Name())
+		if err != nil {
+			return nil, fmt.Errorf("read embedded %s: %w", e.Name(), err)
+		}
+		embedded[e.Name()] = body
+	}
+
+	user := map[string][]byte{}
+	if userDir != "" {
+		userFiles, err := os.ReadDir(userDir)
+		if err != nil {
+			return nil, fmt.Errorf("read %s: %w", userDir, err)
+		}
+		for _, e := range userFiles {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), ".tmpl") {
+				continue
+			}
+			body, err := os.ReadFile(filepath.Join(userDir, e.Name()))
+			if err != nil {
+				return nil, fmt.Errorf("read %s: %w", e.Name(), err)
+			}
+			user[e.Name()] = body
+		}
+	}
+
+	names := make(map[string]struct{}, len(embedded)+len(user))
+	for n := range embedded {
+		names[n] = struct{}{}
+	}
+	for n := range user {
+		names[n] = struct{}{}
+	}
+	sorted := make([]string, 0, len(names))
+	for n := range names {
+		sorted = append(sorted, n)
+	}
+	sort.Strings(sorted)
+
+	entries := make([]templateEntry, 0, len(sorted))
+	for _, n := range sorted {
+		emb, hasEmb := embedded[n]
+		usr, hasUsr := user[n]
+		var entry templateEntry
+		entry.Name = n
+		switch {
+		case hasEmb && hasUsr && bytes.Equal(emb, usr):
+			entry.Status = "identical"
+			entry.User = filepath.Join(userDir, n)
+		case hasEmb && hasUsr:
+			entry.Status = "customized"
+			entry.User = filepath.Join(userDir, n)
+		case hasUsr:
+			entry.Status = "user-only"
+			entry.User = filepath.Join(userDir, n)
+		default:
+			entry.Status = "embedded-only"
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
 }
 
 func newTemplatesUpgradeCmd() *cobra.Command {

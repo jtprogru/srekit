@@ -957,6 +957,119 @@ func TestTemplatesUpgradeAllUnchanged(t *testing.T) {
 	}
 }
 
+// TestTemplatesListClassifies verifies all four statuses round-trip: after
+// init, customize one, drop another, add a bespoke file.
+func TestTemplatesListClassifies(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	// Customize one (must remain a *.tmpl).
+	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// Remove one so it becomes embedded-only.
+	if err := os.Remove(filepath.Join(dir, "runbook.md.tmpl")); err != nil {
+		t.Fatal(err)
+	}
+	// Add a bespoke one with no embedded counterpart.
+	if err := os.WriteFile(filepath.Join(dir, "my-custom.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "list", dir)
+	if err != nil {
+		t.Fatalf("list failed: %v (output: %s)", err, out)
+	}
+	for _, want := range []string{
+		"task.md.tmpl",
+		"customized",
+		"runbook.md.tmpl",
+		"embedded-only",
+		"my-custom.md.tmpl",
+		"user-only",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in output:\n%s", want, out)
+		}
+	}
+	// At least one identical (postmortem hasn't been touched).
+	if !strings.Contains(out, "postmortem.md.tmpl") || !strings.Contains(out, "identical") {
+		t.Errorf("expected an identical entry, got:\n%s", out)
+	}
+}
+
+// TestTemplatesListJSON verifies --json round-trips through encoding/json.
+func TestTemplatesListJSON(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "list", dir, "--json")
+	if err != nil {
+		t.Fatalf("list --json failed: %v (output: %s)", err, out)
+	}
+	var got []map[string]string
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
+	}
+	found := false
+	for _, e := range got {
+		if e["name"] == "task.md.tmpl" {
+			if e["status"] != "customized" {
+				t.Errorf("task.md.tmpl status: got %q, want customized", e["status"])
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("task.md.tmpl entry missing in JSON output: %s", out)
+	}
+}
+
+// TestTemplatesListFilter verifies --filter narrows the output.
+func TestTemplatesListFilter(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "list", dir, "--filter", "customized")
+	if err != nil {
+		t.Fatalf("list --filter failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "task.md.tmpl") {
+		t.Errorf("expected task.md.tmpl in customized filter, got: %s", out)
+	}
+	// No 'identical' entries should slip through.
+	if strings.Contains(out, "identical") {
+		t.Errorf("--filter=customized leaked identical entries: %s", out)
+	}
+}
+
+// TestTemplatesListInvalidFilter verifies bad --filter values are rejected.
+func TestTemplatesListInvalidFilter(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatal(err)
+	}
+	_, err := runCLI(t, "templates", "list", dir, "--filter", "bogus")
+	if err == nil {
+		t.Fatal("expected error on bogus --filter value")
+	}
+}
+
 func TestSretaskAlias(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "sretask", "--title", "alias works", "--stdout")
