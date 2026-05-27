@@ -32,10 +32,26 @@ tasks:
     cmds: ["go vet ./..."]
 
   test:
+    desc: Run unit tests with coverage
     cmds: ["go test --short -coverprofile=cover.out -v ./..."]
 
+  test:race:
+    desc: Run tests with the race detector (matches CI)
+    cmds: ["go test -race -v ./..."]
+
   lint:
+    desc: Run golangci-lint
     cmds: ["golangci-lint -v run"]
+
+  ci:
+    desc: Run everything CI runs (lint + race tests). Quick local pre-push check.
+    cmds:
+      - task: lint
+      - task: test:race
+
+  release:dry:
+    desc: Goreleaser dry-run (no publish; binaries land in ./dist)
+    cmds: ["goreleaser release --clean --snapshot --skip=publish,sign"]
 
   install:
     cmds: ["go install"]
