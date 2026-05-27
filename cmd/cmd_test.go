@@ -650,6 +650,148 @@ func TestTemplatesDiffUserOnly(t *testing.T) {
 	}
 }
 
+// TestConfigInitWritesYAML covers the happy non-interactive path: with
+// --yes plus explicit flags, no prompts are needed and the file is written
+// with the expected keys.
+func TestConfigInitWritesYAML(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	target := filepath.Join(dir, ".srekit.yaml")
+
+	out, err := runCLI(t,
+		"--config", target,
+		"config", "init",
+		"--yes",
+		"--author", "Test Person",
+		"--email", "t@example.com",
+		"--templates-dir", "~/.srekit/templates",
+	)
+	if err != nil {
+		t.Fatalf("config init failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "Wrote ") {
+		t.Errorf("expected friendly confirmation, got: %s", out)
+	}
+
+	body, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatalf("config file not written: %v", err)
+	}
+	got := string(body)
+	for _, want := range []string{
+		"author: Test Person",
+		"email: t@example.com",
+		"templates_dir: ~/.srekit/templates",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
+		}
+	}
+}
+
+// TestConfigInitOmitsTemplatesDir verifies that when templates_dir is empty
+// we emit the key as a commented-out hint instead of an empty value.
+func TestConfigInitOmitsTemplatesDir(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	target := filepath.Join(dir, ".srekit.yaml")
+
+	if _, err := runCLI(t,
+		"--config", target,
+		"config", "init",
+		"--yes",
+		"--author", "A",
+		"--email", "a@a",
+	); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(body)
+	if strings.Contains(got, "templates_dir:") && !strings.Contains(got, "# templates_dir:") {
+		t.Errorf("expected templates_dir to be commented out when empty, got:\n%s", got)
+	}
+}
+
+// TestConfigInitRefusesOverwrite locks the no-clobber default.
+func TestConfigInitRefusesOverwrite(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	target := filepath.Join(dir, ".srekit.yaml")
+	if err := os.WriteFile(target, []byte("preexisting: true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, err := runCLI(t,
+		"--config", target,
+		"config", "init",
+		"--yes",
+		"--author", "A",
+		"--email", "a@a",
+	)
+	if err == nil {
+		t.Fatal("expected error when config file exists without --force")
+	}
+	if !strings.Contains(err.Error(), "--force") {
+		t.Fatalf("error should mention --force, got: %v", err)
+	}
+	// Verify the file wasn't clobbered.
+	b, _ := os.ReadFile(target)
+	if string(b) != "preexisting: true\n" {
+		t.Fatalf("existing file was overwritten: %q", string(b))
+	}
+}
+
+// TestConfigInitForce overwrites on top of an existing file.
+func TestConfigInitForce(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	target := filepath.Join(dir, ".srekit.yaml")
+	if err := os.WriteFile(target, []byte("preexisting: true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runCLI(t,
+		"--config", target,
+		"config", "init",
+		"--yes", "--force",
+		"--author", "B", "--email", "b@b",
+	); err != nil {
+		t.Fatalf("config init --force failed: %v", err)
+	}
+	b, _ := os.ReadFile(target)
+	if !strings.Contains(string(b), "author: B") {
+		t.Fatalf("--force should overwrite; got: %s", string(b))
+	}
+}
+
+// TestConfigInitMissingAuthorFails covers the non-interactive case where
+// --author isn't passed and git config has nothing useful — the command
+// must error rather than write an invalid file.
+func TestConfigInitMissingAuthorFails(t *testing.T) {
+	// Run from a temp dir with no git config so gitConfigValue returns "".
+	// Also clear HOME so a developer's global ~/.gitconfig doesn't leak in.
+	dir := t.TempDir()
+	t.Chdir(dir)
+	t.Setenv("HOME", dir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, ".config"))
+	t.Setenv("GIT_CONFIG_NOSYSTEM", "1")
+	t.Setenv("GIT_CONFIG_GLOBAL", filepath.Join(dir, "empty-gitconfig"))
+
+	target := filepath.Join(dir, ".srekit.yaml")
+	_, err := runCLI(t,
+		"--config", target,
+		"config", "init",
+		"--yes",
+	)
+	if err == nil {
+		t.Fatal("expected error when --yes has no author/email source")
+	}
+	if !strings.Contains(err.Error(), "author") && !strings.Contains(err.Error(), "email") {
+		t.Fatalf("error should mention author or email, got: %v", err)
+	}
+}
+
 func TestSretaskAlias(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "sretask", "--title", "alias works", "--stdout")

@@ -218,9 +218,19 @@ srekit completion bash > /etc/bash_completion.d/srekit
 ```yaml
 author: Mikhail Savin
 email: jtprogru@gmail.com
+# templates_dir: ~/.srekit/templates
 ```
 
-Или через env: `SREKIT_AUTHOR`, `SREKIT_EMAIL`.
+Или через env: `SREKIT_AUTHOR`, `SREKIT_EMAIL`, `SREKIT_TEMPLATES_DIR`.
+
+Быстро создать файл интерактивно:
+
+```bash
+srekit config init                    # TTY → запросит author / email / templates_dir с дефолтами из git config
+srekit config init --yes              # non-interactive: значения из --author / --email / git config
+srekit config init --force            # перезаписать существующий файл
+srekit --config ./my.yaml config init # альтернативный путь
+```
 
 ## License
 

@@ -54,6 +54,7 @@ built by: ` + BuiltBy + `
 		newCapacityCmd(),
 		newRetroCmd(),
 		newTemplatesCmd(),
+		newConfigCmd(),
 	)
 	return root
 }
