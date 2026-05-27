@@ -15,7 +15,12 @@
 # vendor/
 
 dist/
+site/
 *.log
 .vscode/
 plans/
+
+# Python venv for MkDocs (optional local dev)
+.venv/
+venv/
 

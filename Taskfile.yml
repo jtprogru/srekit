@@ -53,5 +53,17 @@ tasks:
     desc: Goreleaser dry-run (no publish; binaries land in ./dist)
     cmds: ["goreleaser release --clean --snapshot --skip=publish,sign"]
 
+  docs:install:
+    desc: Install MkDocs + plugins into the current Python env
+    cmds: ["pip install -r docs/requirements.txt"]
+
+  docs:serve:
+    desc: Serve the docs site locally at http://127.0.0.1:8000
+    cmds: ["mkdocs serve"]
+
+  docs:build:
+    desc: Build the docs site to ./site (no deploy)
+    cmds: ["mkdocs build --strict"]
+
   install:
     cmds: ["go install"]

@@ -11,7 +11,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- Full MkDocs Material documentation site at [`jtprogru.github.io/srekit`](https://jtprogru.github.io/srekit/) — bilingual (EN + RU via `mkdocs-static-i18n`), with a getting-started, full command reference for every subcommand, guides for custom templates / JSON output / configuration precedence, recipes, architecture overview, and contributing notes. Built and deployed automatically by `.github/workflows/docs.yaml` on every push touching `docs/` or `mkdocs.yml`. Local preview: `task docs:install && task docs:serve`.
 
 ### Changed
 

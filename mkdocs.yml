@@ -1,0 +1,129 @@
+site_name: srekit
+site_description: SRE text artifact generator — investigations, incidents, postmortems, RFCs, runbooks, SLOs, error budget policies, capacity plans, on-call reports, retros, changelogs, licenses.
+site_url: https://jtprogru.github.io/srekit/
+repo_url: https://github.com/jtprogru/srekit
+repo_name: jtprogru/srekit
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: ru
+          name: Русский
+          build: true
+          nav_translations:
+            Home: Главная
+            Getting started: Старт
+            Commands: Команды
+            Generators: Генераторы
+            Templates: Шаблоны
+            Config: Конфиг
+            Completion: Автодополнение
+            Guides: Руководства
+            Custom templates workflow: Кастомные шаблоны
+            JSON output for pipelines: JSON-вывод для пайплайнов
+            Configuration & precedence: Конфигурация
+            Recipes: Рецепты
+            Architecture: Архитектура
+            Contributing: Контрибьютинг
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.keys
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Commands:
+      - Overview: commands/index.md
+      - Generators:
+          - srekit task: commands/task.md
+          - srekit license: commands/license.md
+          - srekit incident: commands/incident.md
+          - srekit postmortem: commands/postmortem.md
+          - srekit rfc: commands/rfc.md
+          - srekit runbook: commands/runbook.md
+          - srekit changelog: commands/changelog.md
+          - srekit oncall-report: commands/oncall-report.md
+          - srekit slo: commands/slo.md
+          - srekit ebp: commands/ebp.md
+          - srekit capacity: commands/capacity.md
+          - srekit retro: commands/retro.md
+      - Templates: commands/templates.md
+      - Config: commands/config.md
+      - Completion: commands/completion.md
+  - Guides:
+      - Custom templates workflow: guides/custom-templates.md
+      - JSON output for pipelines: guides/json-output.md
+      - Configuration & precedence: guides/configuration.md
+  - Recipes: recipes.md
+  - Architecture: architecture.md
+  - Contributing: contributing.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jtprogru/srekit
+  version:
+    provider: mike
