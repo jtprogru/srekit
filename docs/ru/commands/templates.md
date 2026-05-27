@@ -14,7 +14,7 @@
 
 ## `templates init [dir]` {#templates-init}
 
-Скаффолд кастомной директории шаблонов из embedded-набора, опционально с `git init`. Сидит `.srekit-embedded/` сидкар, который `templates upgrade` использует как merge-base, и best-effort дописывает `.srekit-embedded/` в `.gitignore`.
+Скаффолд кастомной директории шаблонов из embedded-набора, опционально с `git init`. Дополнительно создаёт служебную директорию `.srekit-embedded/` со снапшотом embedded — её использует `templates upgrade` как merge-base — и дописывает её в `.gitignore`.
 
 ```bash
 srekit templates init                     # резолвит templates_dir из конфига; fallback на ~/.srekit/templates

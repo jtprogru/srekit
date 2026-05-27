@@ -15,7 +15,7 @@ Built-in шаблоны srekit — это разумные defaults, но люб
                                 под твоим git-remote)
 ```
 
-Сидкар `.srekit-embedded/` внутри templates dir хранит byte-exact копию того, что *был* embedded в последний sync. Это merge-base, который позволяет `templates upgrade` делать настоящий 3-way merge — не затаптывая твои правки и не отказываясь их трогать.
+Скрытая директория `.srekit-embedded/` внутри твоей templates dir хранит byte-exact копию того, что *был* embedded в последний sync. Это merge-base, который позволяет `templates upgrade` делать настоящий 3-way merge — не затаптывая твои правки и не отказываясь их трогать.
 
 ## Шаг за шагом
 
@@ -39,7 +39,7 @@ srekit templates init ~/.srekit/templates
 Несколько деталей:
 
 - `templates init` по умолчанию делает `git init` (`--no-git` чтобы пропустить).
-- Создаёт сидкар `.srekit-embedded/` и дописывает его в `.gitignore`, чтобы он никогда не попал в team-репо шаблонов.
+- Создаёт служебную директорию `.srekit-embedded/` (снапшот embedded на момент init) и дописывает её в `.gitignore`, чтобы она никогда не попала в team-репо шаблонов.
 - Без явного `[dir]` резолвит `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` в yaml; fallback `~/.srekit/templates`.
 
 ### 2. Подключить
@@ -124,7 +124,7 @@ srekit templates init   # учтёт templates_dir из yaml
 rm -rf ~/.srekit/templates   # старый ghost
 ```
 
-### "Я потерял .srekit-embedded сидкар"
+### "Я снёс директорию `.srekit-embedded/`"
 
 Может, удалил dir или восстановил из бэкапа без скрытых директорий. Не беда:
 

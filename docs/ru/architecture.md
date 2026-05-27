@@ -62,7 +62,7 @@ Production-код использует package-level `tmpl.Default` (`EmbedSourc
 
 ### Snapshot'ы шаблонов: `.srekit-embedded/`
 
-3-way merge в `templates upgrade` использует per-template снапшот "embedded content на момент последнего sync" как merge base. Сидкар лежит в `<user-templates-dir>/.srekit-embedded/<name>` и дописывается в `.gitignore` user dir, чтобы не загрязнять templates-репо. См. `cmd/templates.go` — `snapshotPath`, `readSnapshot`, `writeSnapshot`, `ensureSnapshotIgnored`, `threeWayMerge`.
+3-way merge в `templates upgrade` использует per-template снапшот "embedded content на момент последнего sync" как merge base. Снапшоты лежат в `<user-templates-dir>/.srekit-embedded/<name>` — отдельная служебная директория, которая дописывается в `.gitignore` user dir, чтобы не загрязнять templates-репо. См. `cmd/templates.go` — `snapshotPath`, `readSnapshot`, `writeSnapshot`, `ensureSnapshotIgnored`, `threeWayMerge`.
 
 ## Релизный конвейер
 
