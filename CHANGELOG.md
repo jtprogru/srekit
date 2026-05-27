@@ -11,9 +11,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
-- `srekit templates validate [dir]` — parses each `*.tmpl` with the same FuncMap srekit uses and (for files whose names match a built-in template) executes them against canonical sample data. Catches syntax errors and field-name typos (`{{ .Servce }}` instead of `{{ .Service }}`). Exits non-zero if any template fails. Templates with non-built-in names get parse-only validation.
-- `srekit templates diff [dir]` — diffs each `*.tmpl` in the user dir against the version embedded in the current binary via `git diff --no-index`. Useful after `srekit templates pull` or a binary upgrade to see what drifted. Flags: `--name-only`, `--no-color`. Templates without an embedded counterpart are reported as `user-only`.
-- `internal/tmpl.Samples` — canonical sample-data registry keyed by built-in template filename, plus `internal/tmpl.Validate(name, body)` helper. Single source of truth for what data shape each built-in template expects; must stay in sync with the struct literals in `cmd/*.go`.
+-
 
 ### Changed
 
@@ -22,6 +20,14 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 ### Fixed
 
 -
+
+## [0.7.0] - 2026-05-27
+
+### Added
+
+- `srekit templates validate [dir]` — parses each `*.tmpl` with the same FuncMap srekit uses and (for files whose names match a built-in template) executes them against canonical sample data. Catches syntax errors and field-name typos (`{{ .Servce }}` instead of `{{ .Service }}`). Exits non-zero if any template fails. Templates with non-built-in names get parse-only validation.
+- `srekit templates diff [dir]` — diffs each `*.tmpl` in the user dir against the version embedded in the current binary via `git diff --no-index`. Useful after `srekit templates pull` or a binary upgrade to see what drifted. Flags: `--name-only`, `--no-color`. Templates without an embedded counterpart are reported as `user-only`.
+- `internal/tmpl.Samples` — canonical sample-data registry keyed by built-in template filename, plus `internal/tmpl.Validate(name, body)` helper. Single source of truth for what data shape each built-in template expects; must stay in sync with the struct literals in `cmd/*.go`.
 
 ## [0.6.0] - 2026-05-26
 
@@ -144,7 +150,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/jtprogru/srekit/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jtprogru/srekit/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jtprogru/srekit/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/jtprogru/srekit/compare/v0.3.0...v0.4.0
