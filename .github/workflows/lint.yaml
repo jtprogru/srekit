@@ -11,7 +11,7 @@ permissions:
 
 env:
   GO_VERSION: "1.25"
-  GOLANGCI_LINT_VERSION: v2.10
+  GOLANGCI_LINT_VERSION: v2.12
 
 jobs:
   golangci-lint:
