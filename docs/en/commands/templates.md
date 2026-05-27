@@ -112,5 +112,5 @@ srekit templates upgrade --force     # overwrite customizations (skips merge)
 
 ## See also
 
-- [Custom templates workflow](../guides/custom-templates.md) — the end-to-end narrative.
+- [Custom templates workflow](../guides/custom-templates.md) — the full walkthrough.
 - [`srekit config`](config.md) — point srekit at your templates dir via `~/.srekit.yaml`.

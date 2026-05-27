@@ -8,7 +8,7 @@
    init  →  pull  →  list  →  validate  →  diff  →  upgrade  →  ...
 ```
 
-Полная narrative-версия — в **[Кастомные шаблоны](../guides/custom-templates.md)**.
+Развёрнутый гайд — в **[Кастомные шаблоны](../guides/custom-templates.md)**.
 
 ---
 
@@ -112,5 +112,5 @@ srekit templates upgrade --force     # перезаписать кастомиз
 
 ## См. также
 
-- [Кастомные шаблоны](../guides/custom-templates.md) — end-to-end narrative.
+- [Кастомные шаблоны](../guides/custom-templates.md) — развёрнутый гайд.
 - [`srekit config`](config.md) — указать srekit на твою templates dir через `~/.srekit.yaml`.

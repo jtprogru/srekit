@@ -2,7 +2,7 @@
 
 srekit's built-in templates are good defaults, but every team eventually wants to tweak them — adopt internal terminology, add a specific section, or drop one they don't use. The custom-templates workflow lets you do that without losing the ability to pick up upstream changes from future srekit releases.
 
-## Mental model
+## How the pieces fit together
 
 ```
                     embedded   (in the srekit binary,
@@ -17,7 +17,7 @@ srekit's built-in templates are good defaults, but every team eventually wants t
 
 The `.srekit-embedded/` sidecar inside your templates dir holds a byte-exact copy of what *was* embedded at the last sync. It's the merge base that lets `templates upgrade` do a true 3-way merge instead of either clobbering your edits or refusing to touch them.
 
-## End-to-end
+## Walkthrough
 
 ### 1. Scaffold
 

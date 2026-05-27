@@ -18,7 +18,7 @@ SRE work produces a lot of structured documents that read 80 % the same and diff
 - **JSON output** — every generator supports `--json` for piping into `jq` and other tools.
 - **Deterministic** — no network calls in the hot path, no hidden state. Author/email/repo resolved from local config and `git`.
 
-## Quick taste
+## At a glance
 
 ```bash
 # Scaffold a postmortem with today's date and your git identity baked in

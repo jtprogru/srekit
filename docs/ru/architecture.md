@@ -1,6 +1,6 @@
 # Архитектура
 
-Тур по коду для контрибьюторов и любопытных пользователей. Пин на [v0.10.1](https://github.com/jtprogru/srekit/tree/v0.10.1) — структура стабильна на эту версию.
+Карта кода для контрибьюторов и любопытных пользователей. Пин на [v0.10.1](https://github.com/jtprogru/srekit/tree/v0.10.1) — структура стабильна на эту версию.
 
 ## Раскладка пакетов
 
@@ -46,7 +46,7 @@ Production-код использует package-level `tmpl.Default` (`EmbedSourc
 
 ### `internal/render.Render()`
 
-Общий рендеринг-пайплайн. Берёт имя шаблона, data-структуру и `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default}`. Зовёт `buildBody()` (короткозамыкает на JSON если `Options.JSON`), потом `writeBody()` (решает stdout vs file по флагам и `Default` имени файла).
+Общий рендеринг-пайплайн. Берёт имя шаблона, data-структуру и `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default}`. Зовёт `buildBody()` (при `Options.JSON` пропускает шаблон и сразу пишет JSON), потом `writeBody()` (решает stdout vs file по флагам и `Default` имени файла).
 
 ### `internal/cliflags.Output`
 

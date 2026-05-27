@@ -91,4 +91,4 @@ Want to know which source srekit picked? Run with the same args and diff the out
 ## See also
 
 - [`srekit config init`](../commands/config.md#config-init) — write the yaml file interactively.
-- [Custom templates workflow](custom-templates.md) — the `templates_dir` end-to-end.
+- [Custom templates workflow](custom-templates.md) — `templates_dir` start to finish.

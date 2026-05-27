@@ -77,7 +77,7 @@ srekit oncall-report --team platform --stdout |
 
 ---
 
-## Детект drift'а шаблонов после `srekit` apgrade
+## Поймать дрейф шаблонов после апгрейда `srekit`
 
 После `brew upgrade srekit`:
 
@@ -95,11 +95,11 @@ srekit templates diff --name-only
 # differs  capacity.md.tmpl
 ```
 
-Затем `srekit templates upgrade` чтобы 3-way merge их подмержить.
+Дальше `srekit templates upgrade` смержит их через 3-way.
 
 ---
 
-## Разные identity per project
+## Разные identity под разные проекты
 
 `~/.srekit.yaml` содержит личную identity; в `.envrc` рабочего репо (через direnv):
 
@@ -112,7 +112,7 @@ export SREKIT_EMAIL="m.savin@work.example.com"
 
 ---
 
-## Закрепить версию srekit per project
+## Закрепить версию srekit на проект
 
 Некоторые команды хотят чтобы все инженеры использовали одинаковую версию srekit для воспроизводимости. Закрепить в project-скрипте:
 
@@ -147,5 +147,5 @@ srekit templates pull
 
 ## См. также
 
-- [Кастомные шаблоны](guides/custom-templates.md) — длинный narrative.
+- [Кастомные шаблоны](guides/custom-templates.md) — развёрнутый гайд.
 - [JSON-вывод](guides/json-output.md) — паттерны для пайплайнов.
