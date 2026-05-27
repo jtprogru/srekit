@@ -460,6 +460,196 @@ func TestTemplatesPullSyncsFromRemote(t *testing.T) {
 	}
 }
 
+// TestTemplatesValidateAllPass scaffolds a fresh dir and confirms every
+// embedded template parses + renders cleanly against tmpl.Samples — this
+// also exercises whether the Samples registry stays in sync with the
+// struct shapes each cmd/*.go file uses.
+func TestTemplatesValidateAllPass(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	out, err := runCLI(t, "templates", "validate", dir)
+	if err != nil {
+		t.Fatalf("validate failed: %v (output: %s)", err, out)
+	}
+	if strings.Contains(out, "FAIL") {
+		t.Fatalf("expected all OK, got: %s", out)
+	}
+	// Spot-check a couple of templates appear in the per-file output.
+	for _, name := range []string{"task.md.tmpl", "postmortem.md.tmpl", "license_mit.tmpl"} {
+		if !strings.Contains(out, "OK    "+name) {
+			t.Errorf("expected OK line for %s, got: %s", name, out)
+		}
+	}
+}
+
+// TestTemplatesValidateCatchesTypo writes a template that references a
+// field name not in the canonical struct shape — validation must fail
+// and the error must point at the bad field.
+func TestTemplatesValidateCatchesTypo(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	// .Servce typo (should be .Service)
+	if err := os.WriteFile(filepath.Join(dir, "runbook.md.tmpl"),
+		[]byte("# bad\n{{ .Servce }}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "validate", dir)
+	if err == nil {
+		t.Fatalf("expected non-zero exit on typo, output: %s", out)
+	}
+	if !strings.Contains(out, "FAIL  runbook.md.tmpl") {
+		t.Errorf("expected FAIL line for runbook, got: %s", out)
+	}
+	if !strings.Contains(out, "Servce") {
+		t.Errorf("error should reference the bad field name, got: %s", out)
+	}
+}
+
+// TestTemplatesValidateCatchesSyntaxError covers the parse-time path.
+func TestTemplatesValidateCatchesSyntaxError(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"),
+		[]byte("{{ .Title \n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "validate", dir)
+	if err == nil {
+		t.Fatalf("expected non-zero exit on syntax error, output: %s", out)
+	}
+	if !strings.Contains(out, "FAIL  task.md.tmpl") {
+		t.Errorf("expected FAIL for task.md.tmpl, got: %s", out)
+	}
+	if !strings.Contains(out, "parse") {
+		t.Errorf("error should mention parse failure, got: %s", out)
+	}
+}
+
+// TestTemplatesValidateUserOnlyTemplate verifies that a template whose
+// filename isn't a built-in (e.g. user's bespoke template used via
+// --template) gets parse-only validation instead of being rejected.
+func TestTemplatesValidateUserOnlyTemplate(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "my-custom.md.tmpl"),
+		[]byte("hello {{ .Whatever }}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "validate", dir)
+	if err != nil {
+		t.Fatalf("validate failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "my-custom.md.tmpl (parse-only") {
+		t.Errorf("expected parse-only note for user-only template, got: %s", out)
+	}
+}
+
+func TestTemplatesDiffAllMatch(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	out, err := runCLI(t, "templates", "diff", dir)
+	if err != nil {
+		t.Fatalf("diff failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "all templates match") {
+		t.Errorf("expected clean-match summary, got: %s", out)
+	}
+}
+
+func TestTemplatesDiffShowsModification(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	// Append a sentinel line so the file differs from embedded.
+	target := filepath.Join(dir, "runbook.md.tmpl")
+	b, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(target, append(b, []byte("\nSENTINEL_LINE\n")...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "diff", dir, "--no-color")
+	if err != nil {
+		t.Fatalf("diff failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "embedded/runbook.md.tmpl") || !strings.Contains(out, "user/runbook.md.tmpl") {
+		t.Errorf("expected diff header for runbook, got: %s", out)
+	}
+	if !strings.Contains(out, "SENTINEL_LINE") {
+		t.Errorf("expected modification to appear in diff body, got: %s", out)
+	}
+}
+
+func TestTemplatesDiffNameOnly(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	target := filepath.Join(dir, "slo.md.tmpl")
+	b, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(target, append(b, []byte("\n# tweak\n")...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "diff", dir, "--name-only")
+	if err != nil {
+		t.Fatalf("diff failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "differs  slo.md.tmpl") {
+		t.Errorf("expected name-only line for slo, got: %s", out)
+	}
+	// Make sure we did NOT emit a full diff body.
+	if strings.Contains(out, "diff --git") {
+		t.Errorf("--name-only should suppress diff bodies, got: %s", out)
+	}
+}
+
+func TestTemplatesDiffUserOnly(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	t.Parallel()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "my-custom.md.tmpl"),
+		[]byte("not in the binary\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "diff", dir)
+	if err != nil {
+		t.Fatalf("diff failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "user-only  my-custom.md.tmpl") {
+		t.Errorf("expected user-only line, got: %s", out)
+	}
+}
+
 func TestSretaskAlias(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "sretask", "--title", "alias works", "--stdout")

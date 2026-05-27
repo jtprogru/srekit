@@ -169,6 +169,41 @@ srekit templates pull --rebase     # если есть локальные ком
 при каждом запуске `srekit` намеренно не делается (это ломает UX и работу
 в офлайне).
 
+### `srekit templates validate` — проверить, что твои шаблоны рендерятся
+
+```bash
+srekit templates validate                    # configured templates_dir
+srekit templates validate ./team-templates   # явная директория
+```
+
+Парсит каждый `*.tmpl` той же FuncMap, что использует `srekit`, и (для
+файлов с именами встроенных шаблонов) гоняет dry-run рендер против
+канонических sample-данных. Ловит:
+
+- Синтаксические ошибки шаблона (unclosed `{{`, неизвестные функции).
+- Опечатки в полях: `{{ .Servce }}` (вместо `.Service`) даёт
+  `can't evaluate field Servce in type struct { ID string; Title string; … }`.
+- Ссылки на поля, которые были у тебя в шаблоне, а в новой версии binary
+  переименованы/удалены.
+
+Шаблоны с нестандартными именами (твои собственные, под `--template`)
+валидируются только на парс-уровне — у `srekit` нет канонической data
+shape, против которой их рендерить.
+
+### `srekit templates diff` — что изменилось относительно embedded-версии
+
+```bash
+srekit templates diff                  # полный unified diff каждого изменённого файла
+srekit templates diff --name-only      # только имена
+srekit templates diff --no-color
+```
+
+Сравнивает каждый `*.tmpl` в твоей templates dir с версией, зашитой в
+текущий binary. Полезно после `srekit templates pull` или обновления
+бинарника — увидеть, что у тебя осталось своё, а что отстало от
+апстрима. Файлы без embedded-counterpart (твои bespoke-шаблоны)
+маркируются как `user-only`.
+
 ### `srekit completion` — shell autocomplete
 
 ```bash
