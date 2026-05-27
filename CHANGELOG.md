@@ -11,7 +11,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- True 3-way merge in `srekit templates upgrade`. The binary now keeps a per-template snapshot of the last-synced embedded version under `<templates-dir>/.srekit-embedded/`, and uses it as the merge base for customized files. `git merge-file --diff3` does the work; clean merges land silently, conflicts are written with `<<<<<<<`/`>>>>>>>` markers and the command exits non-zero so CI flags them. New cases handled: upstream changed but user untouched → fast-forward without `--force`; user changed but upstream untouched → silent no-op (no warning). Without a snapshot (old user dirs), behavior falls back to additive and the snapshot is seeded so the *next* upgrade can merge.
+- `srekit templates init` seeds the `.srekit-embedded/` sidecar on first use and best-effort appends `.srekit-embedded/` to the user dir's `.gitignore` so the sidecar stays out of their template repo.
 
 ### Changed
 

@@ -232,17 +232,29 @@ camelCase (`name`, `status`, `userPath`); это отличается от Pasca
 ### `srekit templates upgrade` — подтянуть новые embedded-шаблоны
 
 ```bash
-srekit templates upgrade             # добавить недостающие, кастомизированные не трогать
+srekit templates upgrade             # 3-way merge кастомизаций, без --force
 srekit templates upgrade --dry-run   # посмотреть что изменится
-srekit templates upgrade --force     # перезаписать и кастомизации тоже
+srekit templates upgrade --force     # перезаписать и кастомизации (без merge)
 ```
 
-Аддитивный апгрейд: для каждого embedded-шаблона — если у тебя его нет,
-докладывается; если идентичен — пропуск; если расходится с embedded —
-оставляется как есть (используй `templates diff` чтобы посмотреть
-дрейф, или `--force` чтобы переписать). `TEMPLATES.md` обновляется
-всегда (это reference, не точка кастомизации). Полный трёхпутевой
-merge через git history — задача для v1.0.
+3-way merge: `srekit` хранит снапшот embedded на момент последнего
+sync'а в `<templates-dir>/.srekit-embedded/` и использует его как
+merge-base. `git merge-file --diff3` мерджит твои изменения с
+upstream'ом:
+
+- нет файла → копируется;
+- идентичен embedded → пропуск;
+- upstream без изменений, твои есть → молчаливо не трогаем;
+- upstream изменился, твоих нет → fast-forward (без `--force`);
+- расхождение с обеих сторон → 3-way merge. Чистый merge — пишется
+  silently; конфликт — маркеры `<<<<<<<` / `>>>>>>>` в файл, exit
+  non-zero, разрешаешь руками.
+
+Без снапшота (старый user dir, до этой версии) — fallback на additive
+поведение (skip + seed снапшота для следующего apgrade). Сидкар
+`.srekit-embedded/` автоматически попадает в `.gitignore` твоей dir.
+`TEMPLATES.md` обновляется всегда (это reference, не точка
+кастомизации).
 
 ### `srekit completion` — shell autocomplete
 

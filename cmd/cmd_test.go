@@ -859,8 +859,9 @@ func TestTemplatesUpgradeAddsMissing(t *testing.T) {
 	}
 }
 
-// TestTemplatesUpgradeSkipsCustomized verifies that a file the user has
-// edited is left alone (no --force) and reported as skipped.
+// TestTemplatesUpgradeSkipsCustomized verifies that when the user has
+// customized a file but upstream hasn't changed (snapshot == embedded),
+// upgrade silently leaves the file alone and counts it as skipped.
 func TestTemplatesUpgradeSkipsCustomized(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
@@ -881,8 +882,10 @@ func TestTemplatesUpgradeSkipsCustomized(t *testing.T) {
 	if string(b) != string(customized) {
 		t.Fatalf("upgrade clobbered customized file: %s", string(b))
 	}
-	if !strings.Contains(out, "! skipped   task.md.tmpl") {
-		t.Errorf("expected '! skipped' line for task.md.tmpl, got: %s", out)
+	// Summary still accounts for it; no per-file line is expected because
+	// there is nothing for 3-way to do here.
+	if !strings.Contains(out, "1 skipped") {
+		t.Errorf("expected summary to count 1 skipped, got: %s", out)
 	}
 }
 
@@ -934,6 +937,211 @@ func TestTemplatesUpgradeDryRun(t *testing.T) {
 	}
 	if !strings.Contains(out, "dry-run:") {
 		t.Errorf("expected 'dry-run:' label in summary, got: %s", out)
+	}
+}
+
+// TestTemplatesInitSeedsSnapshot verifies init writes the .srekit-embedded
+// sidecar so the next upgrade has a merge base.
+func TestTemplatesInitSeedsSnapshot(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	for _, name := range []string{"task.md.tmpl", "postmortem.md.tmpl", "runbook.md.tmpl"} {
+		snap := filepath.Join(dir, ".srekit-embedded", name)
+		body, err := os.ReadFile(snap)
+		if err != nil {
+			t.Errorf("snapshot %s missing: %v", name, err)
+			continue
+		}
+		userBody, _ := os.ReadFile(filepath.Join(dir, name))
+		if string(body) != string(userBody) {
+			t.Errorf("snapshot %s should match the file just written by init", name)
+		}
+	}
+	gitignore, err := os.ReadFile(filepath.Join(dir, ".gitignore"))
+	if err != nil {
+		t.Fatalf("expected .gitignore to be created: %v", err)
+	}
+	if !strings.Contains(string(gitignore), ".srekit-embedded/") {
+		t.Errorf(".gitignore should contain '.srekit-embedded/', got: %s", string(gitignore))
+	}
+}
+
+// TestTemplatesUpgrade3WayCleanMerge constructs a textbook 3-way scenario:
+// user edits the top of a file, "upstream" edits the bottom, both off the
+// same base. With non-overlapping edits, git merge-file produces a clean
+// merged file with both changes.
+func TestTemplatesUpgrade3WayCleanMerge(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	t.Parallel()
+	dir := t.TempDir()
+	// Strategy: keep upstream's diff and user's diff in completely
+	// non-overlapping regions, separated by the full embedded body of
+	// context lines.
+	//
+	//   base     = "EXTRA_BOTTOM\n" appended to embedded body
+	//   user     = "USER_TOP\n" prepended to base  (user edits the TOP region)
+	//   upstream = embedded body, no EXTRA_BOTTOM  (upstream drops the BOTTOM)
+	//
+	// merge-file sees base→user as "add line at top", base→upstream as
+	// "remove line at bottom" — disjoint hunks, clean merge.
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	name := "task.md.tmpl"
+	embeddedBody, _ := os.ReadFile(filepath.Join(dir, name)) // identical to embedded
+	snapBody := append(append([]byte{}, embeddedBody...), []byte("EXTRA_BOTTOM\n")...)
+	userBody := append([]byte("USER_TOP\n"), snapBody...)
+
+	if err := os.WriteFile(filepath.Join(dir, ".srekit-embedded", name), snapBody, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, name), userBody, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "upgrade", dir)
+	if err != nil {
+		t.Fatalf("upgrade failed: %v (output: %s)", err, out)
+	}
+	merged, _ := os.ReadFile(filepath.Join(dir, name))
+	if !bytes.Contains(merged, []byte("USER_TOP")) {
+		t.Errorf("clean merge should preserve USER_TOP, got:\n%s", merged)
+	}
+	if bytes.Contains(merged, []byte("EXTRA_BOTTOM")) {
+		t.Errorf("clean merge should drop EXTRA_BOTTOM (upstream removed it), got:\n%s", merged)
+	}
+	if bytes.Contains(merged, []byte("<<<<<<<")) {
+		t.Errorf("clean merge should have no conflict markers, got:\n%s", merged)
+	}
+	if !strings.Contains(out, "~ merged    "+name) {
+		t.Errorf("expected '~ merged' line, got: %s", out)
+	}
+	if !strings.Contains(out, "1 merged") {
+		t.Errorf("expected '1 merged' in summary, got: %s", out)
+	}
+
+	// Snapshot moved to current embedded.
+	snap, _ := os.ReadFile(filepath.Join(dir, ".srekit-embedded", name))
+	if !bytes.Equal(snap, embeddedBody) {
+		t.Errorf("snapshot should advance to current embedded after merge")
+	}
+}
+
+// TestTemplatesUpgrade3WayConflict constructs overlapping edits on the same
+// region — merge-file must surface conflict markers and the command must
+// exit non-zero.
+func TestTemplatesUpgrade3WayConflict(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	name := "task.md.tmpl"
+	embeddedBody, _ := os.ReadFile(filepath.Join(dir, name))
+
+	// Snapshot: embedded + leading TARGET\n. User edits to USER-EDIT,
+	// upstream (embedded) drops TARGET — overlap.
+	snapBody := append([]byte("TARGET\n"), embeddedBody...)
+	userBody := bytes.Replace(snapBody, []byte("TARGET\n"), []byte("USER-EDIT\n"), 1)
+
+	if err := os.WriteFile(filepath.Join(dir, ".srekit-embedded", name), snapBody, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, name), userBody, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "upgrade", dir)
+	if err == nil {
+		t.Fatalf("expected non-zero exit on conflict, output: %s", out)
+	}
+	if !strings.Contains(err.Error(), "conflict") {
+		t.Errorf("error should mention conflict, got: %v", err)
+	}
+	merged, _ := os.ReadFile(filepath.Join(dir, name))
+	if !bytes.Contains(merged, []byte("<<<<<<<")) || !bytes.Contains(merged, []byte(">>>>>>>")) {
+		t.Errorf("conflict markers missing from merged file:\n%s", merged)
+	}
+	if !strings.Contains(out, "X conflict  "+name) {
+		t.Errorf("expected 'X conflict' line, got: %s", out)
+	}
+}
+
+// TestTemplatesUpgradeFastForward verifies that when the user hasn't edited
+// a file but upstream did, the file is fast-forwarded without --force.
+func TestTemplatesUpgradeFastForward(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	name := "task.md.tmpl"
+	// Simulate "upstream changed since snapshot": rewrite the snapshot to
+	// an older shape (the user file still matches that older shape).
+	oldShape := []byte("OLD EMBEDDED VERSION\n")
+	if err := os.WriteFile(filepath.Join(dir, name), oldShape, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, ".srekit-embedded", name), oldShape, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "upgrade", dir)
+	if err != nil {
+		t.Fatalf("upgrade failed: %v (output: %s)", err, out)
+	}
+	merged, _ := os.ReadFile(filepath.Join(dir, name))
+	if bytes.Equal(merged, oldShape) {
+		t.Errorf("expected fast-forward to current embedded, file still at old shape")
+	}
+	if !strings.Contains(out, "~ updated   "+name+" (upstream change, no local edits)") {
+		t.Errorf("expected fast-forward line, got: %s", out)
+	}
+}
+
+// TestTemplatesUpgradeNoSnapshotFallback verifies behavior when the user
+// dir has no .srekit-embedded sidecar (e.g. scaffolded before this
+// feature): customized files are skipped but the snapshot is seeded so
+// the *next* upgrade can do 3-way.
+func TestTemplatesUpgradeNoSnapshotFallback(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	// Wipe the sidecar to simulate "pre-3-way user dir."
+	if err := os.RemoveAll(filepath.Join(dir, ".srekit-embedded")); err != nil {
+		t.Fatal(err)
+	}
+	name := "task.md.tmpl"
+	customized := []byte("CUSTOMIZED\n")
+	if err := os.WriteFile(filepath.Join(dir, name), customized, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "upgrade", dir)
+	if err != nil {
+		t.Fatalf("upgrade failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "! skipped   "+name+" (customized; no merge base") {
+		t.Errorf("expected no-snapshot skip line, got: %s", out)
+	}
+	// Snapshot must now exist for next upgrade.
+	if _, err := os.Stat(filepath.Join(dir, ".srekit-embedded", name)); err != nil {
+		t.Errorf("expected snapshot to be seeded after no-base skip, got: %v", err)
+	}
+	// File preserved.
+	b, _ := os.ReadFile(filepath.Join(dir, name))
+	if string(b) != string(customized) {
+		t.Errorf("customized file should be preserved, got: %s", string(b))
 	}
 }
 

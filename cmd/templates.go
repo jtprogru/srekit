@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -225,21 +226,33 @@ func newTemplatesUpgradeCmd() *cobra.Command {
 		Use:   "upgrade [dir]",
 		Short: "Bring a templates directory in line with the binary's embedded set",
 		Long: `For each template embedded in this srekit binary, compare against [dir]
-(default: configured templates dir, falling back to ~/.srekit/templates):
-  - missing in user dir  → copy in (new templates added since last upgrade)
-  - identical            → skip
-  - customized           → leave alone (run 'srekit templates diff' to see
-                          drift, or pass --force to overwrite)
-TEMPLATES.md is always refreshed — it's a reference doc, not a
-customization point.
+(default: configured templates dir, falling back to ~/.srekit/templates).
 
-Use --dry-run to preview what would change without touching the filesystem.`,
+When a base snapshot from a previous init/upgrade is available
+(.srekit-embedded/<name>), customized files are 3-way merged via
+'git merge-file --diff3':
+  - missing in user dir   → copy in
+  - identical to embedded → skip
+  - upstream unchanged    → leave user's customizations alone
+  - upstream changed,
+      user untouched      → fast-forward to new embedded
+      both diverged       → 3-way merge; clean merges land silently with
+                            an updated snapshot, conflicts are written
+                            with markers (and the command exits non-zero
+                            so CI / git status flag them)
+
+Without a snapshot (older user dir scaffolded before this feature),
+falls back to the additive behavior: skip customized files unless
+--force overwrites them. The snapshot is refreshed on every run, so
+the second upgrade onward will use 3-way.
+
+TEMPLATES.md is always refreshed. Use --dry-run to preview.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runTemplatesUpgrade(cmd, args, force, dryRun)
 		},
 	}
-	cmd.Flags().BoolVar(&force, "force", false, "overwrite customized templates with the embedded versions")
+	cmd.Flags().BoolVar(&force, "force", false, "overwrite customized templates with the embedded versions (skips merge)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "report what would change without writing")
 	return cmd
 }
@@ -255,7 +268,8 @@ func runTemplatesUpgrade(cmd *cobra.Command, args []string, force, dryRun bool) 
 	}
 
 	out := cmd.OutOrStdout()
-	var added, updated, unchanged, skipped int
+	ctx := cmd.Context()
+	var added, updated, mergedCount, conflictCount, unchanged, skipped int
 	for _, e := range entries {
 		name := e.Name()
 		embedded, err := fs.ReadFile(tmpl.FS, "templates/"+name)
@@ -264,31 +278,101 @@ func runTemplatesUpgrade(cmd *cobra.Command, args []string, force, dryRun bool) 
 		}
 		target := filepath.Join(dir, name)
 		existing, err := os.ReadFile(target)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("read %s: %w", target, err)
+		}
+		missing := errors.Is(err, fs.ErrNotExist)
+		snapshot, snapErr := readSnapshot(dir, name)
+		hasSnapshot := snapErr == nil
+
 		switch {
-		case errors.Is(err, fs.ErrNotExist):
+		case missing:
 			if !dryRun {
-				// Templates are public scaffolding; 0o644 matches the convention
-				// elsewhere in this package.
 				if err := os.WriteFile(target, embedded, 0o644); err != nil { //nolint:gosec // G306: same rationale as templates init
 					return fmt.Errorf("write %s: %w", target, err)
+				}
+				if err := writeSnapshot(dir, name, embedded); err != nil {
+					return err
 				}
 			}
 			fmt.Fprintf(out, "+ added     %s\n", name)
 			added++
-		case err != nil:
-			return fmt.Errorf("read %s: %w", target, err)
+
 		case bytes.Equal(existing, embedded):
+			// Identical to embedded — make sure the snapshot is in sync for
+			// future upgrades, then move on.
+			if !dryRun && (!hasSnapshot || !bytes.Equal(snapshot, embedded)) {
+				if err := writeSnapshot(dir, name, embedded); err != nil {
+					return err
+				}
+			}
 			unchanged++
+
 		case force:
 			if !dryRun {
 				if err := os.WriteFile(target, embedded, 0o644); err != nil { //nolint:gosec // G306: see above
 					return fmt.Errorf("write %s: %w", target, err)
 				}
+				if err := writeSnapshot(dir, name, embedded); err != nil {
+					return err
+				}
 			}
 			fmt.Fprintf(out, "~ updated   %s (was customized; --force overwrote)\n", name)
 			updated++
+
+		case hasSnapshot && bytes.Equal(snapshot, embedded):
+			// Upstream unchanged since the last sync — user's customizations
+			// are unrelated to the new binary. Leave them alone.
+			skipped++
+
+		case hasSnapshot && bytes.Equal(snapshot, existing):
+			// User hasn't touched this file since last sync; upstream did.
+			// Fast-forward to the new embedded.
+			if !dryRun {
+				if err := os.WriteFile(target, embedded, 0o644); err != nil { //nolint:gosec // G306: see above
+					return fmt.Errorf("write %s: %w", target, err)
+				}
+				if err := writeSnapshot(dir, name, embedded); err != nil {
+					return err
+				}
+			}
+			fmt.Fprintf(out, "~ updated   %s (upstream change, no local edits)\n", name)
+			updated++
+
+		case hasSnapshot:
+			// Both diverged from snapshot — true 3-way merge.
+			mergedBody, conflicts, err := threeWayMerge(ctx, name, existing, snapshot, embedded)
+			if err != nil {
+				return err
+			}
+			if !dryRun {
+				if err := os.WriteFile(target, mergedBody, 0o644); err != nil { //nolint:gosec // G306: see above
+					return fmt.Errorf("write %s: %w", target, err)
+				}
+				// Snapshot moves to the new embedded regardless of conflicts:
+				// the user's resolution lives in their file, and we want the
+				// next upgrade's base to be the current upstream.
+				if err := writeSnapshot(dir, name, embedded); err != nil {
+					return err
+				}
+			}
+			if conflicts > 0 {
+				fmt.Fprintf(out, "X conflict  %s (%d conflict(s); resolve markers and re-run)\n", name, conflicts)
+				conflictCount++
+			} else {
+				fmt.Fprintf(out, "~ merged    %s (3-way merge, no conflicts)\n", name)
+				mergedCount++
+			}
+
 		default:
-			fmt.Fprintf(out, "! skipped   %s (customized; use --force or merge by hand)\n", name)
+			// Customized + no snapshot → additive fallback. Seed the snapshot
+			// with the current embedded so the next upgrade can do 3-way.
+			if !dryRun {
+				if err := writeSnapshot(dir, name, embedded); err != nil {
+					return err
+				}
+			}
+			fmt.Fprintf(out, "! skipped   %s (customized; no merge base — next upgrade will 3-way)\n", name)
 			skipped++
 		}
 	}
@@ -300,10 +384,17 @@ func runTemplatesUpgrade(cmd *cobra.Command, args []string, force, dryRun bool) 
 		if err := os.WriteFile(docsTarget, tmpl.DocsMD, 0o644); err != nil { //nolint:gosec // G306: see above
 			return fmt.Errorf("write %s: %w", docsTarget, err)
 		}
+		if err := ensureSnapshotIgnored(dir); err != nil {
+			fmt.Fprintf(cmd.ErrOrStderr(), "srekit: could not update %s/.gitignore: %v\n", dir, err)
+		}
 	}
 
-	fmt.Fprintf(out, "\n%s: %d added, %d updated, %d unchanged, %d customized (skipped). TEMPLATES.md refreshed.\n",
-		summaryLabel(dryRun), added, updated, unchanged, skipped)
+	fmt.Fprintf(out,
+		"\n%s: %d added, %d updated, %d merged, %d conflict, %d unchanged, %d skipped. TEMPLATES.md refreshed.\n",
+		summaryLabel(dryRun), added, updated, mergedCount, conflictCount, unchanged, skipped)
+	if conflictCount > 0 {
+		return fmt.Errorf("%d template(s) have unresolved conflict markers (resolve and re-run)", conflictCount)
+	}
 	return nil
 }
 
@@ -368,6 +459,11 @@ func runTemplatesInit(cmd *cobra.Command, dir string, force, noGit bool) error {
 		if err := os.WriteFile(target, b, 0o644); err != nil { //nolint:gosec // G306: same rationale as internal/render
 			return fmt.Errorf("write %s: %w", target, err)
 		}
+		// Seed the merge-base snapshot so a future 'templates upgrade' can do
+		// a true 3-way merge instead of falling back to additive logic.
+		if err := writeSnapshot(dir, e.Name(), b); err != nil {
+			return err
+		}
 		written++
 	}
 
@@ -376,6 +472,11 @@ func runTemplatesInit(cmd *cobra.Command, dir string, force, noGit bool) error {
 	docsTarget := filepath.Join(dir, "TEMPLATES.md")
 	if err := os.WriteFile(docsTarget, tmpl.DocsMD, 0o644); err != nil { //nolint:gosec // G306: same rationale as internal/render
 		return fmt.Errorf("write %s: %w", docsTarget, err)
+	}
+
+	// Keep the snapshot sidecar out of the user's git history.
+	if err := ensureSnapshotIgnored(dir); err != nil {
+		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: could not update %s/.gitignore: %v\n", dir, err)
 	}
 
 	if !noGit {
@@ -703,4 +804,94 @@ func gitInit(cmd *cobra.Command, dir string) error {
 		return fmt.Errorf("git init: %w", err)
 	}
 	return nil
+}
+
+// snapshotSubdir is the sidecar directory inside the user's templates dir
+// that holds a byte-for-byte copy of the embedded template content as of
+// the last init or upgrade. It serves as the merge-base for 3-way upgrades.
+const snapshotSubdir = ".srekit-embedded"
+
+func snapshotPath(userDir, name string) string {
+	return filepath.Join(userDir, snapshotSubdir, name)
+}
+
+func readSnapshot(userDir, name string) ([]byte, error) {
+	return os.ReadFile(snapshotPath(userDir, name))
+}
+
+func writeSnapshot(userDir, name string, body []byte) error {
+	snapDir := filepath.Join(userDir, snapshotSubdir)
+	if err := os.MkdirAll(snapDir, 0o755); err != nil {
+		return fmt.Errorf("create snapshot dir: %w", err)
+	}
+	// Snapshot files are internal scaffolding — same 0o644 rationale.
+	if err := os.WriteFile(snapshotPath(userDir, name), body, 0o644); err != nil { //nolint:gosec // G306: see runTemplatesInit
+		return fmt.Errorf("write snapshot %s: %w", name, err)
+	}
+	return nil
+}
+
+// ensureSnapshotIgnored appends `.srekit-embedded/` to the user dir's
+// .gitignore on a best-effort basis so the sidecar doesn't leak into
+// the user's git history. Idempotent.
+func ensureSnapshotIgnored(userDir string) error {
+	gitignorePath := filepath.Join(userDir, ".gitignore")
+	body, err := os.ReadFile(gitignorePath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	entry := snapshotSubdir + "/"
+	for _, line := range strings.Split(string(body), "\n") {
+		if strings.TrimSpace(line) == entry || strings.TrimSpace(line) == snapshotSubdir {
+			return nil
+		}
+	}
+	if len(body) > 0 && !bytes.HasSuffix(body, []byte("\n")) {
+		body = append(body, '\n')
+	}
+	body = append(body, []byte(entry+"\n")...)
+	return os.WriteFile(gitignorePath, body, 0o644) //nolint:gosec // G306: same rationale as templates init
+}
+
+// threeWayMerge runs `git merge-file -p --diff3` on the three buffers
+// via tempfiles and returns the merged body along with the conflict count.
+// A non-zero conflict count is not an error — the caller writes the body
+// (with markers) and decides how to report.
+func threeWayMerge(ctx context.Context, name string, user, base, embedded []byte) ([]byte, int, error) {
+	dir, err := os.MkdirTemp("", "srekit-merge-")
+	if err != nil {
+		return nil, 0, fmt.Errorf("create tempdir: %w", err)
+	}
+	defer os.RemoveAll(dir)
+
+	paths := make(map[string]string, 3)
+	for label, body := range map[string][]byte{"user": user, "base": base, "embedded": embedded} {
+		p := filepath.Join(dir, label)
+		if err := os.WriteFile(p, body, 0o644); err != nil { //nolint:gosec // G306: tempfile, lifecycle == this function
+			return nil, 0, fmt.Errorf("write tempfile: %w", err)
+		}
+		paths[label] = p
+	}
+
+	// git merge-file <current> <base> <other> — produces "current with
+	// other merged in, base as ancestor". Order matters for conflict
+	// marker labeling. The three path args are tempfiles created inside
+	// this function from MkdirTemp + Join — no user-controlled strings.
+	gitCmd := exec.CommandContext(ctx, "git", "merge-file", "-p", "--diff3", //nolint:gosec // G204: args are tempfile paths we just created
+		"-L", "user", "-L", "base", "-L", "embedded",
+		paths["user"], paths["base"], paths["embedded"])
+	var stdout, stderr bytes.Buffer
+	gitCmd.Stdout = &stdout
+	gitCmd.Stderr = &stderr
+	err = gitCmd.Run()
+	var exitErr *exec.ExitError
+	switch {
+	case err == nil:
+		return stdout.Bytes(), 0, nil
+	case errors.As(err, &exitErr):
+		// Exit code = conflict count (per git merge-file man page).
+		return stdout.Bytes(), exitErr.ExitCode(), nil
+	default:
+		return nil, 0, fmt.Errorf("git merge-file %s: %w (stderr: %s)", name, err, stderr.String())
+	}
 }
