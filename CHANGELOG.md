@@ -11,7 +11,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- `srekit templates upgrade [dir]` — additive upgrade of a custom templates directory against the binary's embedded set. Copies in any template that's missing in the user dir, leaves customized files alone (run `templates diff` to inspect, or pass `--force` to overwrite), and always refreshes `TEMPLATES.md`. `--dry-run` previews changes without touching the filesystem. Closes the `init` → `pull` → `diff` → `upgrade` loop; a true three-way merge against git history is left for v1.0.
 
 ### Changed
 

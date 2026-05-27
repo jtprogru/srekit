@@ -213,6 +213,21 @@ srekit templates diff --no-color
 апстрима. Файлы без embedded-counterpart (твои bespoke-шаблоны)
 маркируются как `user-only`.
 
+### `srekit templates upgrade` — подтянуть новые embedded-шаблоны
+
+```bash
+srekit templates upgrade             # добавить недостающие, кастомизированные не трогать
+srekit templates upgrade --dry-run   # посмотреть что изменится
+srekit templates upgrade --force     # перезаписать и кастомизации тоже
+```
+
+Аддитивный апгрейд: для каждого embedded-шаблона — если у тебя его нет,
+докладывается; если идентичен — пропуск; если расходится с embedded —
+оставляется как есть (используй `templates diff` чтобы посмотреть
+дрейф, или `--force` чтобы переписать). `TEMPLATES.md` обновляется
+всегда (это reference, не точка кастомизации). Полный трёхпутевой
+merge через git history — задача для v1.0.
+
 ### `srekit completion` — shell autocomplete
 
 ```bash

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -27,7 +28,106 @@ func newTemplatesCmd() *cobra.Command {
 	c.AddCommand(newTemplatesPullCmd())
 	c.AddCommand(newTemplatesValidateCmd())
 	c.AddCommand(newTemplatesDiffCmd())
+	c.AddCommand(newTemplatesUpgradeCmd())
 	return c
+}
+
+func newTemplatesUpgradeCmd() *cobra.Command {
+	var (
+		force  bool
+		dryRun bool
+	)
+	cmd := &cobra.Command{
+		Use:   "upgrade [dir]",
+		Short: "Bring a templates directory in line with the binary's embedded set",
+		Long: `For each template embedded in this srekit binary, compare against [dir]
+(default: configured templates dir, falling back to ~/.srekit/templates):
+  - missing in user dir  → copy in (new templates added since last upgrade)
+  - identical            → skip
+  - customized           → leave alone (run 'srekit templates diff' to see
+                          drift, or pass --force to overwrite)
+TEMPLATES.md is always refreshed — it's a reference doc, not a
+customization point.
+
+Use --dry-run to preview what would change without touching the filesystem.`,
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runTemplatesUpgrade(cmd, args, force, dryRun)
+		},
+	}
+	cmd.Flags().BoolVar(&force, "force", false, "overwrite customized templates with the embedded versions")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "report what would change without writing")
+	return cmd
+}
+
+func runTemplatesUpgrade(cmd *cobra.Command, args []string, force, dryRun bool) error {
+	dir, err := pickTemplatesDir(cmd, args)
+	if err != nil {
+		return err
+	}
+	entries, err := fs.ReadDir(tmpl.FS, "templates")
+	if err != nil {
+		return fmt.Errorf("read embedded templates: %w", err)
+	}
+
+	out := cmd.OutOrStdout()
+	var added, updated, unchanged, skipped int
+	for _, e := range entries {
+		name := e.Name()
+		embedded, err := fs.ReadFile(tmpl.FS, "templates/"+name)
+		if err != nil {
+			return fmt.Errorf("read embedded %s: %w", name, err)
+		}
+		target := filepath.Join(dir, name)
+		existing, err := os.ReadFile(target)
+		switch {
+		case errors.Is(err, fs.ErrNotExist):
+			if !dryRun {
+				// Templates are public scaffolding; 0o644 matches the convention
+				// elsewhere in this package.
+				if err := os.WriteFile(target, embedded, 0o644); err != nil { //nolint:gosec // G306: same rationale as templates init
+					return fmt.Errorf("write %s: %w", target, err)
+				}
+			}
+			fmt.Fprintf(out, "+ added     %s\n", name)
+			added++
+		case err != nil:
+			return fmt.Errorf("read %s: %w", target, err)
+		case bytes.Equal(existing, embedded):
+			unchanged++
+		case force:
+			if !dryRun {
+				if err := os.WriteFile(target, embedded, 0o644); err != nil { //nolint:gosec // G306: see above
+					return fmt.Errorf("write %s: %w", target, err)
+				}
+			}
+			fmt.Fprintf(out, "~ updated   %s (was customized; --force overwrote)\n", name)
+			updated++
+		default:
+			fmt.Fprintf(out, "! skipped   %s (customized; use --force or merge by hand)\n", name)
+			skipped++
+		}
+	}
+
+	// TEMPLATES.md is the reference doc shipped with the binary — keep it
+	// in sync on every upgrade so placeholder/FuncMap docs match the code.
+	docsTarget := filepath.Join(dir, "TEMPLATES.md")
+	if !dryRun {
+		if err := os.WriteFile(docsTarget, tmpl.DocsMD, 0o644); err != nil { //nolint:gosec // G306: see above
+			return fmt.Errorf("write %s: %w", docsTarget, err)
+		}
+	}
+
+	fmt.Fprintf(out, "\n%s: %d added, %d updated, %d unchanged, %d customized (skipped). TEMPLATES.md refreshed.\n",
+		summaryLabel(dryRun), added, updated, unchanged, skipped)
+	return nil
+}
+
+func summaryLabel(dryRun bool) string {
+	if dryRun {
+		return "dry-run"
+	}
+	return "summary"
 }
 
 func newTemplatesInitCmd() *cobra.Command {

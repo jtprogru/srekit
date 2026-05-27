@@ -833,6 +833,130 @@ func TestPostmortemJSON(t *testing.T) {
 	}
 }
 
+// TestTemplatesUpgradeAddsMissing scaffolds a partial dir (one template
+// missing) and verifies upgrade copies the missing one in and reports it.
+func TestTemplatesUpgradeAddsMissing(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	// Remove one template to simulate "new in this binary".
+	missing := filepath.Join(dir, "runbook.md.tmpl")
+	if err := os.Remove(missing); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "upgrade", dir)
+	if err != nil {
+		t.Fatalf("upgrade failed: %v (output: %s)", err, out)
+	}
+	if _, err := os.Stat(missing); err != nil {
+		t.Fatalf("upgrade did not restore runbook.md.tmpl: %v", err)
+	}
+	if !strings.Contains(out, "+ added     runbook.md.tmpl") {
+		t.Errorf("expected '+ added' line for runbook, got: %s", out)
+	}
+}
+
+// TestTemplatesUpgradeSkipsCustomized verifies that a file the user has
+// edited is left alone (no --force) and reported as skipped.
+func TestTemplatesUpgradeSkipsCustomized(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	target := filepath.Join(dir, "task.md.tmpl")
+	customized := []byte("# MY CUSTOM TASK: {{ .Title }}\n")
+	if err := os.WriteFile(target, customized, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "upgrade", dir)
+	if err != nil {
+		t.Fatalf("upgrade failed: %v (output: %s)", err, out)
+	}
+	b, _ := os.ReadFile(target)
+	if string(b) != string(customized) {
+		t.Fatalf("upgrade clobbered customized file: %s", string(b))
+	}
+	if !strings.Contains(out, "! skipped   task.md.tmpl") {
+		t.Errorf("expected '! skipped' line for task.md.tmpl, got: %s", out)
+	}
+}
+
+// TestTemplatesUpgradeForce verifies --force overwrites the user's customizations.
+func TestTemplatesUpgradeForce(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	target := filepath.Join(dir, "task.md.tmpl")
+	if err := os.WriteFile(target, []byte("CUSTOM\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "upgrade", dir, "--force")
+	if err != nil {
+		t.Fatalf("upgrade --force failed: %v (output: %s)", err, out)
+	}
+	b, _ := os.ReadFile(target)
+	if !strings.Contains(string(b), "Расследование") {
+		t.Fatalf("--force should overwrite with embedded content; got: %s", string(b))
+	}
+	if !strings.Contains(out, "~ updated   task.md.tmpl") {
+		t.Errorf("expected '~ updated' line, got: %s", out)
+	}
+}
+
+// TestTemplatesUpgradeDryRun verifies --dry-run reports diffs but writes nothing.
+func TestTemplatesUpgradeDryRun(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	missing := filepath.Join(dir, "runbook.md.tmpl")
+	if err := os.Remove(missing); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "templates", "upgrade", dir, "--dry-run")
+	if err != nil {
+		t.Fatalf("upgrade --dry-run failed: %v (output: %s)", err, out)
+	}
+	if _, err := os.Stat(missing); !os.IsNotExist(err) {
+		t.Fatalf("--dry-run must not write files; runbook.md.tmpl reappeared")
+	}
+	if !strings.Contains(out, "+ added     runbook.md.tmpl") {
+		t.Errorf("expected '+ added' line in dry-run report, got: %s", out)
+	}
+	if !strings.Contains(out, "dry-run:") {
+		t.Errorf("expected 'dry-run:' label in summary, got: %s", out)
+	}
+}
+
+// TestTemplatesUpgradeAllUnchanged verifies the quiet path: fresh init then
+// upgrade should report 0 added / 0 updated / N unchanged.
+func TestTemplatesUpgradeAllUnchanged(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	out, err := runCLI(t, "templates", "upgrade", dir)
+	if err != nil {
+		t.Fatalf("upgrade failed: %v (output: %s)", err, out)
+	}
+	if strings.Contains(out, "+ added") || strings.Contains(out, "~ updated") || strings.Contains(out, "! skipped") {
+		t.Errorf("expected quiet upgrade after fresh init, got: %s", out)
+	}
+	if !strings.Contains(out, "0 added, 0 updated") {
+		t.Errorf("expected summary to show 0 changes, got: %s", out)
+	}
+}
+
 func TestSretaskAlias(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "sretask", "--title", "alias works", "--stdout")
