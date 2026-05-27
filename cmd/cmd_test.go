@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -789,6 +790,46 @@ func TestConfigInitMissingAuthorFails(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "author") && !strings.Contains(err.Error(), "email") {
 		t.Fatalf("error should mention author or email, got: %v", err)
+	}
+}
+
+// TestTaskJSON verifies --json emits structured data with the same fields
+// the template would have seen. PascalCase keys are the public contract.
+func TestTaskJSON(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "task", "--title", "Tail latency", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
+	}
+	if got["Title"] != "Tail latency" {
+		t.Errorf("Title mismatch: %v", got["Title"])
+	}
+	if _, ok := got["ID"].(string); !ok {
+		t.Errorf("expected string ID, got %T: %v", got["ID"], got["ID"])
+	}
+}
+
+// TestPostmortemJSON verifies a structured field (Severity) round-trips
+// through --json on a command that exercises more flags.
+func TestPostmortemJSON(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "postmortem",
+		"--title", "API outage",
+		"--severity", "SEV-1",
+		"--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
+	}
+	if got["Title"] != "API outage" || got["Severity"] != "SEV-1" {
+		t.Errorf("field mismatch: %+v", got)
 	}
 }
 

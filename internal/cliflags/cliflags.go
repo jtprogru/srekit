@@ -18,6 +18,7 @@ type Output struct {
 	Force        bool
 	DryRun       bool
 	TemplatePath string
+	JSON         bool
 }
 
 // Bind registers the flags on cmd. outDesc overrides the --out help text
@@ -31,6 +32,7 @@ func (o *Output) Bind(cmd *cobra.Command, outDesc string) {
 	cmd.Flags().BoolVar(&o.Force, "force", false, "overwrite existing file")
 	cmd.Flags().BoolVar(&o.DryRun, "dry-run", false, "print result, do not write a file")
 	cmd.Flags().StringVar(&o.TemplatePath, "template", "", "use this template file instead of the embedded/templates-dir template")
+	cmd.Flags().BoolVar(&o.JSON, "json", false, "emit the template data as JSON instead of rendering the template (default sink: stdout)")
 }
 
 // RenderOptions converts the flag state into render.Options. defaultPath is
@@ -43,5 +45,6 @@ func (o *Output) RenderOptions(defaultPath string) render.Options {
 		DryRun:       o.DryRun,
 		Default:      defaultPath,
 		TemplatePath: o.TemplatePath,
+		JSON:         o.JSON,
 	}
 }

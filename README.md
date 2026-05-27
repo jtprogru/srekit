@@ -30,7 +30,16 @@ srekit --help
 ```
 
 Все команды поддерживают единый набор флагов:
-`--out FILE` (записать в файл), `--stdout` (печать в stdout), `--force` (перезаписать), `--dry-run` (показать без записи).
+`--out FILE` (записать в файл), `--stdout` (печать в stdout), `--force` (перезаписать), `--dry-run` (показать без записи), `--json` (отдать данные шаблона как JSON вместо рендеринга).
+
+С `--json` команда не рендерит шаблон, а пишет в stdout (или `--out FILE`) структуру, которую увидел бы шаблон. Удобно для пайплайнов:
+
+```bash
+srekit task --title "Tail latency" --json | jq '.ID'
+srekit postmortem --title X --severity SEV-1 --json | jq '.Severity'
+```
+
+Ключи — PascalCase (так их видит `text/template`); это публичный контракт. При `--json` markdown-дефолт пути игнорируется, чтобы JSON случайно не оказался в `.md`-файле.
 
 ### `srekit task` — investigation log для SRE-расследования
 
