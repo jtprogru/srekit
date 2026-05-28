@@ -60,7 +60,7 @@ Source & issues:  https://github.com/jtprogru/srekit`,
 			return configureTemplates(cmd)
 		},
 	}
-	root.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.srekit.yaml)")
+	root.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default: $XDG_CONFIG_HOME/srekit/config.yaml, or legacy ~/.srekit.yaml if present)")
 	root.PersistentFlags().String("templates-dir", "", "directory of custom templates (missing files fall back to embedded)")
 	root.PersistentFlags().BoolP("quiet", "q", false, "suppress informational messages (generated content and errors still print)")
 	root.Flags().BoolP("version", "V", false, "Show version")
@@ -119,14 +119,11 @@ func run() int {
 }
 
 func initConfig(cfgFile string) {
+	if cfgFile == "" {
+		cfgFile = resolveConfigPath()
+	}
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".srekit")
-		viper.SetConfigType("yaml")
 	}
 	viper.SetEnvPrefix("SREKIT")
 	viper.AutomaticEnv()

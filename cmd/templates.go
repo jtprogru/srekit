@@ -19,8 +19,6 @@ import (
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
-const defaultTemplatesDir = "~/.srekit/templates"
-
 func newTemplatesCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "templates",
@@ -226,7 +224,7 @@ func newTemplatesUpgradeCmd() *cobra.Command {
 		Use:   "upgrade [dir]",
 		Short: "Bring a templates directory in line with the binary's embedded set",
 		Long: `For each template embedded in this srekit binary, compare against [dir]
-(default: configured templates dir, falling back to ~/.srekit/templates).
+(default: configured templates dir, falling back to $XDG_CONFIG_HOME/srekit/templates).
 
 When a base snapshot from a previous init/upgrade is available
 (.srekit-embedded/<name>), customized files are 3-way merged via
@@ -424,7 +422,7 @@ the placeholder/FuncMap reference, and run git init in the directory
 
 When [dir] is omitted, the target is resolved in the same order every
 other 'templates' subcommand uses: --templates-dir / SREKIT_TEMPLATES_DIR
-/ templates_dir: in ~/.srekit.yaml, falling back to ~/.srekit/templates.`,
+/ templates_dir: in the config file, falling back to $XDG_CONFIG_HOME/srekit/templates.`,
 		Example: `  # Scaffold the default dir and git init it
   srekit templates init
 
@@ -443,7 +441,7 @@ other 'templates' subcommand uses: --templates-dir / SREKIT_TEMPLATES_DIR
 				if resolved != "" {
 					dir = resolved
 				} else {
-					dir = defaultTemplatesDir
+					dir = resolveDefaultTemplatesDir()
 				}
 			}
 			expanded, err := expandHome(dir)
@@ -521,7 +519,7 @@ func runTemplatesInit(cmd *cobra.Command, dir string, force, noGit bool) error {
 		fmt.Fprintln(out)
 	}
 	fmt.Fprintln(out, "Then point srekit at this directory:")
-	fmt.Fprintf(out, "  echo 'templates_dir: %s' >> ~/.srekit.yaml\n", dir)
+	fmt.Fprintf(out, "  echo 'templates_dir: %s' >> %s\n", dir, resolveConfigPath())
 	fmt.Fprintln(out, "  # or: export SREKIT_TEMPLATES_DIR="+dir)
 	return nil
 }
@@ -553,10 +551,7 @@ func runTemplatesPull(cmd *cobra.Command, rebase bool) error {
 	}
 	if dir == "" {
 		// Nothing configured — fall back to the conventional default location.
-		dir, err = expandHome(defaultTemplatesDir)
-		if err != nil {
-			return err
-		}
+		dir = resolveDefaultTemplatesDir()
 	}
 	if info, err := os.Stat(dir); err != nil {
 		return fmt.Errorf("templates dir %s: %w (run 'srekit templates init' first)", dir, err)
@@ -590,7 +585,7 @@ func newTemplatesValidateCmd() *cobra.Command {
 		Use:   "validate [dir]",
 		Short: "Parse and dry-run every .tmpl in the templates directory",
 		Long: `Walk [dir] (default: configured templates dir, falling back to
-~/.srekit/templates), parse each *.tmpl with the same FuncMap srekit uses,
+$XDG_CONFIG_HOME/srekit/templates), parse each *.tmpl with the same FuncMap srekit uses,
 and — for files whose names match a built-in template — execute the
 template against canonical sample data to catch references to fields that
 don't exist in the struct shape (e.g. a typo'd '.Servce' instead of
@@ -809,10 +804,7 @@ func pickTemplatesDir(cmd *cobra.Command, args []string) (string, error) {
 		}
 		dir = resolved
 		if dir == "" {
-			dir, err = expandHome(defaultTemplatesDir)
-			if err != nil {
-				return "", err
-			}
+			dir = resolveDefaultTemplatesDir()
 		}
 	}
 	info, err := os.Stat(dir)

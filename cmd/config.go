@@ -14,13 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const defaultConfigPath = "~/.srekit.yaml"
-
 func newConfigCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "config",
 		Short: "Manage the srekit user configuration file",
-		Long:  "Scaffold or inspect ~/.srekit.yaml — author, email, and an optional default templates_dir.",
+		Long:  "Scaffold or inspect the srekit config ($XDG_CONFIG_HOME/srekit/config.yaml, or legacy ~/.srekit.yaml) — author, email, and an optional default templates_dir.",
 	}
 	c.AddCommand(newConfigInitCmd())
 	return c
@@ -36,15 +34,17 @@ func newConfigInitCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Create ~/.srekit.yaml interactively",
-		Long: `Walk the user through filling in ~/.srekit.yaml — author, email,
+		Short: "Create the srekit config file interactively",
+		Long: `Walk the user through filling in the srekit config — author, email,
 and an optional default templates_dir. Defaults are pulled from
 'git config user.name' / 'user.email'. Pass --yes (or run with a
 non-TTY stdin) to skip the prompts and write straight from the
 flag/git-config values.
 
 The target path follows --config: if --config FILE is set on the
-root command, init writes there; otherwise it writes ~/.srekit.yaml.`,
+root command, init writes there; otherwise it writes
+$XDG_CONFIG_HOME/srekit/config.yaml (or the legacy ~/.srekit.yaml if
+that already exists).`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runConfigInit(cmd, configInitOpts{
@@ -132,7 +132,7 @@ func configTargetPath(cmd *cobra.Command) (string, error) {
 			return expandHome(v)
 		}
 	}
-	return expandHome(defaultConfigPath)
+	return resolveConfigPath(), nil
 }
 
 func promptLine(r *bufio.Reader, out io.Writer, label, def string) (string, error) {
@@ -172,7 +172,7 @@ func renderConfigYAML(author, email, templatesDir string) string {
 	if templatesDir != "" {
 		fmt.Fprintf(&b, "templates_dir: %s\n", yamlString(templatesDir))
 	} else {
-		b.WriteString("# templates_dir: ~/.srekit/templates  # optional; uncomment to override embedded templates\n")
+		b.WriteString("# templates_dir: ~/.config/srekit/templates  # optional; uncomment to override embedded templates\n")
 	}
 	return b.String()
 }
