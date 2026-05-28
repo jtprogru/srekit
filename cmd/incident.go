@@ -32,6 +32,11 @@ func newIncidentCmd() *cobra.Command {
 		Use:   "incident",
 		Short: "Generate a live-incident report template",
 		Long:  "Generate a live-incident report (status, lead, comms, updates log) — to be filled during the incident, distinct from a postmortem.",
+		Example: `  # Active SEV-1, printed to stdout
+  srekit incident --title "Checkout 5xx spike" --severity SEV-1 --lead alice --stdout
+
+  # Write to the default file (incident-<slug>.md)
+  srekit incident -T "DB failover" --status investigated`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if title == "" {
 				return errors.New("--title is required")
@@ -50,7 +55,7 @@ func newIncidentCmd() *cobra.Command {
 				Now:      clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("incident-%s.md", ids.Slug(title))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "incident.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "incident.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "incident title (required)")

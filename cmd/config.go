@@ -120,7 +120,9 @@ func runConfigInit(cmd *cobra.Command, opts configInitOpts) error {
 		return fmt.Errorf("write %s: %w", target, err)
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "Wrote %s\n", target)
+	if quiet, _ := cmd.Flags().GetBool("quiet"); !quiet {
+		fmt.Fprintf(cmd.OutOrStdout(), "Wrote %s\n", target)
+	}
 	return nil
 }
 

@@ -21,6 +21,7 @@ type Options struct {
 	Default      string
 	TemplatePath string // optional: read template from this file path instead of the embedded/loader chain
 	JSON         bool   // emit the template data as JSON instead of rendering the template
+	Quiet        bool   // suppress informational messages (the "wrote <file>" line, dry-run notes)
 }
 
 func Render(stdout io.Writer, loader *tmpl.Loader, tmplName string, data any, opts Options) error {
@@ -66,8 +67,10 @@ func writeBody(stdout io.Writer, body []byte, opts Options) error {
 		target = opts.Default
 	}
 
-	if opts.Stdout || target == "" {
-		if opts.DryRun {
+	// "-" is the conventional stand-in for stdout (so `--out -` works in
+	// pipelines without inventing a separate flag).
+	if opts.Stdout || target == "" || target == "-" {
+		if opts.DryRun && !opts.Quiet {
 			fmt.Fprintln(stdout, "# dry-run: would write to stdout")
 		}
 		_, err := stdout.Write(body)
@@ -75,7 +78,9 @@ func writeBody(stdout io.Writer, body []byte, opts Options) error {
 	}
 
 	if opts.DryRun {
-		fmt.Fprintf(stdout, "# dry-run: would write %d bytes to %s\n", len(body), target)
+		if !opts.Quiet {
+			fmt.Fprintf(stdout, "# dry-run: would write %d bytes to %s\n", len(body), target)
+		}
 		_, err := stdout.Write(body)
 		return err
 	}
@@ -97,6 +102,8 @@ func writeBody(stdout io.Writer, body []byte, opts Options) error {
 	if err := os.WriteFile(target, body, 0o644); err != nil { //nolint:gosec // G306: see comment above
 		return err
 	}
-	fmt.Fprintf(stdout, "wrote %s\n", target)
+	if !opts.Quiet {
+		fmt.Fprintf(stdout, "wrote %s\n", target)
+	}
 	return nil
 }

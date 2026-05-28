@@ -36,8 +36,10 @@ func (o *Output) Bind(cmd *cobra.Command, outDesc string) {
 }
 
 // RenderOptions converts the flag state into render.Options. defaultPath is
-// the file path used when the user passed neither --out nor --stdout.
-func (o *Output) RenderOptions(defaultPath string) render.Options {
+// the file path used when the user passed neither --out nor --stdout. The cmd
+// is used to read the inherited persistent --quiet flag.
+func (o *Output) RenderOptions(cmd *cobra.Command, defaultPath string) render.Options {
+	quiet, _ := cmd.Flags().GetBool("quiet")
 	return render.Options{
 		Out:          o.Out,
 		Stdout:       o.Stdout,
@@ -46,5 +48,6 @@ func (o *Output) RenderOptions(defaultPath string) render.Options {
 		Default:      defaultPath,
 		TemplatePath: o.TemplatePath,
 		JSON:         o.JSON,
+		Quiet:        quiet,
 	}
 }

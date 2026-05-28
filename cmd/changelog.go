@@ -38,7 +38,7 @@ func newChangelogCmd() *cobra.Command {
 				Repo:           repo,
 				InitialVersion: version,
 			}
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "changelog.md.tmpl", data, out.RenderOptions("CHANGELOG.md"))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "changelog.md.tmpl", data, out.RenderOptions(cmd, "CHANGELOG.md"))
 		},
 	}
 	cmd.Flags().StringVar(&repoFlag, "repo", "", "OWNER/REPO for compare links (default: detect from git remote)")

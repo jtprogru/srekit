@@ -31,8 +31,13 @@ func TestBindCustomOutDesc(t *testing.T) {
 func TestRenderOptionsCopiesState(t *testing.T) {
 	t.Parallel()
 	o := &Output{Out: "x.md", Stdout: true, Force: true, DryRun: true}
-	opts := o.RenderOptions("def.md")
+	cmd := &cobra.Command{Use: "x"}
+	cmd.Flags().Bool("quiet", true, "")
+	opts := o.RenderOptions(cmd, "def.md")
 	if opts.Out != "x.md" || !opts.Stdout || !opts.Force || !opts.DryRun || opts.Default != "def.md" {
 		t.Errorf("RenderOptions mismatch: %+v", opts)
+	}
+	if !opts.Quiet {
+		t.Errorf("RenderOptions did not pick up --quiet: %+v", opts)
 	}
 }

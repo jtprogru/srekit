@@ -24,6 +24,8 @@ func newRunbookCmd() *cobra.Command {
 		Use:   "runbook",
 		Short: "Generate an on-call runbook template",
 		Long:  "Generate a runbook with Symptoms / Diagnose / Mitigate / Verify sections.",
+		Example: `  # Runbook tied to a service and alert
+  srekit runbook --title "High p99 latency" --service api-gw --alert HighLatency`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if title == "" {
 				return errors.New("--title is required")
@@ -38,7 +40,7 @@ func newRunbookCmd() *cobra.Command {
 				Now:     clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("runbook-%s.md", ids.Slug(title))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "runbook.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "runbook.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "runbook title (required)")

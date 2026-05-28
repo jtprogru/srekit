@@ -25,6 +25,11 @@ func newPostmortemCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "postmortem",
 		Short: "Generate a Google SRE-style postmortem template",
+		Example: `  # Write postmortem-<slug>.md
+  srekit postmortem --title "Checkout outage" --severity SEV-1 --owner bob
+
+  # Pipe to stdout for review
+  srekit postmortem -T "Cache stampede" --start 2026-05-20T10:00:00Z --out -`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if title == "" {
 				return errors.New("--title is required")
@@ -41,7 +46,7 @@ func newPostmortemCmd() *cobra.Command {
 				Now:      clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("postmortem-%s.md", ids.Slug(title))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "postmortem.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "postmortem.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "incident title (required)")

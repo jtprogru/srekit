@@ -36,7 +36,7 @@ func newCapacityCmd() *cobra.Command {
 				Now:     clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("capacity-%s.md", ids.Slug(service))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "capacity.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "capacity.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "", "service name (required)")

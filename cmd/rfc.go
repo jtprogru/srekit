@@ -35,6 +35,11 @@ func newRFCCmd() *cobra.Command {
 		Use:   "rfc",
 		Short: "Generate an RFC / ADR markdown template",
 		Long:  "Generate an RFC (a.k.a. ADR) document with Context / Decision / Alternatives / Consequences sections.",
+		Example: `  # Proposed RFC (author/email come from git config if omitted)
+  srekit rfc --title "Adopt OpenTelemetry"
+
+  # Mark an accepted decision
+  srekit rfc -T "Drop legacy auth" --status accepted`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if title == "" {
 				return errors.New("--title is required")
@@ -57,7 +62,7 @@ func newRFCCmd() *cobra.Command {
 				Author: a,
 			}
 			def := fmt.Sprintf("rfc-%s.md", ids.Slug(title))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "rfc.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "rfc.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "RFC title (required)")

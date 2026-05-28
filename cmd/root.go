@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -41,16 +43,26 @@ var (
 func NewRootCmd() *cobra.Command {
 	var cfgFile string
 	root := &cobra.Command{
-		Use:     "srekit",
-		Short:   "Generator of SRE text artifacts: investigations, incidents, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs",
-		Long:    `srekit generates text artifacts SREs deal with daily — investigation logs, live-incident reports, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs, licenses — all from embedded templates.`,
+		Use:   "srekit",
+		Short: "Generator of SRE text artifacts: investigations, incidents, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs",
+		Long: `srekit generates text artifacts SREs deal with daily — investigation logs, live-incident reports, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs, licenses — all from embedded templates.
+
+Docs:  https://jtprogru.github.io/srekit/
+Source & issues:  https://github.com/jtprogru/srekit`,
 		Version: Version,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			// Flag/argument parsing happens before PersistentPreRunE, so leaving
+			// SilenceUsage false until here means a genuine misuse (unknown flag,
+			// bad arg) still prints the usage block, while errors returned from
+			// RunE (validation, render, I/O) print only the error — no wall of
+			// flags burying the message.
+			cmd.SilenceUsage = true
 			return configureTemplates(cmd)
 		},
 	}
 	root.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.srekit.yaml)")
 	root.PersistentFlags().String("templates-dir", "", "directory of custom templates (missing files fall back to embedded)")
+	root.PersistentFlags().BoolP("quiet", "q", false, "suppress informational messages (generated content and errors still print)")
 	root.Flags().BoolP("version", "V", false, "Show version")
 	root.SetVersionTemplate(`srekit version: {{.Version}}
 from commit: ` + Commit + `
@@ -77,6 +89,19 @@ built by: ` + BuiltBy + `
 }
 
 func Execute() {
+	// os.Exit is isolated here so run's deferred signal cleanup (stop) always
+	// runs before the process exits.
+	os.Exit(run())
+}
+
+func run() int {
+	// Cancel the command context on SIGINT/SIGTERM so child processes started
+	// with exec.CommandContext (git in the templates subcommands) are torn down
+	// on Ctrl-C. NotifyContext stops trapping after the first signal, so a
+	// second Ctrl-C falls through to Go's default and kills the process.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	root := NewRootCmd()
 	inner := root.PersistentPreRunE
 	root.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
@@ -87,9 +112,10 @@ func Execute() {
 		}
 		return nil
 	}
-	if err := root.Execute(); err != nil {
-		os.Exit(1)
+	if err := root.ExecuteContext(ctx); err != nil {
+		return 1
 	}
+	return 0
 }
 
 func initConfig(cfgFile string) {

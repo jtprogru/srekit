@@ -25,8 +25,14 @@ func newOncallCmd() *cobra.Command {
 		out    cliflags.Output
 	)
 	cmd := &cobra.Command{
-		Use:   "oncall-report",
-		Short: "Generate a weekly on-call report template",
+		Use:     "oncall-report",
+		Aliases: []string{"oncall"},
+		Short:   "Generate a weekly on-call report template",
+		Example: `  # This week's report for a team (period defaults to Mon–Sun)
+  srekit oncall-report --team platform
+
+  # Explicit period
+  srekit oncall-report --team platform --start 2026-05-18 --end 2026-05-24`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if team == "" {
 				return errors.New("--team is required")
@@ -62,7 +68,7 @@ func newOncallCmd() *cobra.Command {
 				Author: a,
 			}
 			def := fmt.Sprintf("oncall-%s-%s.md", ids.Slug(team), start)
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "oncall.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "oncall.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
 	cmd.Flags().StringVar(&team, "team", "", "team name (required)")

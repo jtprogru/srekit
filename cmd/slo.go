@@ -24,6 +24,8 @@ func newSLOCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "slo",
 		Short: "Generate an SLO/SLI document template",
+		Example: `  # SLO doc with custom availability and latency targets
+  srekit slo --service api-gw --target 99.95% --latency 250ms --window 28d`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if service == "" {
 				return errors.New("--service is required")
@@ -39,7 +41,7 @@ func newSLOCmd() *cobra.Command {
 				Now:           clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("slo-%s.md", ids.Slug(service))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "slo.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "slo.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "", "service name (required)")

@@ -31,6 +31,11 @@ func newLicenseCmd() *cobra.Command {
 		Aliases: []string{"lic"},
 		Short:   "Generate a LICENSE file (default: WTFPL)",
 		Long:    "Generate a LICENSE for your project. Default: WTFPL (matches the gch lic command). Supports mit and apache2 as alternatives.",
+		Example: `  # MIT LICENSE to stdout (author/email from git config)
+  srekit license --type mit
+
+  # Apache-2.0 written to ./LICENSE
+  srekit license --type apache2 --out LICENSE`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			tmplName, ok := licenseTemplates[licType]
 			if !ok {
@@ -44,7 +49,7 @@ func newLicenseCmd() *cobra.Command {
 			if year == 0 {
 				year = clock.Now().Year()
 			}
-			opts := out.RenderOptions("")
+			opts := out.RenderOptions(cmd, "")
 			if out.Out == "" && !out.Stdout {
 				opts.Stdout = true
 			}

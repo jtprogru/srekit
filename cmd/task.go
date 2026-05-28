@@ -25,6 +25,11 @@ func newTaskCmd() *cobra.Command {
 		Aliases: []string{"sretask"},
 		Short:   "Generate a markdown SRE investigation log",
 		Long:    "Generate a markdown SRE investigation log with YAML front matter and sections for context, hypothesis, evidence, findings, and action items.",
+		Example: `  # Investigation log in the current directory
+  srekit task --title "Latency regression in api-gw"
+
+  # Into a specific directory
+  srekit task -T "Disk fills on db-03" --path ./investigations`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if title == "" {
 				return errors.New("--title is required")
@@ -39,7 +44,7 @@ func newTaskCmd() *cobra.Command {
 				Title:            title,
 			}
 			def := filepath.Join(path, fmt.Sprintf("investigation-%s.md", ids.Slug(title)))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "task.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "task.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "investigation title (required)")

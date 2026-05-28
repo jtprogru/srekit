@@ -247,6 +247,11 @@ falls back to the additive behavior: skip customized files unless
 the second upgrade onward will use 3-way.
 
 TEMPLATES.md is always refreshed. Use --dry-run to preview.`,
+		Example: `  # Preview what an upgrade would change
+  srekit templates upgrade --dry-run
+
+  # Apply, overwriting local customizations with embedded versions
+  srekit templates upgrade --force`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runTemplatesUpgrade(cmd, args, force, dryRun)
@@ -420,6 +425,11 @@ the placeholder/FuncMap reference, and run git init in the directory
 When [dir] is omitted, the target is resolved in the same order every
 other 'templates' subcommand uses: --templates-dir / SREKIT_TEMPLATES_DIR
 / templates_dir: in ~/.srekit.yaml, falling back to ~/.srekit/templates.`,
+		Example: `  # Scaffold the default dir and git init it
+  srekit templates init
+
+  # Scaffold into a specific dir without git
+  srekit templates init ./my-templates --no-git`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var dir string
@@ -645,6 +655,13 @@ func runTemplatesValidate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// noColorEnv reports whether the NO_COLOR convention (https://no-color.org)
+// asks us to suppress color: the variable is present and non-empty.
+func noColorEnv() bool {
+	v, ok := os.LookupEnv("NO_COLOR")
+	return ok && v != ""
+}
+
 func newTemplatesDiffCmd() *cobra.Command {
 	var (
 		nameOnly bool
@@ -662,13 +679,18 @@ skipped.
 
 Useful after 'srekit templates pull' or a binary upgrade to see what's
 drifted.`,
+		Example: `  # Full unified diff vs embedded
+  srekit templates diff
+
+  # Just the names of drifted templates
+  srekit templates diff --name-only`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runTemplatesDiff(cmd, args, nameOnly, noColor)
 		},
 	}
 	cmd.Flags().BoolVar(&nameOnly, "name-only", false, "just list which files differ; no diff bodies")
-	cmd.Flags().BoolVar(&noColor, "no-color", false, "disable color in diff output")
+	cmd.Flags().BoolVar(&noColor, "no-color", false, "disable color in diff output (also honors the NO_COLOR env var)")
 	return cmd
 }
 
@@ -746,7 +768,7 @@ func runTemplatesDiff(cmd *cobra.Command, args []string, nameOnly, noColor bool)
 			return fmt.Errorf("write tempfile: %w", err)
 		}
 		colorMode := "auto"
-		if noColor {
+		if noColor || noColorEnv() {
 			colorMode = "never"
 		}
 		gitArgs := []string{
