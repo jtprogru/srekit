@@ -2,7 +2,6 @@
 
 📚 **Documentation:** [jtprogru.github.io/srekit](https://jtprogru.github.io/srekit/) (EN + RU, full command reference, guides, recipes, architecture).
 
-
 Генератор текстовых артефактов SRE: investigation log'и, инциденты, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, capacity plans, retro, changelog'и, лицензии.
 
 Все markdown-шаблоны двуязычные: заголовки и метки в формате `Русский (English)`, тело — на русском. Технические идентификаторы (SLO/SLI/RFC/PromQL/UTC/SEV), ключи YAML frontmatter и PromQL-выражения остаются английскими. Шаблон `changelog` остаётся полностью английским, чтобы не ломать тулинг вокруг Keep a Changelog.
@@ -63,11 +62,11 @@ srekit --help
 С `--json` команда не рендерит шаблон, а пишет в stdout (или `--out FILE`) структуру, которую увидел бы шаблон. Удобно для пайплайнов:
 
 ```bash
-srekit task --title "Tail latency" --json | jq '.ID'
-srekit postmortem --title X --severity SEV-1 --json | jq '.Severity'
+srekit task --title "Tail latency" --json | jq '.id'
+srekit postmortem --title X --severity SEV-1 --json | jq '.severity'
 ```
 
-Ключи — PascalCase (так их видит `text/template`); это публичный контракт. При `--json` markdown-дефолт пути игнорируется, чтобы JSON случайно не оказался в `.md`-файле.
+Ключи — camelCase во всех командах (включая `templates list --json`); это публичный контракт. При `--json` markdown-дефолт пути игнорируется, чтобы JSON случайно не оказался в `.md`-файле.
 
 ### `srekit task` — investigation log для SRE-расследования
 
@@ -168,8 +167,7 @@ srekit templates init                # → ~/.srekit/templates
 srekit templates init ./team-templates --no-git
 ```
 
-Раскладывает все встроенные шаблоны в директорию, пишет `TEMPLATES.md` со
-справочником плейсхолдеров и FuncMap, и делает `git init`. Дальше:
+Раскладывает все встроенные шаблоны в директорию, пишет `TEMPLATES.md` со справочником плейсхолдеров и FuncMap, и делает `git init`. Дальше:
 
 ```bash
 cd ~/.srekit/templates
@@ -191,8 +189,7 @@ echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
 srekit runbook --title "p99 spike" --template ./oneshot-runbook.tmpl --stdout
 ```
 
-Если файла нет в твоей директории, `srekit` тихо берёт встроенный — можно
-оверрайдить только то, что нужно.
+Если файла нет в твоей директории, `srekit` тихо берёт встроенный — можно оверрайдить только то, что нужно.
 
 ### `srekit templates pull` — синхронизация с remote
 
@@ -201,10 +198,7 @@ srekit templates pull              # git pull --ff-only
 srekit templates pull --rebase     # если есть локальные коммиты
 ```
 
-Запускает `git pull` в configured templates_dir. По умолчанию `--ff-only`,
-чтобы не получить сюрприз-merge'и. Команда вызывается явно — авто-pull
-при каждом запуске `srekit` намеренно не делается (это ломает UX и работу
-в офлайне).
+Запускает `git pull` в configured templates_dir. По умолчанию `--ff-only`, чтобы не получить сюрприз-merge'и. Команда вызывается явно — авто-pull при каждом запуске `srekit` намеренно не делается (это ломает UX и работу в офлайне).
 
 ### `srekit templates validate` — проверить, что твои шаблоны рендерятся
 
@@ -213,19 +207,13 @@ srekit templates validate                    # configured templates_dir
 srekit templates validate ./team-templates   # явная директория
 ```
 
-Парсит каждый `*.tmpl` той же FuncMap, что использует `srekit`, и (для
-файлов с именами встроенных шаблонов) гоняет dry-run рендер против
-канонических sample-данных. Ловит:
+Парсит каждый `*.tmpl` той же FuncMap, что использует `srekit`, и (для файлов с именами встроенных шаблонов) гоняет dry-run рендер против канонических sample-данных. Ловит:
 
 - Синтаксические ошибки шаблона (unclosed `{{`, неизвестные функции).
-- Опечатки в полях: `{{ .Servce }}` (вместо `.Service`) даёт
-  `can't evaluate field Servce in type struct { ID string; Title string; … }`.
-- Ссылки на поля, которые были у тебя в шаблоне, а в новой версии binary
-  переименованы/удалены.
+- Опечатки в полях: `{{ .Servce }}` (вместо `.Service`) даёт `can't evaluate field Servce in type struct { ID string; Title string; … }`.
+- Ссылки на поля, которые были у тебя в шаблоне, а в новой версии binary переименованы/удалены.
 
-Шаблоны с нестандартными именами (твои собственные, под `--template`)
-валидируются только на парс-уровне — у `srekit` нет канонической data
-shape, против которой их рендерить.
+Шаблоны с нестандартными именами (твои собственные, под `--template`) валидируются только на парс-уровне — у `srekit` нет канонической data shape, против которой их рендерить.
 
 ### `srekit templates diff` — что изменилось относительно embedded-версии
 
@@ -235,11 +223,7 @@ srekit templates diff --name-only      # только имена
 srekit templates diff --no-color
 ```
 
-Сравнивает каждый `*.tmpl` в твоей templates dir с версией, зашитой в
-текущий binary. Полезно после `srekit templates pull` или обновления
-бинарника — увидеть, что у тебя осталось своё, а что отстало от
-апстрима. Файлы без embedded-counterpart (твои bespoke-шаблоны)
-маркируются как `user-only`.
+Сравнивает каждый `*.tmpl` в твоей templates dir с версией, зашитой в текущий binary. Полезно после `srekit templates pull` или обновления бинарника — увидеть, что у тебя осталось своё, а что отстало от апстрима. Файлы без embedded-counterpart (твои bespoke-шаблоны) маркируются как `user-only`.
 
 ### `srekit templates list` — что у тебя есть и в каком состоянии
 
@@ -251,11 +235,13 @@ srekit templates list --filter customized # только то, что ты пе�
 ```
 
 Классификация для каждого `*.tmpl`:
-`identical` — байт-в-байт совпадает с embedded; `customized` — есть у тебя
-и отличается; `user-only` — твой bespoke без embedded-counterpart;
-`embedded-only` — зашит в бинарник, у тебя нет override. JSON-ключи —
-camelCase (`name`, `status`, `userPath`); это отличается от PascalCase
-у `--json` генераторов — нюанс будет приведён к общему знаменателю к v1.0.
+
+- `identical` — байт-в-байт совпадает с embedded;
+- `customized` — есть у тебя и отличается;
+- `user-only` — твой bespoke без embedded-counterpart;
+- `embedded-only` — зашит в бинарник, у тебя нет override.
+
+JSON-ключи — camelCase (`name`, `status`, `userPath`) — то же соглашение, что и у `--json` генераторов.
 
 ### `srekit templates upgrade` — подтянуть новые embedded-шаблоны
 
@@ -265,24 +251,15 @@ srekit templates upgrade --dry-run   # посмотреть что измени�
 srekit templates upgrade --force     # перезаписать и кастомизации (без merge)
 ```
 
-3-way merge: `srekit` хранит снапшот embedded на момент последнего
-sync'а в `<templates-dir>/.srekit-embedded/` и использует его как
-merge-base. `git merge-file --diff3` мерджит твои изменения с
-upstream'ом:
+3-way merge: `srekit` хранит снапшот embedded на момент последнего sync'а в `<templates-dir>/.srekit-embedded/` и использует его как merge-base. `git merge-file --diff3` мерджит твои изменения с upstream'ом:
 
 - нет файла → копируется;
 - идентичен embedded → пропуск;
 - upstream без изменений, твои есть → молчаливо не трогаем;
 - upstream изменился, твоих нет → fast-forward (без `--force`);
-- расхождение с обеих сторон → 3-way merge. Чистый merge — пишется
-  silently; конфликт — маркеры `<<<<<<<` / `>>>>>>>` в файл, exit
-  non-zero, разрешаешь руками.
+- расхождение с обеих сторон → 3-way merge. Чистый merge — пишется silently; конфликт — маркеры `<<<<<<<` / `>>>>>>>` в файл, exit non-zero, разрешаешь руками.
 
-Без снапшота (старый user dir, до этой версии) — fallback на additive
-поведение (skip + seed снапшота для следующего apgrade). Сидкар
-`.srekit-embedded/` автоматически попадает в `.gitignore` твоей dir.
-`TEMPLATES.md` обновляется всегда (это reference, не точка
-кастомизации).
+Без снапшота (старый user dir, до этой версии) — fallback на additive поведение (skip + seed снапшота для следующего apgrade). Сидкар `.srekit-embedded/` автоматически попадает в `.gitignore` твоей dir. `TEMPLATES.md` обновляется всегда (это reference, не точка кастомизации).
 
 ### `srekit completion` — shell autocomplete
 
@@ -297,7 +274,7 @@ srekit completion bash > /etc/bash_completion.d/srekit
 
 ```yaml
 author: Mikhail Savin
-email: jtprogru@gmail.com
+email: jtprogru@example.com
 # templates_dir: ~/.srekit/templates
 ```
 
@@ -314,4 +291,4 @@ srekit --config ./my.yaml config init # альтернативный путь
 
 ## License
 
-WTFPL — см. `LICENSE`.
+MIT — см. `LICENSE`.
