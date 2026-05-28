@@ -57,7 +57,7 @@ func newRFCCmd() *cobra.Command {
 				Author: a,
 			}
 			def := fmt.Sprintf("rfc-%s.md", ids.Slug(title))
-			return render.Render(cmd.OutOrStdout(), "rfc.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "rfc.md.tmpl", data, out.RenderOptions(def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "RFC title (required)")

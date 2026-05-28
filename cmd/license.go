@@ -48,7 +48,7 @@ func newLicenseCmd() *cobra.Command {
 			if out.Out == "" && !out.Stdout {
 				opts.Stdout = true
 			}
-			return render.Render(cmd.OutOrStdout(), tmplName, struct {
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), tmplName, struct {
 				Author meta.Author
 				Year   int
 			}{author, year}, opts)

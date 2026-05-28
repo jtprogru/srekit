@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,22 @@ import (
 
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
+
+// loaderCtxKey keys the per-invocation *tmpl.Loader stored on the command
+// context by configureTemplates and read back by render commands via
+// loaderFrom. Using the context (rather than a package-level var) keeps the
+// loader scoped to a single command tree, so parallel tests don't race.
+type loaderCtxKey struct{}
+
+// loaderFrom returns the template loader configured for this invocation.
+// configureTemplates always sets one in PersistentPreRunE before any RunE
+// runs; the embedded-only fallback guards the rare path that bypasses it.
+func loaderFrom(cmd *cobra.Command) *tmpl.Loader {
+	if l, ok := cmd.Context().Value(loaderCtxKey{}).(*tmpl.Loader); ok && l != nil {
+		return l
+	}
+	return tmpl.NewDefaultLoader()
+}
 
 var (
 	Version = "dev"
@@ -108,27 +125,28 @@ func resolveTemplatesDir(cmd *cobra.Command) (string, error) {
 	return expandHome(dir)
 }
 
-// configureTemplates installs a DirSource on tmpl.Default if the user
-// configured one. The common case (no custom dir) leaves tmpl.Default
-// untouched — keeps parallel tests race-free on the package-level Default.
+// configureTemplates builds the loader for this invocation and stashes it on
+// the command context. The loader serves the embedded templates by default;
+// when --templates-dir (or its env/yaml equivalent) points at a usable
+// directory, a DirSource is prepended so user templates take priority with
+// transparent per-file fallback to embedded.
 func configureTemplates(cmd *cobra.Command) error {
+	loader := tmpl.NewDefaultLoader()
 	dir, err := resolveTemplatesDir(cmd)
 	if err != nil {
 		return fmt.Errorf("--templates-dir: %w", err)
 	}
-	if dir == "" {
-		return nil
-	}
-	info, err := os.Stat(dir)
-	if err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: templates dir %s: %v (falling back to embedded)\n", dir, err)
-		return nil
-	}
-	if !info.IsDir() {
+	switch info, statErr := os.Stat(dir); {
+	case dir == "":
+		// no custom dir configured — embedded only
+	case statErr != nil:
+		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: templates dir %s: %v (falling back to embedded)\n", dir, statErr)
+	case !info.IsDir():
 		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: %s is not a directory (falling back to embedded)\n", dir)
-		return nil
+	default:
+		loader.AddDirSource(dir)
 	}
-	tmpl.Default = &tmpl.Loader{Sources: []tmpl.Source{tmpl.DirSource{Dir: dir}, tmpl.EmbedSource{}}}
+	cmd.SetContext(context.WithValue(cmd.Context(), loaderCtxKey{}, loader))
 	return nil
 }
 

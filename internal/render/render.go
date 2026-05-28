@@ -23,15 +23,15 @@ type Options struct {
 	JSON         bool   // emit the template data as JSON instead of rendering the template
 }
 
-func Render(stdout io.Writer, tmplName string, data any, opts Options) error {
-	body, err := buildBody(tmplName, data, opts)
+func Render(stdout io.Writer, loader *tmpl.Loader, tmplName string, data any, opts Options) error {
+	body, err := buildBody(loader, tmplName, data, opts)
 	if err != nil {
 		return err
 	}
 	return writeBody(stdout, body, opts)
 }
 
-func buildBody(tmplName string, data any, opts Options) ([]byte, error) {
+func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]byte, error) {
 	if opts.JSON {
 		b, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
@@ -45,7 +45,7 @@ func buildBody(tmplName string, data any, opts Options) ([]byte, error) {
 	if opts.TemplatePath != "" {
 		t, err = tmpl.ParseFile(opts.TemplatePath)
 	} else {
-		t, err = tmpl.Parse(tmplName)
+		t, err = loader.Parse(tmplName)
 	}
 	if err != nil {
 		return nil, err

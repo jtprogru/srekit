@@ -39,7 +39,7 @@ func newTaskCmd() *cobra.Command {
 				Title:            title,
 			}
 			def := filepath.Join(path, fmt.Sprintf("investigation-%s.md", ids.Slug(title)))
-			return render.Render(cmd.OutOrStdout(), "task.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "task.md.tmpl", data, out.RenderOptions(def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "investigation title (required)")

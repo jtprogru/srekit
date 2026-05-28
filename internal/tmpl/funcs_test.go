@@ -84,7 +84,7 @@ func TestNowFuncRespectsClock(t *testing.T) {
 
 func TestParseAppliesFuncMap(t *testing.T) {
 	// Sanity check: rfc.md.tmpl uses {{ shortID .ID 8 }} — must parse without error.
-	if _, err := Parse("rfc.md.tmpl"); err != nil {
+	if _, err := NewDefaultLoader().Parse("rfc.md.tmpl"); err != nil {
 		t.Fatalf("rfc.md.tmpl should parse with FuncMap: %v", err)
 	}
 }

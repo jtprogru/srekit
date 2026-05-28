@@ -34,7 +34,7 @@ func newEBPCmd() *cobra.Command {
 				Now:     clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("ebp-%s.md", ids.Slug(service))
-			return render.Render(cmd.OutOrStdout(), "ebp.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "ebp.md.tmpl", data, out.RenderOptions(def))
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "", "service name (required)")

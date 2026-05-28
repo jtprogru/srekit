@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/jtprogru/srekit/internal/clock"
-	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
 func runCLI(t *testing.T, args ...string) (string, error) {
@@ -25,15 +24,6 @@ func runCLI(t *testing.T, args ...string) (string, error) {
 	cmd.SetArgs(args)
 	err := cmd.Execute()
 	return out.String(), err
-}
-
-// resetTmplDefault snapshots tmpl.Default and restores it after the test.
-// Use in any test that exercises --templates-dir, which mutates the
-// package-level loader. Not safe to use with t.Parallel().
-func resetTmplDefault(t *testing.T) {
-	t.Helper()
-	orig := tmpl.Default
-	t.Cleanup(func() { tmpl.Default = orig })
 }
 
 func TestTaskStdout(t *testing.T) {
@@ -262,11 +252,11 @@ func TestCapacityPlan(t *testing.T) {
 	}
 }
 
-// TestTemplatesDirOverride mutates the package-level tmpl.Default, so it
-// must not be parallel and must reset Default in cleanup. Verifies that
-// --templates-dir picks up custom templates from the given directory.
+// TestTemplatesDirOverride verifies that --templates-dir picks up custom
+// templates from the given directory. The loader is now scoped per command
+// tree (cmd.Context), so this is parallel-safe.
 func TestTemplatesDirOverride(t *testing.T) {
-	resetTmplDefault(t)
+	t.Parallel()
 
 	dir := t.TempDir()
 	custom := []byte("# CUSTOM POSTMORTEM: {{ .Title }}\n")
@@ -286,7 +276,7 @@ func TestTemplatesDirOverride(t *testing.T) {
 // --templates-dir transparently fall back to the embedded versions. Uses
 // postmortem because it has no author/email dependency that CI runners lack.
 func TestTemplatesDirPartialFallback(t *testing.T) {
-	resetTmplDefault(t)
+	t.Parallel()
 
 	dir := t.TempDir() // empty — nothing to override
 	out, err := runCLI(t, "--templates-dir", dir, "postmortem", "--title", "X", "--stdout")
@@ -299,8 +289,8 @@ func TestTemplatesDirPartialFallback(t *testing.T) {
 }
 
 // TestPerCommandTemplateOverride uses --template (single-file override) on
-// a single command. Does not touch tmpl.Default — render reads the file
-// directly via opts.TemplatePath — so this test is parallel-safe.
+// a single command. render reads the file directly via opts.TemplatePath,
+// bypassing the loader entirely.
 func TestPerCommandTemplateOverride(t *testing.T) {
 	t.Parallel()
 
@@ -389,7 +379,7 @@ func TestTemplatesInitForce(t *testing.T) {
 // TestTemplatesPullRejectsNonGitDir verifies the friendly error message when
 // the configured templates directory exists but isn't a git repo.
 func TestTemplatesPullRejectsNonGitDir(t *testing.T) {
-	resetTmplDefault(t)
+	t.Parallel()
 
 	dir := t.TempDir() // exists, but no .git/
 	_, err := runCLI(t, "--templates-dir", dir, "templates", "pull")
@@ -409,7 +399,7 @@ func TestTemplatesPullSyncsFromRemote(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git not available")
 	}
-	resetTmplDefault(t)
+	t.Parallel()
 
 	base := t.TempDir()
 	remote := filepath.Join(base, "remote.git")
@@ -945,7 +935,7 @@ func TestTemplatesUpgradeDryRun(t *testing.T) {
 // and unconditionally scaffold ~/.srekit/templates. It must now resolve
 // the configured directory the same way every other subcommand does.
 func TestTemplatesInitRespectsConfiguredDir(t *testing.T) {
-	resetTmplDefault(t)
+	// Uses withViper (global viper) so it is not parallel-safe.
 	// Pre-stage an existing empty dir so configureTemplates (the root
 	// PersistentPreRunE) doesn't warn about a missing path.
 	dir := filepath.Join(t.TempDir(), "configured-templates")

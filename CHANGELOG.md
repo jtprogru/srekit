@@ -15,7 +15,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Changed
 
--
+- Template loading no longer goes through a package-level mutable `tmpl.Default`. The loader is now built per command tree in `configureTemplates` and threaded to each command via the cobra command context (`loaderFrom`); `render.Render` takes the `*tmpl.Loader` as an argument. This removes the global that made `--templates-dir` tests non-parallel and tripped the race detector locally; those tests are `t.Parallel()` again and the `resetTmplDefault` workaround is gone. No user-facing behavior change.
 
 ### Fixed
 

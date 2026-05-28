@@ -62,7 +62,7 @@ func newOncallCmd() *cobra.Command {
 				Author: a,
 			}
 			def := fmt.Sprintf("oncall-%s-%s.md", ids.Slug(team), start)
-			return render.Render(cmd.OutOrStdout(), "oncall.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "oncall.md.tmpl", data, out.RenderOptions(def))
 		},
 	}
 	cmd.Flags().StringVar(&team, "team", "", "team name (required)")

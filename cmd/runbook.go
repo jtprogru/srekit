@@ -38,7 +38,7 @@ func newRunbookCmd() *cobra.Command {
 				Now:     clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("runbook-%s.md", ids.Slug(title))
-			return render.Render(cmd.OutOrStdout(), "runbook.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "runbook.md.tmpl", data, out.RenderOptions(def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "runbook title (required)")

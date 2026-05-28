@@ -39,7 +39,7 @@ func newSLOCmd() *cobra.Command {
 				Now:           clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("slo-%s.md", ids.Slug(service))
-			return render.Render(cmd.OutOrStdout(), "slo.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "slo.md.tmpl", data, out.RenderOptions(def))
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "", "service name (required)")

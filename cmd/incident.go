@@ -50,7 +50,7 @@ func newIncidentCmd() *cobra.Command {
 				Now:      clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("incident-%s.md", ids.Slug(title))
-			return render.Render(cmd.OutOrStdout(), "incident.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "incident.md.tmpl", data, out.RenderOptions(def))
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "incident title (required)")

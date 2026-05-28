@@ -7,11 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
 func TestRenderStdout(t *testing.T) {
 	var out bytes.Buffer
-	err := Render(&out, "task.md.tmpl", struct {
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
 		ID, CreationDate, ModificationDate, Title string
 	}{"id-1", "2026-01-01T00:00:00", "2026-01-01T00:00:00", "Hello"}, Options{Stdout: true})
 	if err != nil {
@@ -27,7 +29,7 @@ func TestRenderToFile(t *testing.T) {
 	target := filepath.Join(dir, "sub", "out.md")
 	var out bytes.Buffer
 
-	err := Render(&out, "task.md.tmpl", struct {
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
 		ID, CreationDate, ModificationDate, Title string
 	}{"id-1", "t", "t", "Foo"}, Options{Out: target})
 	if err != nil {
@@ -49,7 +51,7 @@ func TestRenderRefusesOverwrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	err := Render(&out, "task.md.tmpl", struct {
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
 		ID, CreationDate, ModificationDate, Title string
 	}{"id", "t", "t", "x"}, Options{Out: target})
 	if err == nil {
@@ -62,7 +64,7 @@ func TestRenderForceOverwrite(t *testing.T) {
 	target := filepath.Join(dir, "out.md")
 	_ = os.WriteFile(target, []byte("old"), 0o644)
 	var out bytes.Buffer
-	err := Render(&out, "task.md.tmpl", struct {
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
 		ID, CreationDate, ModificationDate, Title string
 	}{"id", "t", "t", "Force"}, Options{Out: target, Force: true})
 	if err != nil {
@@ -81,7 +83,7 @@ func TestRenderFilePermissions(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
 	var out bytes.Buffer
-	err := Render(&out, "task.md.tmpl", struct {
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
 		ID, CreationDate, ModificationDate, Title string
 	}{"id", "t", "t", "Perms"}, Options{Out: target})
 	if err != nil {
@@ -105,7 +107,7 @@ func TestRenderTemplatePathOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	err := Render(&out, "task.md.tmpl", struct{ Title string }{Title: "Hi"},
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct{ Title string }{Title: "Hi"},
 		Options{Stdout: true, TemplatePath: tmplFile})
 	if err != nil {
 		t.Fatal(err)
@@ -124,7 +126,7 @@ func TestRenderJSONStdout(t *testing.T) {
 		Title string
 	}
 	in := payload{ID: "abc", Title: "Hello"}
-	err := Render(&out, "task.md.tmpl", in, Options{JSON: true, Default: "ignored.md"})
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", in, Options{JSON: true, Default: "ignored.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +147,7 @@ func TestRenderJSONToFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.json")
 	var out bytes.Buffer
-	err := Render(&out, "task.md.tmpl",
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl",
 		struct{ Title string }{Title: "Foo"},
 		Options{Out: target, JSON: true},
 	)
@@ -172,7 +174,7 @@ func TestRenderJSONIgnoresDefaultPath(t *testing.T) {
 	dir := t.TempDir()
 	defaultPath := filepath.Join(dir, "should-not-be-written.md")
 	var out bytes.Buffer
-	err := Render(&out, "task.md.tmpl",
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl",
 		struct{ Title string }{Title: "X"},
 		Options{JSON: true, Default: defaultPath},
 	)
@@ -191,7 +193,7 @@ func TestRenderDryRunNoFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
 	var out bytes.Buffer
-	err := Render(&out, "task.md.tmpl", struct {
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
 		ID, CreationDate, ModificationDate, Title string
 	}{"id", "t", "t", "Dry"}, Options{Out: target, DryRun: true})
 	if err != nil {

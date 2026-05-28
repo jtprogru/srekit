@@ -86,6 +86,13 @@ func (d DirSource) Read(name string) ([]byte, error) {
 // Loader resolves templates by trying Sources in order; first hit wins.
 type Loader struct{ Sources []Source }
 
+// NewDefaultLoader returns a Loader backed only by the embedded templates.
+// cmd builds one per command tree and, when --templates-dir is set, prepends
+// a DirSource. Each call returns a fresh value — no shared package state.
+func NewDefaultLoader() *Loader {
+	return &Loader{Sources: []Source{EmbedSource{}}}
+}
+
 // Parse resolves name through Sources in order and returns a parsed
 // template with Funcs applied. fs.ErrNotExist on a source falls through
 // to the next; any other source error is returned as-is.
@@ -111,17 +118,6 @@ func (l *Loader) Parse(name string) (*template.Template, error) {
 // over the embedded fallback.
 func (l *Loader) AddDirSource(dir string) {
 	l.Sources = append([]Source{DirSource{Dir: dir}}, l.Sources...)
-}
-
-// Default is the package-level Loader used by the convenience Parse below.
-// cmd/root.go configures it at startup based on --templates-dir / viper.
-//
-//nolint:gochecknoglobals // intentional package-level injection point, same pattern as clock.Now
-var Default = &Loader{Sources: []Source{EmbedSource{}}}
-
-// Parse is a convenience wrapper around Default.Parse.
-func Parse(name string) (*template.Template, error) {
-	return Default.Parse(name)
 }
 
 // ParseFile reads a template from an arbitrary file path and parses it

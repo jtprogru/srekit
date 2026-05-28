@@ -39,7 +39,7 @@ func newRetroCmd() *cobra.Command {
 				Now:    clock.Now().Format(time.RFC3339),
 			}
 			def := fmt.Sprintf("retro-%s-%s.md", ids.Slug(team), ids.Slug(s))
-			return render.Render(cmd.OutOrStdout(), "retro.md.tmpl", data, out.RenderOptions(def))
+			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "retro.md.tmpl", data, out.RenderOptions(def))
 		},
 	}
 	cmd.Flags().StringVar(&team, "team", "", "team name (required)")
