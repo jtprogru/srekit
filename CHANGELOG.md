@@ -21,6 +21,23 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.11.0] - 2026-05-28
+
+### Added
+
+- Global `-q` / `--quiet` flag. Suppresses informational messages — the `wrote <file>` confirmation, `--dry-run` notes, and the `config init` "Wrote …" line. Generated content and error messages still print, so `srekit task --title X -q --stdout` emits only the artifact.
+- `Example` blocks in `--help` for the generator commands (`incident`, `postmortem`, `task`, `runbook`, `rfc`, `slo`, `oncall-report`, `license`) and `templates init` / `upgrade` / `diff`. The root `--help` now links to the documentation site and the GitHub repository.
+- `oncall` alias for `oncall-report`.
+- XDG Base Directory support. Fresh installs resolve the config file at `$XDG_CONFIG_HOME/srekit/config.yaml` and the default templates directory at `$XDG_CONFIG_HOME/srekit/templates`. The pre-XDG locations (`~/.srekit.yaml`, `~/.srekit/templates`) keep working unchanged: an existing legacy path wins, so current users see no migration and never end up with a silently-ignored config.
+
+### Changed
+
+- Validation errors now print only the error message instead of dumping the full usage block (e.g. `srekit incident` without `--title`). Usage is still shown for genuine flag/argument parse errors (unknown flag, bad value).
+- `--out -` now writes to stdout, following the conventional `-` stand-in, instead of creating a file literally named `-`.
+- `templates diff` honors the `NO_COLOR` environment variable in addition to the existing `--no-color` flag.
+- `SIGINT` / `SIGTERM` now cancel the command context, so child `git` processes spawned by the `templates` subcommands are torn down on Ctrl-C. A second Ctrl-C falls through to immediate termination.
+- Documented uninstallation in the README, and removed a dead `windows` archive `format_override` from the GoReleaser config (no Windows build target was ever produced).
+
 ## [0.10.2] - 2026-05-28
 
 ### Added
@@ -193,7 +210,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/jtprogru/srekit/compare/v0.10.2...v0.11.0
 [0.7.0]: https://github.com/jtprogru/srekit/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jtprogru/srekit/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jtprogru/srekit/compare/v0.4.0...v0.5.0
