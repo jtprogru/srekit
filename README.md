@@ -26,6 +26,31 @@ go install github.com/jtprogru/srekit@latest
 
 Готовые бинарники под Linux / macOS / FreeBSD (amd64, arm64) — на странице [Releases](https://github.com/jtprogru/srekit/releases).
 
+## Uninstall
+
+Homebrew:
+
+```bash
+brew uninstall srekit
+brew untap jtprogru/tap   # опционально
+```
+
+Установка через `go install` или вручную скачанный бинарник:
+
+```bash
+rm "$(command -v srekit)"   # или удалите бинарь из своего PATH / $GOBIN
+```
+
+Конфиг и пользовательские шаблоны (если создавались) удаляются отдельно:
+
+```bash
+rm -f  "${XDG_CONFIG_HOME:-$HOME/.config}/srekit/config.yaml"
+rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/srekit/templates"
+# legacy-расположение (до перехода на XDG):
+rm -f  ~/.srekit.yaml
+rm -rf ~/.srekit
+```
+
 ## Usage
 
 ```bash
