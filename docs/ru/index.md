@@ -27,7 +27,7 @@ srekit postmortem --title "API outage" --severity SEV-1 \
   --owner "@oncall" --out postmortem-2026-05-06.md
 
 # Пайп генератора в jq для скриптов
-srekit task --title "Tail latency on api-gw" --json | jq '.ID'
+srekit task --title "Tail latency on api-gw" --json | jq '.id'
 
 # Управление кастомными шаблонами
 srekit templates init     # сделать свою копию

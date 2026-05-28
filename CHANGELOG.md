@@ -15,7 +15,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Changed
 
--
+- **Breaking (`--json`):** unified JSON output to **camelCase** keys across every command. The generator commands previously emitted PascalCase (`{"Title":…, "Severity":…}`); they now match the camelCase convention `templates list --json` already used (`{"title":…, "severity":…}`). The nested author object is now `{"name","email"}`. Scripts that pluck PascalCase keys via `jq` (`.Title`, `.Severity`) must switch to camelCase (`.title`, `.severity`). Template authoring is unaffected — Go templates still reference field names (`.Title`).
 
 ### Fixed
 

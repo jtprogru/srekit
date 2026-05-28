@@ -52,8 +52,11 @@ func newRFCCmd() *cobra.Command {
 				return err
 			}
 			data := struct {
-				ID, Title, Status, Now string
-				Author                 meta.Author
+				ID     string      `json:"id"`
+				Title  string      `json:"title"`
+				Status string      `json:"status"`
+				Now    string      `json:"now"`
+				Author meta.Author `json:"author"`
 			}{
 				ID:     ids.UUID(),
 				Title:  title,

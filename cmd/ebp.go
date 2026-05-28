@@ -27,7 +27,9 @@ func newEBPCmd() *cobra.Command {
 				return errors.New("--service is required")
 			}
 			data := struct {
-				ID, Service, Now string
+				ID      string `json:"id"`
+				Service string `json:"service"`
+				Now     string `json:"now"`
 			}{
 				ID:      ids.UUID(),
 				Service: service,

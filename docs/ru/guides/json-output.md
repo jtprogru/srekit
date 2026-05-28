@@ -5,23 +5,22 @@
 ## Контракт
 
 - Default sink — **stdout**. `--out FILE` пишет JSON туда.
-- Имена полей — **PascalCase** (Go field names без `json:` тегов).
+- Имена полей — **camelCase** во всех командах (`id`, `title`, `latencyTarget`, …).
 - С `--json` Markdown default-путь (`Tasker - <title>.md`, `postmortem-<slug>.md` и т.п.) **не** используется — JSON не попадёт случайно в `.md` файл.
 
-!!! note "Два JSON-контракта в v0.x"
-    Генераторы отдают **PascalCase** ключи. Introspection-команды
-    (`templates list --json`) отдают **camelCase** ключи, потому что
-    идут через tagged-структуры, удовлетворяющие линтер `tagliatelle`.
-    Сведём к единому стандарту в v1.0. Пока правило: "JSON от `--json`
-    у генератора — PascalCase, JSON от `templates list --json` или
-    любой будущей introspection — camelCase."
+!!! note "Единый JSON-контракт"
+    Все команды — и генераторы, и introspection
+    (`templates list --json`) — отдают **camelCase** ключи. В ранних
+    0.x релизах генераторы (PascalCase) и `templates list` (camelCase)
+    расходились; этого расхождения больше нет, так что одно соглашение
+    `jq` работает везде.
 
 ## Паттерны
 
 ### Извлечь одно поле
 
 ```bash
-srekit task --title "Tail latency" --json | jq -r '.ID'
+srekit task --title "Tail latency" --json | jq -r '.id'
 # 085883a2-32d0-4d50-9bc6-ac219e29409c
 ```
 
@@ -29,7 +28,7 @@ srekit task --title "Tail latency" --json | jq -r '.ID'
 
 ```bash
 srekit postmortem --title "API outage" --severity SEV-1 --json |
-  jq '{title: .Title, severity: .Severity, started: .Start, owner: .Owner}'
+  jq '{title: .title, severity: .severity, started: .start, owner: .owner}'
 ```
 
 ### Драйвить другой инструмент
@@ -38,7 +37,7 @@ srekit postmortem --title "API outage" --severity SEV-1 --json |
 
 ```bash
 srekit slo --service api-gw --target 99.95% --window 30d --json |
-  jq -r '"\(.Service) \(.Target) \(.Window)"' |
+  jq -r '"\(.service) \(.target) \(.window)"' |
   xargs my-slo-registrar register
 ```
 
@@ -61,26 +60,26 @@ srekit oncall-report --team platform --json --out oncall.json
 
 ## Per-command структура payload
 
-Полный Go struct, который передаётся в шаблон, перечислен на странице каждой команды (раздел "Структура данных для шаблона"). Самые частые:
+Полная структура, которая передаётся в шаблон, перечислена на странице каждой команды (раздел "Структура данных для шаблона"). Авторы шаблонов обращаются к полям по Go-именам (`.Title`); `--json` отдаёт camelCase-ключи ниже:
 
-```go
+```jsonc
 // task
-struct { ID, CreationDate, ModificationDate, Title string }
+{ "id", "creationDate", "modificationDate", "title" }
 
 // postmortem
-struct { ID, Title, Severity, Start, End, Owner, Now string }
+{ "id", "title", "severity", "start", "end", "owner", "now" }
 
 // rfc
-struct { ID, Title, Status, Now string; Author struct { Name, Email string } }
+{ "id", "title", "status", "now", "author": { "name", "email" } }
 
 // oncall-report
-struct { ID, Team, Start, End, Now string; Author struct { Name, Email string } }
+{ "id", "team", "start", "end", "now", "author": { "name", "email" } }
 
 // slo
-struct { ID, Service, Target, Window, Latency, Now string }
+{ "id", "service", "target", "window", "latencyTarget", "now" }
 ```
 
-`Author` — вложенный объект (Go struct `meta.Author{Name, Email}`), обращаться `.Author.Name` / `.Author.Email` в `jq`.
+`author` — вложенный объект (`{ "name", "email" }`), обращаться `.author.name` / `.author.email` в `jq`.
 
 ## Когда использовать `--json`
 
@@ -97,4 +96,4 @@ struct { ID, Service, Target, Window, Latency, Now string }
 ## См. также
 
 - [Рецепты](../recipes.md) — конкретные `--json` пайплайны.
-- [`templates list --json`](../commands/templates.md#templates-list) — introspection JSON (camelCase ключи).
+- [`templates list --json`](../commands/templates.md#templates-list) — introspection JSON (те же camelCase ключи).

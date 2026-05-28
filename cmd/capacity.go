@@ -28,7 +28,10 @@ func newCapacityCmd() *cobra.Command {
 				return errors.New("--service is required")
 			}
 			data := struct {
-				ID, Service, Horizon, Now string
+				ID      string `json:"id"`
+				Service string `json:"service"`
+				Horizon string `json:"horizon"`
+				Now     string `json:"now"`
 			}{
 				ID:      ids.UUID(),
 				Service: service,

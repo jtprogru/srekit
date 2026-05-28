@@ -31,7 +31,11 @@ func newRunbookCmd() *cobra.Command {
 				return errors.New("--title is required")
 			}
 			data := struct {
-				ID, Title, Service, Alert, Now string
+				ID      string `json:"id"`
+				Title   string `json:"title"`
+				Service string `json:"service"`
+				Alert   string `json:"alert"`
+				Now     string `json:"now"`
 			}{
 				ID:      ids.UUID(),
 				Title:   title,

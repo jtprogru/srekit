@@ -30,9 +30,9 @@ func newChangelogCmd() *cobra.Command {
 				repo = r.Slug()
 			}
 			data := struct {
-				Today          string
-				Repo           string
-				InitialVersion string
+				Today          string `json:"today"`
+				Repo           string `json:"repo"`
+				InitialVersion string `json:"initialVersion"`
 			}{
 				Today:          clock.Now().Format("2006-01-02"),
 				Repo:           repo,

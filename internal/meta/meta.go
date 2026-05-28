@@ -34,8 +34,8 @@ func DetectRepo() (Repo, error) {
 }
 
 type Author struct {
-	Name  string
-	Email string
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 // Lookup is the minimal viper surface Resolve needs. Pass viper.GetViper()

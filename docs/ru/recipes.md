@@ -20,7 +20,7 @@ srekit postmortem --title "$TITLE" --severity "$SEV" \
 # Извлечь метаданные и запостить
 srekit postmortem --title "$TITLE" --severity "$SEV" \
   --start "$START" --end "$END" --json |
-  jq '{title, severity: .Severity, started_at: .Start, ended_at: .End}' |
+  jq '{title, severity: .severity, started_at: .start, ended_at: .end}' |
   curl -X POST https://tracker.example.com/api/incidents \
     -H 'Content-Type: application/json' -d @-
 ```

@@ -31,7 +31,10 @@ func newRetroCmd() *cobra.Command {
 				s = clock.Now().Format("2006-01-02")
 			}
 			data := struct {
-				ID, Team, Sprint, Now string
+				ID     string `json:"id"`
+				Team   string `json:"team"`
+				Sprint string `json:"sprint"`
+				Now    string `json:"now"`
 			}{
 				ID:     ids.UUID(),
 				Team:   team,

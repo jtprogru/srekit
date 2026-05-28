@@ -36,7 +36,10 @@ func newTaskCmd() *cobra.Command {
 			}
 			now := clock.Now().Format(time.RFC3339)
 			data := struct {
-				ID, CreationDate, ModificationDate, Title string
+				ID               string `json:"id"`
+				CreationDate     string `json:"creationDate"`
+				ModificationDate string `json:"modificationDate"`
+				Title            string `json:"title"`
 			}{
 				ID:               ids.UUID(),
 				CreationDate:     now,

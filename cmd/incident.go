@@ -45,7 +45,12 @@ func newIncidentCmd() *cobra.Command {
 				return fmt.Errorf("invalid --status %q (investigated, active, contained, resolved)", status)
 			}
 			data := struct {
-				ID, Title, Severity, Lead, Status, Now string
+				ID       string `json:"id"`
+				Title    string `json:"title"`
+				Severity string `json:"severity"`
+				Lead     string `json:"lead"`
+				Status   string `json:"status"`
+				Now      string `json:"now"`
 			}{
 				ID:       ids.UUID(),
 				Title:    title,

@@ -784,7 +784,7 @@ func TestConfigInitMissingAuthorFails(t *testing.T) {
 }
 
 // TestTaskJSON verifies --json emits structured data with the same fields
-// the template would have seen. PascalCase keys are the public contract.
+// the template would have seen. camelCase keys are the public contract.
 func TestTaskJSON(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "task", "--title", "Tail latency", "--json")
@@ -795,11 +795,11 @@ func TestTaskJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &got); err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
 	}
-	if got["Title"] != "Tail latency" {
-		t.Errorf("Title mismatch: %v", got["Title"])
+	if got["title"] != "Tail latency" {
+		t.Errorf("title mismatch: %v", got["title"])
 	}
-	if _, ok := got["ID"].(string); !ok {
-		t.Errorf("expected string ID, got %T: %v", got["ID"], got["ID"])
+	if _, ok := got["id"].(string); !ok {
+		t.Errorf("expected string id, got %T: %v", got["id"], got["id"])
 	}
 }
 
@@ -818,7 +818,7 @@ func TestPostmortemJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &got); err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
 	}
-	if got["Title"] != "API outage" || got["Severity"] != "SEV-1" {
+	if got["title"] != "API outage" || got["severity"] != "SEV-1" {
 		t.Errorf("field mismatch: %+v", got)
 	}
 }

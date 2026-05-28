@@ -40,7 +40,7 @@ srekit postmortem --title "API outage" --severity SEV-1 \
 
 ```bash
 srekit postmortem --title "API outage" --severity SEV-1 --json \
-  | jq '{title: .Title, severity: .Severity, started: .Start}'
+  | jq '{title: .title, severity: .severity, started: .start}'
 ```
 
 ## Структура секций

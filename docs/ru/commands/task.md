@@ -39,7 +39,7 @@ srekit task --title "Tail latency on api-gw" --path ./tasks
 Достать сгенерированный UUID через `jq`:
 
 ```bash
-srekit task --title "Tail latency on api-gw" --json | jq -r '.ID'
+srekit task --title "Tail latency on api-gw" --json | jq -r '.id'
 ```
 
 ## Структура данных для шаблона

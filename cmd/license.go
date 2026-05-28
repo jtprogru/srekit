@@ -54,8 +54,8 @@ func newLicenseCmd() *cobra.Command {
 				opts.Stdout = true
 			}
 			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), tmplName, struct {
-				Author meta.Author
-				Year   int
+				Author meta.Author `json:"author"`
+				Year   int         `json:"year"`
 			}{author, year}, opts)
 		},
 	}

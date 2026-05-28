@@ -35,7 +35,13 @@ func newPostmortemCmd() *cobra.Command {
 				return errors.New("--title is required")
 			}
 			data := struct {
-				ID, Title, Severity, Start, End, Owner, Now string
+				ID       string `json:"id"`
+				Title    string `json:"title"`
+				Severity string `json:"severity"`
+				Start    string `json:"start"`
+				End      string `json:"end"`
+				Owner    string `json:"owner"`
+				Now      string `json:"now"`
 			}{
 				ID:       ids.UUID(),
 				Title:    title,

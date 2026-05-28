@@ -40,7 +40,7 @@ Extract just the metadata for a tracker:
 
 ```bash
 srekit postmortem --title "API outage" --severity SEV-1 --json \
-  | jq '{title: .Title, severity: .Severity, started: .Start}'
+  | jq '{title: .title, severity: .severity, started: .start}'
 ```
 
 ## Section structure

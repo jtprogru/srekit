@@ -57,8 +57,12 @@ func newOncallCmd() *cobra.Command {
 				}
 			}
 			data := struct {
-				ID, Team, Start, End, Now string
-				Author                    meta.Author
+				ID     string      `json:"id"`
+				Team   string      `json:"team"`
+				Start  string      `json:"start"`
+				End    string      `json:"end"`
+				Now    string      `json:"now"`
+				Author meta.Author `json:"author"`
 			}{
 				ID:     ids.UUID(),
 				Team:   team,

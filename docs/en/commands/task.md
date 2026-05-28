@@ -39,7 +39,7 @@ srekit task --title "Tail latency on api-gw" --path ./tasks
 Pipe into `jq` to grab the generated UUID:
 
 ```bash
-srekit task --title "Tail latency on api-gw" --json | jq -r '.ID'
+srekit task --title "Tail latency on api-gw" --json | jq -r '.id'
 ```
 
 ## Template shape

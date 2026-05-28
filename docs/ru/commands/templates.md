@@ -57,8 +57,8 @@ srekit templates list --filter customized   # только один класс
 
 !!! note "JSON shape"
     `templates list --json` отдаёт camelCase ключи (`name`, `status`,
-    `userPath`) — отличается от PascalCase контракта `--json` у
-    генераторов. Сведём к единому стандарту в v1.0.
+    `userPath`) — то же camelCase соглашение, что и `--json` у
+    генераторов.
 
 ---
 
