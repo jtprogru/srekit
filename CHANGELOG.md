@@ -15,11 +15,17 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Changed
 
-- **Breaking (`--json`):** unified JSON output to **camelCase** keys across every command. The generator commands previously emitted PascalCase (`{"Title":…, "Severity":…}`); they now match the camelCase convention `templates list --json` already used (`{"title":…, "severity":…}`). The nested author object is now `{"name","email"}`. Scripts that pluck PascalCase keys via `jq` (`.Title`, `.Severity`) must switch to camelCase (`.title`, `.severity`). Template authoring is unaffected — Go templates still reference field names (`.Title`).
+-
 
 ### Fixed
 
 -
+
+## [0.12.0] - 2026-05-28
+
+### Changed
+
+- **Breaking (`--json`):** unified JSON output to **camelCase** keys across every command. The generator commands previously emitted PascalCase (`{"Title":…, "Severity":…}`); they now match the camelCase convention `templates list --json` already used (`{"title":…, "severity":…}`). The nested author object is now `{"name","email"}`. Scripts that pluck PascalCase keys via `jq` (`.Title`, `.Severity`) must switch to camelCase (`.title`, `.severity`). Template authoring is unaffected — Go templates still reference field names (`.Title`).
 
 ## [0.11.0] - 2026-05-28
 
@@ -210,7 +216,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/jtprogru/srekit/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/jtprogru/srekit/compare/v0.10.2...v0.11.0
 [0.7.0]: https://github.com/jtprogru/srekit/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jtprogru/srekit/compare/v0.5.0...v0.6.0
