@@ -10,6 +10,9 @@
 
 Развёрнутый гайд — в **[Кастомные шаблоны](../guides/custom-templates.md)**.
 
+!!! tip "Готовый репозиторий шаблонов"
+    [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — публичный репозиторий ровно в той раскладке, что ждут эти подкоманды. Склонируй его как `templates_dir`, чтобы пропустить `init`, и работай через `pull` / `list` / `diff` / `upgrade`.
+
 ---
 
 ## `templates init [dir]` {#templates-init}
@@ -113,4 +116,5 @@ srekit templates upgrade --force     # перезаписать кастомиз
 ## См. также
 
 - [Кастомные шаблоны](../guides/custom-templates.md) — развёрнутый гайд.
+- [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — готовый репозиторий шаблонов: склонировать или форкнуть.
 - [`srekit config`](config.md) — указать srekit на твою templates dir через `~/.srekit.yaml`.

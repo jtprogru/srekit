@@ -143,6 +143,8 @@ echo "templates_dir: ~/.acme/templates" >> ~/.srekit.yaml
 srekit templates pull
 ```
 
+Нужна отправная точка? [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — готовый к клонированию пример ровно в той раскладке, что ждёт srekit: используй напрямую или форкни как основу общего репозитория организации.
+
 ---
 
 ## См. также

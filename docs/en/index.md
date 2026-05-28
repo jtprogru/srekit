@@ -40,4 +40,5 @@ srekit templates upgrade  # 3-way merge in new embedded content
 - **[Getting started](getting-started.md)** — install, first command, first config.
 - **[Commands overview](commands/index.md)** — the full command surface.
 - **[Custom templates workflow](guides/custom-templates.md)** — keep your own templates under git and 3-way-merge upstream changes.
+- **[jtprogru/sre-templates](https://github.com/jtprogru/sre-templates)** — a ready-to-use templates repo in exactly the layout srekit expects; clone it, point srekit at it, or fork it as a starting point.
 - **[Recipes](recipes.md)** — practical pipelines (jq, on-call rotation, CI).

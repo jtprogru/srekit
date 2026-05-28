@@ -2,6 +2,16 @@
 
 Built-in шаблоны srekit — это разумные defaults, но любой команде рано или поздно хочется их доработать: принять внутреннюю терминологию, добавить специфичную секцию или убрать ненужную. Workflow кастомных шаблонов даёт это сделать, не теряя возможности забирать upstream-изменения из будущих релизов srekit.
 
+!!! tip "Начни с готового репозитория"
+    [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — публичный репозиторий шаблонов ровно в той раскладке, что описана ниже. Склонируй его вместо скаффолда с нуля или форкни под свой remote:
+
+    ```bash
+    git clone https://github.com/jtprogru/sre-templates ~/.srekit/templates
+    echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+    ```
+
+    Дальше `srekit templates pull` держит его в синхроне с remote, а `srekit templates upgrade` вмёрживает новый embedded-контент из будущих бинарей.
+
 ## Как это устроено
 
 ```
@@ -153,5 +163,6 @@ git -C infra add sre-templates && git -C infra commit -m "vendor srekit template
 
 ## См. также
 
+- [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — готовый репозиторий шаблонов, который можно склонировать или форкнуть.
 - [`srekit templates`](../commands/templates.md) — полный reference по подкомандам.
 - [Конфигурация](configuration.md) — как `templates_dir:` резолвится через флаги / env / yaml.

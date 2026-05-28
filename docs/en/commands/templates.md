@@ -10,6 +10,9 @@ The group has six subcommands forming a lifecycle:
 
 See **[Custom templates workflow](../guides/custom-templates.md)** for the narrative version.
 
+!!! tip "Ready-made templates repo"
+    [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) is a public repo in the exact layout these subcommands expect. Clone it as your `templates_dir` to skip `init`, then use `pull` / `list` / `diff` / `upgrade` against it.
+
 ---
 
 ## `templates init [dir]` {#templates-init}
@@ -113,4 +116,5 @@ srekit templates upgrade --force     # overwrite customizations (skips merge)
 ## See also
 
 - [Custom templates workflow](../guides/custom-templates.md) — the full walkthrough.
+- [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — a ready-to-use templates repo to clone or fork.
 - [`srekit config`](config.md) — point srekit at your templates dir via `~/.srekit.yaml`.

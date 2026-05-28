@@ -93,6 +93,7 @@ If you pass neither `--out` nor `--stdout`, each command has a sensible default 
 You now have enough to use srekit day-to-day. To go deeper:
 
 - **[Custom templates workflow](guides/custom-templates.md)** — fork the embedded templates into your own git repo and pull/merge upstream changes cleanly.
+- **[jtprogru/sre-templates](https://github.com/jtprogru/sre-templates)** — a ready-made templates repo in the exact layout srekit expects. Clone it and point `templates_dir` at it to skip scaffolding from scratch.
 - **[JSON output](guides/json-output.md)** — pipe generators into `jq` for CI scripts and integrations.
 - **[Commands overview](commands/index.md)** — full reference for every subcommand and flag.
 - **[Recipes](../recipes.md)** — concrete workflows that combine srekit with your tooling.

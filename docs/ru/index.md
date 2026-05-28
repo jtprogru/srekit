@@ -40,4 +40,5 @@ srekit templates upgrade  # 3-way merge новых embedded-изменений
 - **[Старт](getting-started.md)** — установка, первая команда, первый конфиг.
 - **[Обзор команд](commands/index.md)** — полная поверхность CLI.
 - **[Кастомные шаблоны](guides/custom-templates.md)** — храни свои шаблоны под git и забирай upstream-изменения через 3-way merge.
+- **[jtprogru/sre-templates](https://github.com/jtprogru/sre-templates)** — готовый репозиторий шаблонов ровно в той раскладке, которую ждёт srekit; склонируй его, нацель srekit на него или форкни как отправную точку.
 - **[Рецепты](recipes.md)** — практические пайплайны (jq, on-call ротация, CI).

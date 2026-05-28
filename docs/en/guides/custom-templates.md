@@ -2,6 +2,16 @@
 
 srekit's built-in templates are good defaults, but every team eventually wants to tweak them — adopt internal terminology, add a specific section, or drop one they don't use. The custom-templates workflow lets you do that without losing the ability to pick up upstream changes from future srekit releases.
 
+!!! tip "Start from a ready-made repo"
+    [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) is a public templates repo in exactly the layout below. Clone it instead of scaffolding from scratch, or fork it to keep your own remote:
+
+    ```bash
+    git clone https://github.com/jtprogru/sre-templates ~/.srekit/templates
+    echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+    ```
+
+    From there `srekit templates pull` keeps it in sync with the remote and `srekit templates upgrade` merges in new embedded content from future binaries.
+
 ## How the pieces fit together
 
 ```
@@ -153,5 +163,6 @@ git -C infra add sre-templates && git -C infra commit -m "vendor srekit template
 
 ## See also
 
+- [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — a ready-to-use templates repo you can clone or fork.
 - [`srekit templates`](../commands/templates.md) — full subcommand reference.
 - [Configuration & precedence](configuration.md) — how `templates_dir:` is resolved across flags / env / yaml.

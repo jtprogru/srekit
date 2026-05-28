@@ -93,6 +93,7 @@ srekit postmortem --title "API outage" --severity SEV-1 \
 Этого хватит для повседневного использования. Если хочется глубже:
 
 - **[Кастомные шаблоны](guides/custom-templates.md)** — форк embedded шаблонов в свой git-репо и подтягивание upstream-изменений через clean merge.
+- **[jtprogru/sre-templates](https://github.com/jtprogru/sre-templates)** — готовый репозиторий шаблонов ровно в той раскладке, которую ждёт srekit. Склонируй его и нацель на него `templates_dir`, чтобы не скаффолдить с нуля.
 - **[JSON-вывод](guides/json-output.md)** — пайплайны генераторов в `jq` для CI-скриптов и интеграций.
 - **[Обзор команд](commands/index.md)** — полный reference по каждой подкоманде и флагу.
 - **[Рецепты](../recipes.md)** — конкретные сценарии, где srekit совмещается с твоим тулчейном.
