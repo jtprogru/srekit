@@ -21,6 +21,27 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.28.0] - 2026-06-04
+
+### Added
+
+- **`SECURITY.md` — published vulnerability reporting policy.** Documents the reporting channel (GitHub private advisory or email), supported-versions story for the 0.x line, scope (what srekit is responsible for vs. what's the user's own trust), the threat model (single-user CLI, no network listener, no auth layer), what we run in CI to keep ourselves safe (govulncheck + gosec + Bearer), and the FuncMap-surface caveat for anyone embedding `srekit` in a workflow that ingests third-party `<name>.yaml`.
+
+- **`govulncheck` step in `.github/workflows/security.yaml`** — blocking on every push / PR. Catches known CVEs in direct and transitive Go dependencies; complements the gosec scan that already runs via `golangci-lint`.
+
+### Changed
+
+- **Security audit ran end-to-end against the v0.27.0 codebase.** Tools: `gosec` (latest), `govulncheck` (latest), manual review of file writes, subprocess invocations, YAML/template parsing, user input handling. Result: **no reachable vulnerabilities.** The gosec scan returned 39 findings, all triaged as intentional design choices:
+    - 14 × G306 (`WriteFile` perms `0o644`) — scaffolded templates and rendered documents are public artifacts; `0o644` is correct. Already annotated with `//nolint:gosec` in code.
+    - 16 × G304 (file inclusion via variable) — a CLI tool's job is to read paths supplied by the user (`--templates-dir`, `--template`, `--from`). Not a vulnerability.
+    - 6 × G302 (directory perms `0o755`) — `templates_dir` is public, parent of a git working tree.
+    - 6 × G204 (subprocess with variable) — every `exec.Command` invocation is `git` with arguments passed as separate argv elements (never `sh -c`); the only "variable" component is a directory path or known-set git subcommand. Not exploitable.
+    - 3 × G703 (path traversal via taint) — confirmed false positives; the variable in each case is either an embedded-set filename or a user-explicit dir from a CLI flag.
+
+  `govulncheck` returned **0 vulnerabilities**.
+
+  This audit is now self-monitoring: govulncheck runs on every push / PR (blocking), gosec runs inside golangci-lint on every push / PR. The findings catalog and rationale live in this CHANGELOG entry as the audit baseline.
+
 ## [0.27.0] - 2026-06-04
 
 ### Fixed
@@ -530,7 +551,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.27.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/jtprogru/srekit/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/jtprogru/srekit/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/jtprogru/srekit/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/jtprogru/srekit/compare/v0.24.0...v0.25.0
