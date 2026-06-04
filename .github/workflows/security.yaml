@@ -1,0 +1,32 @@
+name: security
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  bearer:
+    name: bearer (informational)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Bearer scan
+        id: bearer
+        uses: bearer/bearer-action@v2
+        continue-on-error: true
+        with:
+          format: sarif
+          output: bearer.sarif
+          exit-code: "0"
+      - name: Upload SARIF to GitHub code scanning
+        if: always() && hashFiles('bearer.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bearer.sarif
+          category: bearer
