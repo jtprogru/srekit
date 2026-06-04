@@ -8,13 +8,16 @@ import (
 )
 
 func TestLoader_DirOverridesEmbed(t *testing.T) {
+	// As of v0.20.0 there's no shared .tmpl name between embed and
+	// dir-by-default, so this test exercises the source-priority logic by
+	// putting a fixture .tmpl into the dir source and verifying it resolves.
 	dir := t.TempDir()
 	custom := []byte("CUSTOM: {{ .Title }}\n")
-	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), custom, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "fixture.md.tmpl"), custom, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	tpl, err := loader.Parse("task.md.tmpl")
+	tpl, err := loader.Parse("fixture.md.tmpl")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,16 +31,18 @@ func TestLoader_DirOverridesEmbed(t *testing.T) {
 }
 
 func TestLoader_FallbackToEmbed(t *testing.T) {
-	// Dir exists but doesn't contain the requested template — should fall through
-	// to embed without error.
+	// Dir exists but doesn't contain the requested artifact — should fall
+	// through to embed. After v0.20.0 every embedded artifact is a v1
+	// YAML, so we exercise the fallback via LoadArtifactBytes (the .tmpl
+	// path is no longer represented in embed).
 	dir := t.TempDir()
 	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	tpl, err := loader.Parse("changelog.md.tmpl")
+	body, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
 	if err != nil {
 		t.Fatalf("expected embed fallback, got error: %v", err)
 	}
-	if tpl == nil {
-		t.Fatal("expected non-nil template from embed fallback")
+	if len(body) == 0 {
+		t.Fatal("expected non-empty body from embed fallback")
 	}
 }
 

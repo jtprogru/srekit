@@ -28,7 +28,7 @@ import (
 // sidecar files via DirSource, so the transition is backward-compatible
 // even though embed doesn't ship them anymore.
 //
-//go:embed templates/*.tmpl templates/*.yaml
+//go:embed templates/*.yaml
 var FS embed.FS
 
 // DocsMD is the placeholder/FuncMap reference shipped to user templates

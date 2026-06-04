@@ -300,25 +300,13 @@ func TestTemplatesDirPartialFallback(t *testing.T) {
 	}
 }
 
-// TestPerCommandTemplateOverride uses --template (single-file override) on
-// a single command. render reads the file directly via opts.TemplatePath,
-// bypassing the loader entirely.
-func TestPerCommandTemplateOverride(t *testing.T) {
-	t.Parallel()
-
-	dir := t.TempDir()
-	custom := filepath.Join(dir, "my-changelog.tmpl")
-	if err := os.WriteFile(custom, []byte("# ONESHOT CHANGELOG: {{ .Repo }}\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out, err := runCLI(t, "changelog", "--repo", "owner/repo", "--template", custom, "--stdout")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(out, "# ONESHOT CHANGELOG: owner/repo") {
-		t.Fatalf("expected single-template override, got: %s", out)
-	}
-}
+// TestPerCommandTemplateOverride was deleted in v0.20.0. The `--template
+// FILE` flag is now a no-op for every command: each generator goes
+// through the artifact render path, which resolves `<name>.yaml` before
+// any TemplatePath check. The flag is kept for backwards compatibility
+// on the CLI surface, but per-artifact customization in v1.x is via a
+// `<name>.yaml` in `templates_dir`. Render package still tests
+// TemplatePath in isolation (TestRenderTemplatePathOverride).
 
 // TestTemplatesInitScaffolds verifies that 'srekit templates init <dir> --no-git'
 // copies every embedded template and writes TEMPLATES.md.
@@ -339,7 +327,7 @@ func TestTemplatesInitScaffolds(t *testing.T) {
 		"task.yaml", "incident.yaml",
 		"runbook.yaml", "rfc.yaml", "slo.yaml",
 		"ebp.yaml", "capacity.yaml",
-		"oncall.yaml", "retro.yaml", "changelog.md.tmpl",
+		"oncall.yaml", "retro.yaml", "changelog.yaml",
 		"postmortem.yaml",
 		"TEMPLATES.md",
 	} {
@@ -368,7 +356,7 @@ func TestTemplatesInitRefusesOverwrite(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "changelog.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), []byte("MINE\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	_, err := runCLI(t, "templates", "init", dir, "--no-git")
@@ -379,7 +367,7 @@ func TestTemplatesInitRefusesOverwrite(t *testing.T) {
 		t.Fatalf("error should mention --force, got: %v", err)
 	}
 	// Verify the file wasn't clobbered.
-	b, _ := os.ReadFile(filepath.Join(dir, "changelog.md.tmpl"))
+	b, _ := os.ReadFile(filepath.Join(dir, "postmortem.yaml"))
 	if string(b) != "MINE\n" {
 		t.Fatalf("existing file was overwritten: %q", string(b))
 	}
@@ -390,14 +378,14 @@ func TestTemplatesInitForce(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "changelog.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), []byte("MINE\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git", "--force"); err != nil {
 		t.Fatalf("init --force failed: %v", err)
 	}
-	b, _ := os.ReadFile(filepath.Join(dir, "changelog.md.tmpl"))
-	if !strings.Contains(string(b), "# Changelog") {
+	b, _ := os.ReadFile(filepath.Join(dir, "postmortem.yaml"))
+	if !strings.Contains(string(b), "version: 1") {
 		t.Fatalf("--force should overwrite with embedded content; got: %s", string(b))
 	}
 }
@@ -447,7 +435,7 @@ func TestTemplatesPullSyncsFromRemote(t *testing.T) {
 
 	runGit("init", "--bare", "--initial-branch=main", remote)
 	runGit("init", "--initial-branch=main", src)
-	if err := os.WriteFile(filepath.Join(src, "changelog.md.tmpl"), []byte("v1\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(src, "postmortem.yaml"), []byte("v1\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	runGit("-C", src, "add", ".")
@@ -457,12 +445,12 @@ func TestTemplatesPullSyncsFromRemote(t *testing.T) {
 	runGit("clone", remote, user)
 
 	// Sanity-check the initial clone.
-	if b, _ := os.ReadFile(filepath.Join(user, "changelog.md.tmpl")); string(b) != "v1\n" {
+	if b, _ := os.ReadFile(filepath.Join(user, "postmortem.yaml")); string(b) != "v1\n" {
 		t.Fatalf("clone produced %q, expected v1", string(b))
 	}
 
 	// Source pushes an update.
-	if err := os.WriteFile(filepath.Join(src, "changelog.md.tmpl"), []byte("v2\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(src, "postmortem.yaml"), []byte("v2\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	runGit("-C", src, "commit", "-am", "v2")
@@ -472,7 +460,7 @@ func TestTemplatesPullSyncsFromRemote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pull failed: %v (output: %s)", err, out)
 	}
-	if b, _ := os.ReadFile(filepath.Join(user, "changelog.md.tmpl")); string(b) != "v2\n" {
+	if b, _ := os.ReadFile(filepath.Join(user, "postmortem.yaml")); string(b) != "v2\n" {
 		t.Fatalf("pull did not sync to v2: %q", string(b))
 	}
 }
@@ -495,39 +483,36 @@ func TestTemplatesValidateAllPass(t *testing.T) {
 		t.Fatalf("expected all OK, got: %s", out)
 	}
 	// Spot-check a couple of artifacts appear in the per-file output.
-	// postmortem is the v1 .yaml artifact; others are still legacy .tmpl.
-	// (License families are inlined in the binary as of v0.14.0 and don't
-	// flow through templates dir / validate.)
-	for _, name := range []string{"changelog.md.tmpl", "postmortem.yaml", "changelog.md.tmpl"} {
+	// As of v0.20.0 every artifact ships as v1 YAML (`.tmpl` retired across
+	// the 0.14–0.20 sequence). License families are inlined in the binary.
+	for _, name := range []string{"postmortem.yaml", "task.yaml", "changelog.yaml"} {
 		if !strings.Contains(out, "OK    "+name) {
 			t.Errorf("expected OK line for %s, got: %s", name, out)
 		}
 	}
 }
 
-// TestTemplatesValidateCatchesTypo writes a template that references a
-// field name not in the canonical struct shape — validation must fail
-// and the error must point at the bad field.
-func TestTemplatesValidateCatchesTypo(t *testing.T) {
+// TestTemplatesValidateCatchesBadYAML writes a v1 artifact YAML with a
+// structural error (unknown section type) and asserts validate fails on
+// it. As of v0.20.0 no embedded artifact ships as .tmpl, so the prior
+// Samples-driven `.tmpl` typo-catching path is no longer exercised by
+// any builtin; the YAML schema check is the equivalent contract guard.
+func TestTemplatesValidateCatchesBadYAML(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	// .Servce typo (should be .Service)
-	if err := os.WriteFile(filepath.Join(dir, "changelog.md.tmpl"),
-		[]byte("# bad\n{{ .Servce }}\n"), 0o644); err != nil {
+	bad := []byte("version: 1\nsections:\n  - id: x\n    title: X\n    type: not-a-real-type\n")
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), bad, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	out, err := runCLI(t, "templates", "validate", dir)
 	if err == nil {
-		t.Fatalf("expected non-zero exit on typo, output: %s", out)
+		t.Fatalf("expected non-zero exit on bad yaml, output: %s", out)
 	}
-	if !strings.Contains(out, "FAIL  changelog.md.tmpl") {
-		t.Errorf("expected FAIL line for changelog, got: %s", out)
-	}
-	if !strings.Contains(out, "Servce") {
-		t.Errorf("error should reference the bad field name, got: %s", out)
+	if !strings.Contains(out, "FAIL  postmortem.yaml") {
+		t.Errorf("expected FAIL line for postmortem.yaml, got: %s", out)
 	}
 }
 
@@ -538,19 +523,18 @@ func TestTemplatesValidateCatchesSyntaxError(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "changelog.md.tmpl"),
-		[]byte("{{ .Title \n"), 0o644); err != nil {
+	// Malformed YAML (unmatched flow-mapping brace) — must surface at the
+	// YAML parser, never make it to schema checks.
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"),
+		[]byte("version: 1\nsections: { id: x\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	out, err := runCLI(t, "templates", "validate", dir)
 	if err == nil {
 		t.Fatalf("expected non-zero exit on syntax error, output: %s", out)
 	}
-	if !strings.Contains(out, "FAIL  changelog.md.tmpl") {
-		t.Errorf("expected FAIL for changelog.md.tmpl, got: %s", out)
-	}
-	if !strings.Contains(out, "parse") {
-		t.Errorf("error should mention parse failure, got: %s", out)
+	if !strings.Contains(out, "FAIL  postmortem.yaml") {
+		t.Errorf("expected FAIL for postmortem.yaml, got: %s", out)
 	}
 }
 
@@ -775,7 +759,7 @@ func TestTemplatesDiffShowsModification(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 	// Append a sentinel line so the file differs from embedded.
-	target := filepath.Join(dir, "changelog.md.tmpl")
+	target := filepath.Join(dir, "postmortem.yaml")
 	b, err := os.ReadFile(target)
 	if err != nil {
 		t.Fatal(err)
@@ -787,7 +771,7 @@ func TestTemplatesDiffShowsModification(t *testing.T) {
 	if err != nil {
 		t.Fatalf("diff failed: %v (output: %s)", err, out)
 	}
-	if !strings.Contains(out, "embedded/changelog.md.tmpl") || !strings.Contains(out, "user/changelog.md.tmpl") {
+	if !strings.Contains(out, "embedded/postmortem.yaml") || !strings.Contains(out, "user/postmortem.yaml") {
 		t.Errorf("expected diff header for changelog, got: %s", out)
 	}
 	if !strings.Contains(out, "SENTINEL_LINE") {
@@ -804,7 +788,7 @@ func TestTemplatesDiffNameOnly(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	target := filepath.Join(dir, "changelog.md.tmpl")
+	target := filepath.Join(dir, "postmortem.yaml")
 	b, err := os.ReadFile(target)
 	if err != nil {
 		t.Fatal(err)
@@ -816,7 +800,7 @@ func TestTemplatesDiffNameOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("diff failed: %v (output: %s)", err, out)
 	}
-	if !strings.Contains(out, "differs  changelog.md.tmpl") {
+	if !strings.Contains(out, "differs  postmortem.yaml") {
 		t.Errorf("expected name-only line for changelog, got: %s", out)
 	}
 	// Make sure we did NOT emit a full diff body.
@@ -1277,7 +1261,7 @@ func TestPostmortemSchemaValidateExclusive(t *testing.T) {
 // envelope shape used by `changelog` — the last remaining generator on
 // the bootstrap envelope as of v0.19.0. Other generators are all on the
 // structured artifact path.
-func TestChangelogJSONBootstrap(t *testing.T) {
+func TestChangelogJSONStructured(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "changelog", "--repo", "owner/repo", "--stdout", "--json")
 	if err != nil {
@@ -1292,12 +1276,22 @@ func TestChangelogJSONBootstrap(t *testing.T) {
 		t.Errorf("meta.repo mismatch: %v", meta)
 	}
 	secs := got["sections"].([]any)
-	if len(secs) != 1 {
-		t.Fatalf("expected one bootstrap section, got %d", len(secs))
+	if len(secs) < 2 {
+		t.Fatalf("expected structured sections (unreleased + initial release), got %d", len(secs))
 	}
-	s0 := secs[0].(map[string]any)
-	if s0["id"] != "body" {
-		t.Errorf("bootstrap section id should be 'body', got %v", s0["id"])
+	// Verify per-section access works for the v1 artifact shape.
+	var sawUnreleased, sawInitial bool
+	for _, raw := range secs {
+		s := raw.(map[string]any)
+		switch s["id"] {
+		case "unreleased":
+			sawUnreleased = true
+		case "initial_release":
+			sawInitial = true
+		}
+	}
+	if !sawUnreleased || !sawInitial {
+		t.Errorf("missing expected section ids in %v", secs)
 	}
 }
 
@@ -1341,7 +1335,7 @@ func TestTemplatesUpgradeAddsMissing(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 	// Remove one template to simulate "new in this binary".
-	missing := filepath.Join(dir, "changelog.md.tmpl")
+	missing := filepath.Join(dir, "postmortem.yaml")
 	if err := os.Remove(missing); err != nil {
 		t.Fatal(err)
 	}
@@ -1351,9 +1345,9 @@ func TestTemplatesUpgradeAddsMissing(t *testing.T) {
 		t.Fatalf("upgrade failed: %v (output: %s)", err, out)
 	}
 	if _, err := os.Stat(missing); err != nil {
-		t.Fatalf("upgrade did not restore changelog.md.tmpl: %v", err)
+		t.Fatalf("upgrade did not restore postmortem.yaml: %v", err)
 	}
-	if !strings.Contains(out, "+ added     changelog.md.tmpl") {
+	if !strings.Contains(out, "+ added     postmortem.yaml") {
 		t.Errorf("expected '+ added' line for changelog, got: %s", out)
 	}
 }
@@ -1367,7 +1361,7 @@ func TestTemplatesUpgradeSkipsCustomized(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	target := filepath.Join(dir, "changelog.md.tmpl")
+	target := filepath.Join(dir, "postmortem.yaml")
 	customized := []byte("# MY CUSTOM TASK: {{ .Title }}\n")
 	if err := os.WriteFile(target, customized, 0o644); err != nil {
 		t.Fatal(err)
@@ -1395,7 +1389,7 @@ func TestTemplatesUpgradeForce(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	target := filepath.Join(dir, "changelog.md.tmpl")
+	target := filepath.Join(dir, "postmortem.yaml")
 	if err := os.WriteFile(target, []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -1404,10 +1398,10 @@ func TestTemplatesUpgradeForce(t *testing.T) {
 		t.Fatalf("upgrade --force failed: %v (output: %s)", err, out)
 	}
 	b, _ := os.ReadFile(target)
-	if !strings.Contains(string(b), "# Changelog") {
+	if !strings.Contains(string(b), "version: 1") {
 		t.Fatalf("--force should overwrite with embedded content; got: %s", string(b))
 	}
-	if !strings.Contains(out, "~ updated   changelog.md.tmpl") {
+	if !strings.Contains(out, "~ updated   postmortem.yaml") {
 		t.Errorf("expected '~ updated' line, got: %s", out)
 	}
 }
@@ -1419,7 +1413,7 @@ func TestTemplatesUpgradeDryRun(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	missing := filepath.Join(dir, "changelog.md.tmpl")
+	missing := filepath.Join(dir, "postmortem.yaml")
 	if err := os.Remove(missing); err != nil {
 		t.Fatal(err)
 	}
@@ -1429,9 +1423,9 @@ func TestTemplatesUpgradeDryRun(t *testing.T) {
 		t.Fatalf("upgrade --dry-run failed: %v (output: %s)", err, out)
 	}
 	if _, err := os.Stat(missing); !os.IsNotExist(err) {
-		t.Fatalf("--dry-run must not write files; changelog.md.tmpl reappeared")
+		t.Fatalf("--dry-run must not write files; postmortem.yaml reappeared")
 	}
-	if !strings.Contains(out, "+ added     changelog.md.tmpl") {
+	if !strings.Contains(out, "+ added     postmortem.yaml") {
 		t.Errorf("expected '+ added' line in dry-run report, got: %s", out)
 	}
 	if !strings.Contains(out, "dry-run:") {
@@ -1457,7 +1451,7 @@ func TestTemplatesInitRespectsConfiguredDir(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 	// Files should land in the configured dir, not in defaultTemplatesDir.
-	for _, name := range []string{"changelog.md.tmpl", "TEMPLATES.md"} {
+	for _, name := range []string{"postmortem.yaml", "TEMPLATES.md"} {
 		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
 			t.Errorf("expected %s in configured dir, got: %v", name, err)
 		}
@@ -1472,7 +1466,7 @@ func TestTemplatesInitSeedsSnapshot(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	for _, name := range []string{"changelog.md.tmpl", "postmortem.yaml", "changelog.md.tmpl"} {
+	for _, name := range []string{"postmortem.yaml", "postmortem.yaml", "postmortem.yaml"} {
 		snap := filepath.Join(dir, ".srekit-embedded", name)
 		body, err := os.ReadFile(snap)
 		if err != nil {
@@ -1516,7 +1510,7 @@ func TestTemplatesUpgrade3WayCleanMerge(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	name := "changelog.md.tmpl"
+	name := "postmortem.yaml"
 	embeddedBody, _ := os.ReadFile(filepath.Join(dir, name)) // identical to embedded
 	snapBody := append(append([]byte{}, embeddedBody...), []byte("EXTRA_BOTTOM\n")...)
 	userBody := append([]byte("USER_TOP\n"), snapBody...)
@@ -1568,7 +1562,7 @@ func TestTemplatesUpgrade3WayConflict(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	name := "changelog.md.tmpl"
+	name := "postmortem.yaml"
 	embeddedBody, _ := os.ReadFile(filepath.Join(dir, name))
 
 	// Snapshot: embedded + leading TARGET\n. User edits to USER-EDIT,
@@ -1607,7 +1601,7 @@ func TestTemplatesUpgradeFastForward(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	name := "changelog.md.tmpl"
+	name := "postmortem.yaml"
 	// Simulate "upstream changed since snapshot": rewrite the snapshot to
 	// an older shape (the user file still matches that older shape).
 	oldShape := []byte("OLD EMBEDDED VERSION\n")
@@ -1645,7 +1639,7 @@ func TestTemplatesUpgradeNoSnapshotFallback(t *testing.T) {
 	if err := os.RemoveAll(filepath.Join(dir, ".srekit-embedded")); err != nil {
 		t.Fatal(err)
 	}
-	name := "changelog.md.tmpl"
+	name := "postmortem.yaml"
 	customized := []byte("CUSTOMIZED\n")
 	if err := os.WriteFile(filepath.Join(dir, name), customized, 0o644); err != nil {
 		t.Fatal(err)
@@ -1697,11 +1691,11 @@ func TestTemplatesListClassifies(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	// Customize one. As of v0.19.0 only changelog.md.tmpl remains as a
+	// Customize one. As of v0.19.0 only postmortem.yaml remains as a
 	// .tmpl-format embedded artifact; we customize it here to verify the
 	// "customized" status surfaces. (Status detection works for .yaml
 	// artifacts too — this test just picks an embedded file to mutate.)
-	if err := os.WriteFile(filepath.Join(dir, "changelog.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	// Remove a different one so it becomes embedded-only.
@@ -1718,7 +1712,7 @@ func TestTemplatesListClassifies(t *testing.T) {
 		t.Fatalf("list failed: %v (output: %s)", err, out)
 	}
 	for _, want := range []string{
-		"changelog.md.tmpl",
+		"postmortem.yaml",
 		"customized",
 		"runbook.yaml",
 		"embedded-only",
@@ -1742,7 +1736,7 @@ func TestTemplatesListJSON(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "changelog.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1756,15 +1750,15 @@ func TestTemplatesListJSON(t *testing.T) {
 	}
 	found := false
 	for _, e := range got {
-		if e["name"] == "changelog.md.tmpl" {
+		if e["name"] == "postmortem.yaml" {
 			if e["status"] != "customized" {
-				t.Errorf("changelog.md.tmpl status: got %q, want customized", e["status"])
+				t.Errorf("postmortem.yaml status: got %q, want customized", e["status"])
 			}
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("changelog.md.tmpl entry missing in JSON output: %s", out)
+		t.Errorf("postmortem.yaml entry missing in JSON output: %s", out)
 	}
 }
 
@@ -1775,7 +1769,7 @@ func TestTemplatesListFilter(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "changelog.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1783,8 +1777,8 @@ func TestTemplatesListFilter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list --filter failed: %v (output: %s)", err, out)
 	}
-	if !strings.Contains(out, "changelog.md.tmpl") {
-		t.Errorf("expected changelog.md.tmpl in customized filter, got: %s", out)
+	if !strings.Contains(out, "postmortem.yaml") {
+		t.Errorf("expected postmortem.yaml in customized filter, got: %s", out)
 	}
 	// No 'identical' entries should slip through.
 	if strings.Contains(out, "identical") {

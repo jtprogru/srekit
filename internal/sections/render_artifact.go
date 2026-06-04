@@ -98,7 +98,8 @@ func RenderArtifact(a *Artifact, rendered []RenderedSection, ctx any) ([]byte, e
 		b.WriteString("\n")
 	}
 
-	// 5. Sections.
+	// 5. Sections. Section titles were already template-evaluated in
+	// sections.Merge so the JSON contract and the rendered markdown agree.
 	for _, s := range rendered {
 		b.WriteString("\n## ")
 		b.WriteString(s.Title)

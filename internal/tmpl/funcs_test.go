@@ -1,6 +1,8 @@
 package tmpl
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -83,9 +85,17 @@ func TestNowFuncRespectsClock(t *testing.T) {
 }
 
 func TestParseAppliesFuncMap(t *testing.T) {
-	// Sanity check: any embedded .tmpl must parse with FuncMap applied.
-	// Functional coverage of individual funcs lives in the unit tests above.
-	if _, err := NewDefaultLoader().Parse("changelog.md.tmpl"); err != nil {
-		t.Fatalf("changelog.md.tmpl should parse with FuncMap: %v", err)
+	// Loader.Parse must wire the FuncMap so templates can call shortID /
+	// default / slugify / now. As of v0.20.0 the embed FS contains no .tmpl
+	// (every generator is on the v1 YAML artifact path), so this test
+	// writes a fixture template into a DirSource and verifies it parses.
+	dir := t.TempDir()
+	body := []byte(`{{ "abc-1234" | shortID 4 }} / {{ "" | default "fallback" }}`)
+	if err := os.WriteFile(filepath.Join(dir, "fixture.tmpl"), body, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	loader := &Loader{Sources: []Source{DirSource{Dir: dir}}}
+	if _, err := loader.Parse("fixture.tmpl"); err != nil {
+		t.Fatalf("fixture should parse with FuncMap: %v", err)
 	}
 }

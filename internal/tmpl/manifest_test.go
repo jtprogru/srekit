@@ -53,30 +53,25 @@ func TestIsTemplateArtifact(t *testing.T) {
 	}
 }
 
-func TestEmbeddedNames_includesTmplAndManifest(t *testing.T) {
+func TestEmbeddedNames_isAllArtifactYAML(t *testing.T) {
 	t.Parallel()
 	names, err := EmbeddedNames()
 	if err != nil {
 		t.Fatal(err)
 	}
-	var hasTmpl, hasYAML bool
+	if len(names) == 0 {
+		t.Fatal("expected embedded artifacts")
+	}
 	for _, n := range names {
-		if strings.HasSuffix(n, ".tmpl") {
-			hasTmpl = true
-		}
-		if strings.HasSuffix(n, ".sections.yaml") {
-			hasYAML = true
+		if !strings.HasSuffix(n, ".yaml") {
+			// As of v0.20.0 every embedded artifact is the v1 single-file
+			// YAML format; .tmpl/.sections.yaml were retired across the
+			// 0.14–0.20 migration sequence.
+			t.Errorf("expected only .yaml artifacts in embed, got %q", n)
 		}
 		if !IsTemplateArtifact(n) {
 			t.Errorf("EmbeddedNames returned non-artifact %q", n)
 		}
-	}
-	if !hasTmpl {
-		t.Errorf("expected at least one .tmpl in embedded names")
-	}
-	if !hasYAML {
-		// Will be true after postmortem.sections.yaml is added in Step 3.
-		t.Logf("note: no .sections.yaml in embed yet — will be added in Step 3")
 	}
 }
 
@@ -146,7 +141,10 @@ func TestLoadArtifactBytes_FindsEmbeddedPostmortem(t *testing.T) {
 func TestLoadArtifactBytes_NotFound(t *testing.T) {
 	t.Parallel()
 	loader := NewDefaultLoader()
-	_, err := loader.LoadArtifactBytes("changelog.md.tmpl") // no changelog.yaml yet
+	// All embedded artifacts ship as .yaml as of v0.20.0; an artifact name
+	// that doesn't correspond to any shipped name must miss across all
+	// sources and surface fs.ErrNotExist.
+	_, err := loader.LoadArtifactBytes("does-not-exist.md.tmpl")
 	if !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("want fs.ErrNotExist, got %v", err)
 	}

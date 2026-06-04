@@ -28,16 +28,14 @@ var Samples = map[string]any{
 	// ebp.yaml / capacity.yaml — v1 artifacts).
 	// oncall.md.tmpl was removed in v0.19.0 (migrated to oncall.yaml).
 	// retro.md.tmpl was removed in v0.16.0 (migrated to retro.yaml — v1 artifact).
-	"changelog.md.tmpl": struct {
-		Today, Repo, InitialVersion string
-	}{
-		Today:          "2026-01-01",
-		Repo:           "owner/repo",
-		InitialVersion: "0.1.0",
-	},
+	// changelog.md.tmpl was removed in v0.20.0 (migrated to changelog.yaml).
 	// license_*.tmpl entries were removed in v0.14.0 — license bodies are
 	// inlined as Go constants in cmd/license.go and no longer flow through
 	// the embed FS / Samples / templates validate pipeline.
+	//
+	// All embedded artifacts are now v1 YAML; the Samples registry is empty.
+	// Validate() falls back to parse-only with ErrUnknownTemplate for any
+	// bespoke .tmpl files users keep in their templates_dir.
 }
 
 // ErrUnknownTemplate is returned by Validate when name is not a builtin —

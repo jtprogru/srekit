@@ -62,9 +62,17 @@ func Merge(manifest *Manifest, input map[string]string, ctx any) ([]RenderedSect
 			}
 			body = rendered
 		}
+		title := s.Title
+		if strings.Contains(title, "{{") {
+			rendered, err := renderTemplate(title, ctx)
+			if err != nil {
+				return nil, fmt.Errorf("section %q title: %w", s.ID, err)
+			}
+			title = rendered
+		}
 		out = append(out, RenderedSection{
 			ID:       s.ID,
-			Title:    s.Title,
+			Title:    title,
 			Type:     string(s.Type),
 			Required: s.Required,
 			Body:     body,

@@ -21,6 +21,28 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.20.0] - 2026-06-04
+
+### Added
+
+- **Section titles are template-evaluated.** Both `sections.Merge` and `RenderArtifact` now run section titles through the FuncMap before emitting (markdown H2 / structured `--json` `title`). This lets generators like `changelog` use dynamic headings (e.g. `[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}`). Previously titles were emitted verbatim and template syntax leaked into both outputs.
+
+### Changed
+
+- **`changelog` migrated to the v1 artifact format.** **All 11 generators are now on v1.** No `.tmpl` artifact ships in embed anymore; the `//go:embed templates/*.tmpl` half of the embed pattern was dropped (Go's embed requires at least one matching file per glob). The Samples registry (sample-data fixtures used by `templates validate` for `.tmpl` typo-checks) is empty; `tmpl.Validate` now always returns `ErrUnknownTemplate` for `.tmpl` inputs (parse-only validation). YAML artifacts are structurally validated via `sections.ParseArtifact`.
+
+- **Breaking — `srekit changelog --json` shape.** Moves from bootstrap envelope to structured (`sections: [{id:"unreleased",...}, {id:"initial_release",...}]`). Migration: replace `jq '.sections[0].body'` with per-section access (`jq '.sections[] | select(.id=="initial_release").body'`).
+
+- **Breaking — `changelog.md.tmpl` no longer ships in embed.** Users with customized copies get stderr WARN. `srekit templates upgrade` scaffolds `changelog.yaml`; `srekit templates migrate` auto-converts the legacy `.tmpl`.
+
+- **Breaking — `--template FILE` is a no-op for every shipped command.** Already documented in v0.19.0 for the artifact-path commands; with changelog migrated, no command honors the flag anymore. The flag is kept on the CLI surface for backwards compatibility but does nothing. Per-artifact customization is via dropping a `<name>.yaml` into `templates_dir`.
+
+- **Test suite decoupled from embedded `.tmpl`.** Render and tmpl unit tests previously depended on a specific `.tmpl` shipping in embed; that was the v0.17–v0.19 source of test churn each migration. They now use a `newFixtureLoader(t)` helper that writes a per-test `.tmpl` fixture into a temp dir and returns a `*tmpl.Loader` against it. CLI integration tests in `cmd/cmd_test.go` swap embed-target references from the (now-gone) `changelog.md.tmpl` to `postmortem.yaml`. `TestPerCommandTemplateOverride` was deleted (no command honors `--template` anymore); `TestChangelogJSONBootstrap` was rewritten as `TestChangelogJSONStructured`.
+
+### Fixed
+
+- **Frontmatter-less artifacts render without a leading blank line.** changelog.yaml has no frontmatter; the renderer correctly skips the `---` block and starts the document with the H1.
+
 ## [0.19.0] - 2026-06-04
 
 ### Changed
@@ -396,7 +418,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/jtprogru/srekit/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/jtprogru/srekit/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/jtprogru/srekit/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/jtprogru/srekit/compare/v0.16.0...v0.17.0

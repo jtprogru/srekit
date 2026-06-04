@@ -12,24 +12,37 @@ import (
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
-// changelogData is the canonical struct shape expected by changelog.md.tmpl —
-// the last `.tmpl` artifact still in embed as of v0.19.0. Used by all render
-// tests below that need a working embedded legacy template.
-type changelogData struct {
-	Today, Repo, InitialVersion string
+// As of v0.20.0 no .tmpl artifact ships in embed (every generator is on
+// the v1 YAML artifact path). Render tests that need a working legacy
+// .tmpl template build their own loader from a DirSource pointing at a
+// per-test fixture, decoupling the test suite from embed contents.
+
+const fixtureTmplBody = "# Fixture: {{ .Title }}\n\n{{ .Body }}\n"
+
+// newFixtureLoader returns a Loader that resolves `fixture.md.tmpl` from a
+// temp dir. Use the canonical fixtureTmplBody body so tests can rely on a
+// known field shape (`{Title, Body string}`).
+func newFixtureLoader(t *testing.T) *tmpl.Loader {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "fixture.md.tmpl"), []byte(fixtureTmplBody), 0o644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	return &tmpl.Loader{Sources: []tmpl.Source{tmpl.DirSource{Dir: dir}, tmpl.EmbedSource{}}}
 }
 
-func sampleChangelog() changelogData {
-	return changelogData{Today: "2026-01-01", Repo: "owner/repo", InitialVersion: "0.1.0"}
+type fixtureData struct {
+	Title string
+	Body  string
 }
 
 func TestRenderStdout(t *testing.T) {
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", sampleChangelog(), Options{Stdout: true})
+	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Hello", Body: "world"}, Options{Stdout: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "# Changelog") {
+	if !strings.Contains(out.String(), "# Fixture: Hello") {
 		t.Fatalf("missing title in output: %s", out.String())
 	}
 }
@@ -39,7 +52,7 @@ func TestRenderToFile(t *testing.T) {
 	target := filepath.Join(dir, "sub", "out.md")
 	var out bytes.Buffer
 
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", changelogData{Today: "t", Repo: "Foo/repo", InitialVersion: "0.1.0"}, Options{Out: target})
+	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Foo", Body: "x"}, Options{Out: target})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +72,7 @@ func TestRenderRefusesOverwrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", sampleChangelog(), Options{Out: target})
+	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "x", Body: "y"}, Options{Out: target})
 	if err == nil {
 		t.Fatal("expected error on existing file without --force")
 	}
@@ -70,7 +83,7 @@ func TestRenderForceOverwrite(t *testing.T) {
 	target := filepath.Join(dir, "out.md")
 	_ = os.WriteFile(target, []byte("old"), 0o644)
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", changelogData{Today: "t", Repo: "Force/repo", InitialVersion: "0.1.0"}, Options{Out: target, Force: true})
+	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Force", Body: "y"}, Options{Out: target, Force: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +100,7 @@ func TestRenderFilePermissions(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", sampleChangelog(), Options{Out: target})
+	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Perms", Body: "y"}, Options{Out: target})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +122,8 @@ func TestRenderTemplatePathOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", struct{ Title string }{Title: "Hi"},
+	// Pass a non-existent name; TemplatePath should bypass loader.
+	err := Render(&out, tmpl.NewDefaultLoader(), "anything.md.tmpl", struct{ Title string }{Title: "Hi"},
 		Options{Stdout: true, TemplatePath: tmplFile})
 	if err != nil {
 		t.Fatal(err)
@@ -128,7 +142,7 @@ func TestRenderJSONStdout(t *testing.T) {
 		Title string
 	}
 	in := payload{ID: "abc", Title: "Hello"}
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", in, Options{JSON: true, Default: "ignored.md"})
+	err := Render(&out, tmpl.NewDefaultLoader(), "fixture.md.tmpl", in, Options{JSON: true, Default: "ignored.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +163,7 @@ func TestRenderJSONToFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.json")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl",
+	err := Render(&out, tmpl.NewDefaultLoader(), "fixture.md.tmpl",
 		struct{ Title string }{Title: "Foo"},
 		Options{Out: target, JSON: true},
 	)
@@ -176,7 +190,7 @@ func TestRenderJSONIgnoresDefaultPath(t *testing.T) {
 	dir := t.TempDir()
 	defaultPath := filepath.Join(dir, "should-not-be-written.md")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl",
+	err := Render(&out, tmpl.NewDefaultLoader(), "fixture.md.tmpl",
 		struct{ Title string }{Title: "X"},
 		Options{JSON: true, Default: defaultPath},
 	)
@@ -194,10 +208,15 @@ func TestRenderJSONIgnoresDefaultPath(t *testing.T) {
 // TestRenderBootstrapJSONEnvelope verifies the bootstrap wrapping path:
 // when both JSON and BootstrapJSON are set, the rendered markdown is
 // wrapped as {meta: data, sections: [{id:"body", title:H1, ...}]}.
+//
+// As of v0.20.0 no shipped generator uses the bootstrap envelope (all are
+// on the artifact path), but the code path is preserved for compatibility
+// with external tooling and future generators. The test runs through a
+// fixture loader to stay independent of embed contents.
 func TestRenderBootstrapJSONEnvelope(t *testing.T) {
 	var out bytes.Buffer
-	in := sampleChangelog()
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", in,
+	in := fixtureData{Title: "Hello", Body: "world"}
+	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", in,
 		Options{JSON: true, BootstrapJSON: true, Default: "ignored.md"})
 	if err != nil {
 		t.Fatal(err)
@@ -210,8 +229,8 @@ func TestRenderBootstrapJSONEnvelope(t *testing.T) {
 	if !ok {
 		t.Fatalf("missing meta object: %v", got)
 	}
-	if meta["Repo"] != "owner/repo" {
-		t.Errorf("meta.Repo = %v, want owner/repo", meta["Repo"])
+	if meta["Title"] != "Hello" {
+		t.Errorf("meta.Title = %v, want Hello", meta["Title"])
 	}
 	secs, ok := got["sections"].([]any)
 	if !ok || len(secs) != 1 {
@@ -227,10 +246,10 @@ func TestRenderBootstrapJSONEnvelope(t *testing.T) {
 	if body["required"] != true {
 		t.Errorf("section required = %v, want true", body["required"])
 	}
-	if !strings.Contains(body["body"].(string), "# Changelog") {
+	if !strings.Contains(body["body"].(string), "# Fixture: Hello") {
 		t.Errorf("section body should contain rendered H1, got: %v", body["body"])
 	}
-	if !strings.Contains(body["title"].(string), "Changelog") {
+	if !strings.Contains(body["title"].(string), "Fixture: Hello") {
 		t.Errorf("section title should be H1 text, got: %v", body["title"])
 	}
 }
@@ -242,7 +261,7 @@ func TestRenderStructuredJSONPassThrough(t *testing.T) {
 		"meta":     map[string]any{"title": "X"},
 		"sections": []any{map[string]any{"id": "summary", "body": "hi"}},
 	}
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", in,
+	err := Render(&out, tmpl.NewDefaultLoader(), "fixture.md.tmpl", in,
 		Options{JSON: true, BootstrapJSON: false})
 	if err != nil {
 		t.Fatal(err)
@@ -367,7 +386,7 @@ func TestRenderDryRunNoFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "changelog.md.tmpl", sampleChangelog(), Options{Out: target, DryRun: true})
+	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Dry", Body: "x"}, Options{Out: target, DryRun: true})
 	if err != nil {
 		t.Fatal(err)
 	}

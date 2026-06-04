@@ -1,0 +1,48 @@
+version: 1
+
+title: Changelog
+
+header_body: |
+  All notable changes to this project will be documented in this file.
+  
+  The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+  and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+sections:
+  - id: unreleased
+    title: '[Unreleased]'
+    type: text
+    default_body: |
+      ### Added
+
+      -
+
+      ### Changed
+
+      -
+
+      ### Deprecated
+
+      -
+
+      ### Removed
+
+      -
+
+      ### Fixed
+
+      -
+
+      ### Security
+
+      -
+  - id: initial_release
+    title: '[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}'
+    type: text
+    default_body: |
+      ### Added
+
+      - Initial release.
+
+      [Unreleased]: https://github.com/{{ .Meta.Repo }}/compare/v{{ .Meta.InitialVersion }}...HEAD
+      [{{ .Meta.InitialVersion }}]: https://github.com/{{ .Meta.Repo }}/releases/tag/v{{ .Meta.InitialVersion }}
