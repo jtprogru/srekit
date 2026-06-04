@@ -17,7 +17,7 @@ func TestManifestNameFor(t *testing.T) {
 	}{
 		{"postmortem.md.tmpl", "postmortem.sections.yaml"},
 		{"license_mit.tmpl", "license_mit.sections.yaml"},
-		{"incident.md.tmpl", "incident.sections.yaml"},
+		{"runbook.md.tmpl", "runbook.sections.yaml"},
 		{"already.sections.yaml", "already.sections.yaml.sections.yaml"}, // not idempotent — caller passes template names
 	}
 	for _, tc := range cases {
@@ -83,7 +83,7 @@ func TestEmbeddedNames_includesTmplAndManifest(t *testing.T) {
 func TestLoadManifestBytes_NotFound(t *testing.T) {
 	t.Parallel()
 	loader := NewDefaultLoader()
-	_, err := loader.LoadManifestBytes("rfc.md.tmpl")
+	_, err := loader.LoadManifestBytes("runbook.md.tmpl")
 	if !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("want fs.ErrNotExist, got %v", err)
 	}
@@ -93,11 +93,11 @@ func TestLoadManifestBytes_DirOverridesEmbed(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	custom := []byte("version: 1\nsections: [{id: x, title: X, type: text}]\n")
-	if err := os.WriteFile(filepath.Join(dir, "rfc.sections.yaml"), custom, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "runbook.sections.yaml"), custom, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	got, err := loader.LoadManifestBytes("rfc.md.tmpl")
+	got, err := loader.LoadManifestBytes("runbook.md.tmpl")
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
@@ -110,8 +110,8 @@ func TestLoadManifestBytes_FallsThroughEmptyDir(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	_, err := loader.LoadManifestBytes("rfc.md.tmpl")
-	// rfc has no manifest in embed, dir is empty → fs.ErrNotExist.
+	_, err := loader.LoadManifestBytes("runbook.md.tmpl")
+	// runbook has no manifest in embed, dir is empty → fs.ErrNotExist.
 	if !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("want fs.ErrNotExist, got %v", err)
 	}
@@ -146,7 +146,7 @@ func TestLoadArtifactBytes_FindsEmbeddedPostmortem(t *testing.T) {
 func TestLoadArtifactBytes_NotFound(t *testing.T) {
 	t.Parallel()
 	loader := NewDefaultLoader()
-	_, err := loader.LoadArtifactBytes("rfc.md.tmpl") // no rfc.yaml yet
+	_, err := loader.LoadArtifactBytes("runbook.md.tmpl") // no runbook.yaml yet
 	if !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("want fs.ErrNotExist, got %v", err)
 	}

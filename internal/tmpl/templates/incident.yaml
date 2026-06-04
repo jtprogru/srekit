@@ -1,0 +1,82 @@
+version: 1
+
+frontmatter:
+  id: "{{ .Meta.ID }}"
+  creation_date: "{{ .Meta.Now }}"
+  modification_date: "{{ .Meta.Now }}"
+  type: incident
+  title: "{{ .Meta.Title }}"
+  severity: "{{ .Meta.Severity }}"
+  status: "{{ .Meta.Status }}"
+  incident_lead: "{{ .Meta.Lead }}"
+  tags:
+    - incident
+    - live
+
+title: "Инцидент (Incident) — {{ .Meta.Title }}"
+
+meta_bullets:
+  - "**Статус (Status):** {{ .Meta.Status }}"
+  - "**Тяжесть (Severity):** {{ .Meta.Severity }}"
+  - "**Инцидент-лид (Incident lead):** {{ .Meta.Lead | default \"<incident lead>\" }}"
+  - "**Коммуникации (Comms lead):** _заполнить_"
+  - "**Открыт (Started):** {{ .Meta.Now }}"
+  - "**Последнее обновление (Last updated):** {{ .Meta.Now }}"
+  - "**War room:** _ссылка на канал / комнату_"
+
+sections:
+  - id: current_impact
+    title: Текущее воздействие (Current impact)
+    type: text
+    default_body: |
+      _Что сейчас не работает, для кого, как заметно. Обновляй по мере появления данных._
+
+      -
+  - id: affected_services
+    title: Затронутые сервисы (Affected services)
+    type: text
+    default_body: |
+      -
+  - id: updates_log
+    title: Лог апдейтов (Updates log)
+    type: text
+    default_body: |
+      _Новейшее сверху. Каждая запись — отдельный апдейт со временем UTC. Лаконично._
+
+      ### {{ .Meta.Now }}
+      - Инцидент объявлен. Лид: {{ .Meta.Lead | default "<incident lead>" }}.
+  - id: current_actions
+    title: Текущие действия (Current actions)
+    type: table
+    columns:
+      - Кто
+      - Что
+      - Статус
+    rows:
+      - - ""
+        - ""
+        - ""
+  - id: hypotheses
+    title: Гипотезы (Hypotheses)
+    type: text
+    default_body: |
+      - [ ] H1:
+  - id: customer_comms
+    title: Внешние коммуникации (Customer comms)
+    type: text
+    default_body: |
+      - Статус-страница: _ссылка / нет_
+      - Слак / e-mail тред: _ссылка_
+      - Последний апдейт пользователям: _время + текст_
+  - id: after_resolve
+    title: По окончании (After resolve)
+    type: text
+    default_body: |
+      - [ ] Закрыть инцидент (статус → resolved, отметить время).
+      - [ ] Завести постмортем, если SEV ≥ _уровень_.
+      - [ ] Обновить ссылку «Постмортем» здесь.
+  - id: references
+    title: Ссылки (References)
+    type: text
+    default_body: |
+      -

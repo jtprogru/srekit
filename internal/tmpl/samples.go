@@ -23,16 +23,8 @@ var Samples = map[string]any{
 	// task.md.tmpl was removed in v0.15.0 (migrated to task.yaml — the
 	// first fresh artifact migration to the v1 format). Validation goes
 	// through sections.ParseArtifact in `templates validate`.
-	"incident.md.tmpl": struct {
-		ID, Title, Severity, Lead, Status, Now string
-	}{
-		ID:       "11111111-2222-3333-4444-555555555555",
-		Title:    "Sample incident",
-		Severity: "SEV-2",
-		Lead:     "alice",
-		Status:   "active",
-		Now:      "2026-01-01T00:00:00Z",
-	},
+	// incident.md.tmpl and rfc.md.tmpl were removed in v0.18.0 (migrated to
+	// incident.yaml / rfc.yaml — v1 artifacts).
 	// postmortem.md.tmpl was removed in v0.14.0 (migrated to postmortem.yaml,
 	// the v1 single-file artifact format). The artifact path doesn't go
 	// through `tmpl.Validate`; structural validation of postmortem.yaml is
@@ -45,16 +37,6 @@ var Samples = map[string]any{
 		Service: "api-gw",
 		Alert:   "APIHighLatency",
 		Now:     "2026-01-01T00:00:00Z",
-	},
-	"rfc.md.tmpl": struct {
-		ID, Title, Status, Now string
-		Author                 authorSample
-	}{
-		ID:     "11111111-2222-3333-4444-555555555555",
-		Title:  "Sample RFC",
-		Status: "proposed",
-		Now:    "2026-01-01T00:00:00Z",
-		Author: authorSample{Name: "Sample Author", Email: "sample@example.com"},
 	},
 	// slo.md.tmpl was removed in v0.16.0 (migrated to slo.yaml — v1 artifact).
 	// ebp.md.tmpl and capacity.md.tmpl were removed in v0.17.0 (migrated to

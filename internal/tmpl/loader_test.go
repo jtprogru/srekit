@@ -32,7 +32,7 @@ func TestLoader_FallbackToEmbed(t *testing.T) {
 	// to embed without error.
 	dir := t.TempDir()
 	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	tpl, err := loader.Parse("rfc.md.tmpl")
+	tpl, err := loader.Parse("runbook.md.tmpl")
 	if err != nil {
 		t.Fatalf("expected embed fallback, got error: %v", err)
 	}

@@ -336,8 +336,8 @@ func TestTemplatesInitScaffolds(t *testing.T) {
 	// ships as a single postmortem.yaml (the v1 unified format replacing
 	// the v0.13.x postmortem.md.tmpl + postmortem.sections.yaml pair).
 	for _, name := range []string{
-		"task.yaml", "incident.md.tmpl",
-		"runbook.md.tmpl", "rfc.md.tmpl", "slo.yaml",
+		"task.yaml", "incident.yaml",
+		"runbook.md.tmpl", "rfc.yaml", "slo.yaml",
 		"ebp.yaml", "capacity.yaml",
 		"oncall.md.tmpl", "retro.yaml", "changelog.md.tmpl",
 		"postmortem.yaml",
@@ -804,7 +804,7 @@ func TestTemplatesDiffNameOnly(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	target := filepath.Join(dir, "incident.md.tmpl")
+	target := filepath.Join(dir, "oncall.md.tmpl")
 	b, err := os.ReadFile(target)
 	if err != nil {
 		t.Fatal(err)
@@ -816,8 +816,8 @@ func TestTemplatesDiffNameOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("diff failed: %v (output: %s)", err, out)
 	}
-	if !strings.Contains(out, "differs  incident.md.tmpl") {
-		t.Errorf("expected name-only line for incident, got: %s", out)
+	if !strings.Contains(out, "differs  oncall.md.tmpl") {
+		t.Errorf("expected name-only line for oncall, got: %s", out)
 	}
 	// Make sure we did NOT emit a full diff body.
 	if strings.Contains(out, "diff --git") {
@@ -1273,13 +1273,13 @@ func TestPostmortemSchemaValidateExclusive(t *testing.T) {
 	}
 }
 
-// TestIncidentJSONBootstrap is a representative test for the bootstrap
+// TestRunbookJSONBootstrap is a representative test for the bootstrap
 // envelope shape used by every generator that hasn't migrated to a
-// sections manifest. (Per-command spot-checks for runbook/rfc/etc. would
-// be redundant — all go through the same RenderOptions path.)
-func TestIncidentJSONBootstrap(t *testing.T) {
+// sections manifest. (Per-command spot-checks for oncall/changelog/etc.
+// would be redundant — all go through the same RenderOptions path.)
+func TestRunbookJSONBootstrap(t *testing.T) {
 	t.Parallel()
-	out, err := runCLI(t, "incident", "--title", "Checkout 5xx", "--severity", "SEV-1", "--json")
+	out, err := runCLI(t, "runbook", "--title", "API latency", "--service", "api-gw", "--alert", "APIHighLatency", "--json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1288,7 +1288,7 @@ func TestIncidentJSONBootstrap(t *testing.T) {
 		t.Fatalf("invalid JSON: %v\n%s", err, out)
 	}
 	meta := got["meta"].(map[string]any)
-	if meta["title"] != "Checkout 5xx" || meta["severity"] != "SEV-1" {
+	if meta["title"] != "API latency" || meta["service"] != "api-gw" {
 		t.Errorf("meta mismatch: %v", meta)
 	}
 	secs := got["sections"].([]any)
@@ -1697,8 +1697,8 @@ func TestTemplatesListClassifies(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	// Customize one (must remain a *.tmpl-format artifact in v0.17.x).
-	if err := os.WriteFile(filepath.Join(dir, "incident.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+	// Customize one (must remain a *.tmpl-format artifact in v0.18.x).
+	if err := os.WriteFile(filepath.Join(dir, "oncall.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	// Remove a different one so it becomes embedded-only.
@@ -1715,7 +1715,7 @@ func TestTemplatesListClassifies(t *testing.T) {
 		t.Fatalf("list failed: %v (output: %s)", err, out)
 	}
 	for _, want := range []string{
-		"incident.md.tmpl",
+		"oncall.md.tmpl",
 		"customized",
 		"runbook.md.tmpl",
 		"embedded-only",

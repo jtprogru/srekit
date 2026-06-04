@@ -13,6 +13,8 @@ import (
 	"github.com/jtprogru/srekit/internal/ids"
 	"github.com/jtprogru/srekit/internal/meta"
 	"github.com/jtprogru/srekit/internal/render"
+	"github.com/jtprogru/srekit/internal/sections"
+	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
 var allowedRFCStatus = map[string]bool{
@@ -21,6 +23,23 @@ var allowedRFCStatus = map[string]bool{
 	"rejected":   true,
 	"superseded": true,
 	"deprecated": true,
+}
+
+type rfcMeta struct {
+	ID     string      `json:"id"`
+	Title  string      `json:"title"`
+	Status string      `json:"status"`
+	Now    string      `json:"now"`
+	Author meta.Author `json:"author"`
+}
+
+type rfcData struct {
+	Meta     rfcMeta                    `json:"meta"`
+	Sections []sections.RenderedSection `json:"sections"`
+}
+
+func (d rfcData) ArtifactPayload() ([]sections.RenderedSection, any) {
+	return d.Sections, struct{ Meta rfcMeta }{Meta: d.Meta}
 }
 
 func newRFCCmd() *cobra.Command {
@@ -51,21 +70,29 @@ func newRFCCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			data := struct {
-				ID     string      `json:"id"`
-				Title  string      `json:"title"`
-				Status string      `json:"status"`
-				Now    string      `json:"now"`
-				Author meta.Author `json:"author"`
-			}{
+			m := rfcMeta{
 				ID:     ids.UUID(),
 				Title:  title,
 				Status: status,
 				Now:    clock.Now().Format(time.RFC3339),
 				Author: a,
 			}
+
+			loader := loaderFrom(cmd)
+			manifest, err := loadRFCManifest(cmd, loader)
+			if err != nil {
+				return err
+			}
+			rendered, err := sections.Merge(manifest, nil, struct{ Meta rfcMeta }{Meta: m})
+			if err != nil {
+				return err
+			}
+
+			data := rfcData{Meta: m, Sections: rendered}
 			def := fmt.Sprintf("rfc-%s.md", ids.Slug(title))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "rfc.md.tmpl", data, out.RenderOptions(cmd, def))
+			opts := out.RenderOptionsStructured(cmd, def)
+			opts.RenderArtifact = true
+			return render.Render(cmd.OutOrStdout(), loader, "rfc.md.tmpl", data, opts)
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "RFC title (required)")
@@ -74,4 +101,17 @@ func newRFCCmd() *cobra.Command {
 	cmd.Flags().StringVar(&email, "email", "", "author email")
 	out.Bind(cmd, "write to file (default: rfc-<slug>.md)")
 	return cmd
+}
+
+func loadRFCManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
+	artifactBytes, err := loader.LoadArtifactBytes("rfc.md.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("load rfc.yaml: %w", err)
+	}
+	a, err := sections.ParseArtifact(artifactBytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse rfc.yaml: %w", err)
+	}
+	warnStaleLegacyFiles(cmd, loader, "rfc.yaml", "rfc.md.tmpl")
+	return &sections.Manifest{Version: a.Version, Sections: a.Sections}, nil
 }

@@ -21,6 +21,20 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.18.0] - 2026-06-04
+
+### Changed
+
+- **`incident` and `rfc` migrated to the v1 artifact format.** Same dogfooded recipe as ebp + capacity in v0.17.0: `srekit templates migrate` on the legacy `.tmpl`, then `sed`-rewrote `{{ .Field }}` → `{{ .Meta.Field }}` for the new data root. For `rfc`, the `{{ shortID .ID 8 }}` reference in the H1 also needed a follow-up `sed` to become `{{ shortID .Meta.ID 8 }}`. Both commands now use the artifact render path with structured `--json` (per-section access).
+
+- **Breaking — `srekit incident --json` and `srekit rfc --json` shape.** Moves from bootstrap envelope (`sections: [{id:"body", body:<markdown>}]`) to structured (`sections: [{id:"current_impact",...}, {id:"context",...}, ...]`). Migration: replace `jq '.sections[0].body'` with `jq '.sections[] | select(.id=="...").body'`. Same pattern as ebp / capacity in v0.17.0; documented in `docs/{en,ru}/migration/v1.md` (v0.18.0 section).
+
+- **Breaking — `incident.md.tmpl` / `rfc.md.tmpl` no longer ship in embed.** Users with customized copies get stderr WARN. `srekit templates upgrade` scaffolds the new `.yaml`; `srekit templates migrate` auto-converts the legacy `.tmpl` (review the result and rewrite `{{ .Field }}` references to `{{ .Meta.Field }}`; for `rfc`-style templates also rewrite `{{ shortID .ID … }}` → `{{ shortID .Meta.ID … }}`).
+
+### Fixed
+
+-
+
 ## [0.17.0] - 2026-06-04
 
 ### Changed
@@ -364,7 +378,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/jtprogru/srekit/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/jtprogru/srekit/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/jtprogru/srekit/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/jtprogru/srekit/compare/v0.14.0...v0.15.0
