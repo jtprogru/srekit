@@ -13,14 +13,13 @@ srekit ebp --service NAME [flags]
 | Flag | Required | Description |
 |---|---|---|
 | `--service` | yes | Service this policy applies to |
-| `--owner` | no | Policy owner (team or individual) |
 
 Plus the [shared output flags](index.md#shared-output-flags). Default filename: `ebp-<slug-of-service>.md`.
 
 ## Examples
 
 ```bash
-srekit ebp --service api-gw --owner "@platform" --out ebp-api-gw.md
+srekit ebp --service api-gw --out ebp-api-gw.md
 ```
 
 To stdout:
@@ -44,11 +43,9 @@ srekit ebp --service api-gw --stdout
 
 ## Template shape
 
-```go
-struct {
-    ID, Service, Owner, Now string
-}
-```
+`ebp` ships as a v1 YAML artifact (`internal/tmpl/templates/ebp.yaml`) — frontmatter, H1, meta_bullets, sections (`purpose`, `triggers`, `tiered_actions`, `exceptions`, `escalation`, `review`, `references`). Template expressions reference `.Meta.<Field>` for `ID`, `Service`, `Now`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
+
+(Owner / team is a fill-in inside the rendered meta_bullets — there's no `--owner` flag; edit the rendered file or your customized `ebp.yaml` directly.)
 
 ## See also
 

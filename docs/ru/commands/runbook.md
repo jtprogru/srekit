@@ -43,11 +43,7 @@ srekit runbook --title "DB connection storm" --stdout
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    ID, Title, Service, Alert, Now string
-}
-```
+`runbook` шипится как v1 YAML-артефакт (`internal/tmpl/templates/runbook.yaml`) — frontmatter, H1, meta_bullets, секции (`symptoms`, `severity_slo_impact`, `diagnose`, `mitigate`, `verify`, `after_the_fact`, `references`). Template-выражения обращаются к `.Meta.<Field>` для `ID`, `Title`, `Service`, `Alert`, `Now`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 

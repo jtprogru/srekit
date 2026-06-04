@@ -41,11 +41,7 @@ srekit retro --team platform --stdout
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    ID, Team, Sprint, Now string
-}
-```
+`retro` шипится как v1 YAML-артефакт (`internal/tmpl/templates/retro.yaml`) — frontmatter, H1, meta_bullets, секции (Start / Stop / Continue, action items, references). Template-выражения обращаются к `.Meta.<Field>` для `ID`, `Team`, `Sprint`, `Now`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 

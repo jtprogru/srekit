@@ -43,11 +43,7 @@ srekit runbook --title "DB connection storm" --stdout
 
 ## Template shape
 
-```go
-struct {
-    ID, Title, Service, Alert, Now string
-}
-```
+`runbook` ships as a v1 YAML artifact (`internal/tmpl/templates/runbook.yaml`) — frontmatter, H1, meta_bullets, sections (`symptoms`, `severity_slo_impact`, `diagnose`, `mitigate`, `verify`, `after_the_fact`, `references`). Template expressions reference `.Meta.<Field>` for `ID`, `Title`, `Service`, `Alert`, `Now`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

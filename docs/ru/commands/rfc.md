@@ -49,12 +49,7 @@ srekit rfc --title "X" --status maybe --stdout
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    ID, Title, Status, Now string
-    Author meta.Author // {Name, Email}
-}
-```
+`rfc` шипится как v1 YAML-артефакт (`internal/tmpl/templates/rfc.yaml`) — frontmatter (`id`, `status`, `type: rfc`, `title`, `deciders`, `supersedes`, …), H1 (`RFC-<shortID> — <title>`), meta_bullets, секции (`context`, `decision`, `alternatives_considered`, `consequences`, `references`). Template-выражения обращаются к `.Meta.<Field>` для `ID`, `Title`, `Status`, `Now`, `Author.Name`, `Author.Email`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 

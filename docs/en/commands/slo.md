@@ -45,11 +45,7 @@ srekit slo --service api-gw --target 99.95% --window 90d --latency 250ms \
 
 ## Template shape
 
-```go
-struct {
-    ID, Service, Target, Window, Latency, Now string
-}
-```
+`slo` ships as a v1 YAML artifact (`internal/tmpl/templates/slo.yaml`) — frontmatter, H1, meta_bullets, sections covering the SLI/SLO definition, error budget, and related-docs links. Template expressions reference `.Meta.<Field>` for `ID`, `Service`, `Target`, `Window`, `LatencyTarget`, `Now`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

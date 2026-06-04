@@ -2,7 +2,7 @@
 
 Сгенерировать **постмортем** в стиле Google SRE: severity, timeline, impact, detection / mitigation / root cause, action items, lessons. Билингвальные заголовки.
 
-Начиная с v0.13.0, postmortem — первый генератор, построенный на **sidecar-манифесте секций** (`postmortem.sections.yaml`). Тело документа собирается из типизированных секций (`text` / `list` / `table`), так что `--json` отдаёт структуру секция-за-секцией, а `--from input.json` пересобирает Markdown из отредактированного JSON.
+Тело документа собирается из типизированных секций (`text` / `list` / `table`), объявленных в v1-артефакте `postmortem.yaml`, так что `--json` отдаёт структуру секция-за-секцией, а `--from input.json` пересобирает Markdown из отредактированного JSON. Postmortem был прототипом v1 artifact-формата (введён в v0.14.0) и теперь является canonical-референсом схемы для остальных генераторов — секция "Customizing the artifact" ниже документирует каждое поле.
 
 ## Синопсис
 

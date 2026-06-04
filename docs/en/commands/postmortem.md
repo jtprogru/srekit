@@ -2,7 +2,7 @@
 
 Generate a **postmortem** in Google-SRE style: severity, timeline, impact, detection / mitigation / root cause, action items, lessons. Bilingual headings.
 
-As of v0.13.0, the postmortem command is the first generator backed by a **sidecar sections manifest** (`postmortem.sections.yaml`). Document body is composed from typed sections (`text` / `list` / `table`), so `--json` exposes the structure section-by-section and `--from input.json` round-trips Markdown back from edited JSON.
+The document body is composed from typed sections (`text` / `list` / `table`) declared in the v1 artifact `postmortem.yaml`, so `--json` exposes the structure section-by-section and `--from input.json` round-trips Markdown back from edited JSON. Postmortem was the prototype for the v1 artifact format (introduced in v0.14.0) and is now the canonical schema reference for the rest of the generators — its "Customizing the artifact" section below documents every field.
 
 ## Synopsis
 

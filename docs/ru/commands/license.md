@@ -16,6 +16,7 @@ srekit license [flags]
 | `--year` | нет | Год копирайта (default: текущий) |
 | `--author` | нет | Переопределить имя автора |
 | `--email` | нет | Переопределить email |
+| `--template FILE` | нет | Использовать кастомный license-body из FILE вместо inlined `wtfpl` / `mit` / `apache2`. Те же FuncMap-функции. **License — единственная команда, которая honors `--template`** — остальные генераторы на v1 artifact path и игнорируют этот флаг. |
 
 Плюс [общие output-флаги](index.md#shared-output-flags). По умолчанию эта команда печатает в **stdout** (default-пути нет) — передай `--out LICENSE` чтобы записать в файл.
 
@@ -59,11 +60,7 @@ SREKIT_AUTHOR="Alice Example" SREKIT_EMAIL=alice@example.com \
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    Year, Author, Email string
-}
-```
+License — **единственный** генератор, который НЕ мигрировал на v1 YAML artifact-формат. Три license-body (`mit`, `apache2`, `wtfpl`) зашиты в `cmd/license.go` как Go-string константы и рендерятся через обычный `text/template` с общим FuncMap. На вход шаблон получает `{Year int, Author meta.Author}`, где `meta.Author` — это `{Name, Email string}`. Обращайся к полям как `{{ .Year }}`, `{{ .Author.Name }}`, `{{ .Author.Email }}` внутри `--template FILE` body.
 
 ## См. также
 

@@ -12,12 +12,10 @@ srekit incident --title TITLE [flags]
 
 | Flag | Required | Description |
 |---|---|---|
-| `--title` | yes | Short incident description |
-| `--severity` | no | `SEV-1`, `SEV-2`, `SEV-3`, `SEV-4` (free text accepted) |
-| `--status` | no | One of `investigated`, `active`, `contained`, `resolved`. Validated; unknown values are rejected. |
+| `--title`, `-T` | yes | Short incident description |
+| `--severity` | no | `SEV-1`, `SEV-2`, `SEV-3`, `SEV-4` (free text). Default: `SEV-2`. |
+| `--status` | no | One of `investigated`, `active`, `contained`, `resolved`. Validated; unknown values are rejected. Default: `active`. |
 | `--lead` | no | Incident lead handle / @mention |
-| `--comms` | no | Communications channel (Slack room, status page) |
-| `--start` | no | Start timestamp (e.g. `2026-05-06T08:00Z`) |
 
 Plus the [shared output flags](index.md#shared-output-flags). Default filename: `incident-<slug-of-title>.md`.
 
@@ -29,28 +27,23 @@ Bare minimum, to stdout:
 srekit incident --title "API down" --severity SEV-1 --lead alice --stdout
 ```
 
-Fully populated:
+Specific status:
 
 ```bash
-srekit incident --title "API down" --severity SEV-1 --status active \
-  --lead "@alice" --comms "#inc-api-down" --start 2026-05-06T08:00Z \
-  --out incident-api-down.md
+srekit incident -T "DB failover" --status investigated --lead "@alice" \
+  --out incident-db-failover.md
 ```
 
 Invalid status is rejected up front (no half-written file):
 
 ```bash
-srekit incident --title "X" --status broken --stdout
-# Error: --status must be one of investigated|active|contained|resolved
+srekit incident -T "X" --status broken --stdout
+# Error: invalid --status "broken" (investigated, active, contained, resolved)
 ```
 
 ## Template shape
 
-```go
-struct {
-    ID, Title, Severity, Status, Lead, Comms, Start, Now string
-}
-```
+`incident` ships as a v1 YAML artifact (`internal/tmpl/templates/incident.yaml`) — frontmatter, H1, meta_bullets, sections (`current_impact`, `affected_services`, `updates_log`, `current_actions`, `hypotheses`, `customer_comms`, `after_resolve`, `references`). Template expressions inside the YAML reference `.Meta.<Field>` for `ID`, `Title`, `Severity`, `Lead`, `Status`, `Now`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

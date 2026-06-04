@@ -55,12 +55,7 @@ If you ran the report on Sunday 2026-05-10, you'd get `2026-05-04 → 2026-05-10
 
 ## Template shape
 
-```go
-struct {
-    ID, Team, Start, End, Now string
-    Author meta.Author
-}
-```
+`oncall-report` ships as a v1 YAML artifact (`internal/tmpl/templates/oncall.yaml`) — frontmatter, H1, meta_bullets, sections (`tl_dr`, `pages`, `incidents`, `toil`, `alert_hygiene`, `follow_ups_for_next_on_caller`, `wins`, `references`). Template expressions reference `.Meta.<Field>` for `ID`, `Team`, `Start`, `End`, `Now`, `Author.Name`, `Author.Email`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

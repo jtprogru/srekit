@@ -12,12 +12,10 @@ srekit incident --title TITLE [flags]
 
 | Флаг | Обязательный | Описание |
 |---|---|---|
-| `--title` | да | Краткое описание инцидента |
-| `--severity` | нет | `SEV-1`, `SEV-2`, `SEV-3`, `SEV-4` (free text) |
-| `--status` | нет | `investigated`, `active`, `contained`, `resolved`. Валидируется. |
+| `--title`, `-T` | да | Краткое описание инцидента |
+| `--severity` | нет | `SEV-1`, `SEV-2`, `SEV-3`, `SEV-4` (free text). Default: `SEV-2`. |
+| `--status` | нет | `investigated`, `active`, `contained`, `resolved`. Валидируется. Default: `active`. |
 | `--lead` | нет | Лид инцидента (handle / @mention) |
-| `--comms` | нет | Канал коммуникаций (Slack room, status page) |
-| `--start` | нет | Timestamp начала (например `2026-05-06T08:00Z`) |
 
 Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `incident-<slug-of-title>.md`.
 
@@ -29,28 +27,23 @@ srekit incident --title TITLE [flags]
 srekit incident --title "API down" --severity SEV-1 --lead alice --stdout
 ```
 
-Полностью заполненный:
+С конкретным статусом:
 
 ```bash
-srekit incident --title "API down" --severity SEV-1 --status active \
-  --lead "@alice" --comms "#inc-api-down" --start 2026-05-06T08:00Z \
-  --out incident-api-down.md
+srekit incident -T "DB failover" --status investigated --lead "@alice" \
+  --out incident-db-failover.md
 ```
 
 Невалидный статус отклоняется до записи файла:
 
 ```bash
-srekit incident --title "X" --status broken --stdout
-# Error: --status must be one of investigated|active|contained|resolved
+srekit incident -T "X" --status broken --stdout
+# Error: invalid --status "broken" (investigated, active, contained, resolved)
 ```
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    ID, Title, Severity, Status, Lead, Comms, Start, Now string
-}
-```
+`incident` шипится как v1 YAML-артефакт (`internal/tmpl/templates/incident.yaml`) — frontmatter, H1, meta_bullets, секции (`current_impact`, `affected_services`, `updates_log`, `current_actions`, `hypotheses`, `customer_comms`, `after_resolve`, `references`). Template-выражения внутри YAML обращаются к `.Meta.<Field>` для `ID`, `Title`, `Severity`, `Lead`, `Status`, `Now`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 

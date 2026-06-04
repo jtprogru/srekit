@@ -21,6 +21,27 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.27.0] - 2026-06-04
+
+### Fixed
+
+- **`docs/{en,ru}/commands/*.md` — per-command doc sweep.** Doc-only release; no code changes. The v0.23 doc audit caught the headline `--template` and bootstrap-envelope issues but only updated `task.md` + `templates.md`; the other 10 command docs still had stale shapes. This sweep covers the rest. Issues found and fixed:
+
+  **Phantom CLI flags** (documented flags that don't exist in code):
+    - `docs/{en,ru}/commands/incident.md`: listed `--comms` and `--start` flags. Neither has ever existed on `cmd/incident.go`; the real flags are `--title`, `--severity`, `--lead`, `--status`. Dropped from the flag table and the "fully populated" example; added the missing `-T` short form and the actual default values (`--severity SEV-2`, `--status active`).
+    - `docs/{en,ru}/commands/ebp.md`: listed `--owner` flag. Doesn't exist; the policy owner is a fill-in inside the rendered `meta_bullets`. Dropped from flag table and example; added a note about editing the rendered file directly.
+
+  **Wrong default values:**
+    - `docs/{en,ru}/commands/capacity.md`: `--horizon` was documented as default `6m`. Real default is `1y` (see `cmd/capacity.go`). Fixed.
+
+  **Stale "Template shape" Go-struct snippets**: every per-command doc except `task` (fixed in v0.23) and `postmortem` still showed a Go struct like `{ ID, Title, Service, Now string }` — outdated since the v0.14–v0.20 migration moved each generator from a flat data root to `.Meta.<Field>`. Replaced every snippet with a one-paragraph description pointing at the v1 YAML artifact (`internal/tmpl/templates/<name>.yaml`), listing the section IDs, naming the `.Meta.<Field>` fields available, and linking to `postmortem.md` as the canonical schema reference. Affected: `incident`, `rfc`, `runbook`, `slo`, `ebp`, `capacity`, `retro`, `oncall-report`, `changelog`, `license`.
+
+  **Missing documentation:**
+    - `docs/{en,ru}/commands/license.md` didn't document `--template FILE`. License is the only command that honors the flag (since the v0.22 cleanup); the flag table now includes it with the "license-only" caveat.
+
+  **Stale lead paragraph:**
+    - `docs/{en,ru}/commands/postmortem.md`: opened with "As of v0.13.0, the postmortem command is the **first** generator backed by a sidecar sections manifest". It's no longer the only one (everything is on v1 yaml now) and the sidecar layout was retired in v0.14.0. Rewritten as "Postmortem was the prototype for v1 (v0.14.0) and is now the canonical schema reference for the rest of the generators".
+
 ## [0.26.0] - 2026-06-04
 
 ### Fixed
@@ -509,7 +530,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.26.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.27.0...HEAD
+[0.27.0]: https://github.com/jtprogru/srekit/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/jtprogru/srekit/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/jtprogru/srekit/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/jtprogru/srekit/compare/v0.23.0...v0.24.0

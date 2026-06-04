@@ -41,11 +41,7 @@ srekit retro --team platform --stdout
 
 ## Template shape
 
-```go
-struct {
-    ID, Team, Sprint, Now string
-}
-```
+`retro` ships as a v1 YAML artifact (`internal/tmpl/templates/retro.yaml`) — frontmatter, H1, meta_bullets, sections (Start / Stop / Continue, action items, references). Template expressions reference `.Meta.<Field>` for `ID`, `Team`, `Sprint`, `Now`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

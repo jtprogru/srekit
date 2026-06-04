@@ -13,7 +13,7 @@ srekit capacity --service NAME [flags]
 | Flag | Required | Description |
 |---|---|---|
 | `--service` | yes | Service the plan covers |
-| `--horizon` | no | Planning horizon (e.g. `3m`, `6m`, `1y`). Default: `6m` |
+| `--horizon` | no | Planning horizon (e.g. `6m`, `1y`, `2y`). Default: `1y` |
 
 Plus the [shared output flags](index.md#shared-output-flags). Default filename: `capacity-<slug-of-service>.md`.
 
@@ -44,11 +44,7 @@ srekit capacity --service db-replicas --horizon 1y --stdout
 
 ## Template shape
 
-```go
-struct {
-    ID, Service, Horizon, Now string
-}
-```
+`capacity` ships as a v1 YAML artifact (`internal/tmpl/templates/capacity.yaml`) — frontmatter, H1, meta_bullets, sections (`current_capacity`, `growth_assumptions`, `forecast`, `scale_up_triggers`, `target_headroom`, `dependencies`, `cost_implications`, `risks`, `review`, `references`). Template expressions reference `.Meta.<Field>` for `ID`, `Service`, `Horizon`, `Now`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

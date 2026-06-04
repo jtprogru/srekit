@@ -45,13 +45,7 @@ The scaffold pre-renders compare links pointing at `github.com/<repo>/compare/v<
 
 ## Template shape
 
-```go
-struct {
-    Repo    string  // "<owner>/<name>"
-    Version string
-    Today   string  // RFC 3339-ish
-}
-```
+`changelog` ships as a v1 YAML artifact (`internal/tmpl/templates/changelog.yaml`) — H1 + `header_body` (the intro paragraph) + two sections (`unreleased` and `initial_release`). The `initial_release` section title is dynamic (`[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}`); section titles are template-evaluated since v0.20.0. Template expressions reference `.Meta.<Field>` for `Today` (date `2006-01-02`), `Repo` (`<owner>/<name>`), `InitialVersion`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

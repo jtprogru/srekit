@@ -49,12 +49,7 @@ srekit rfc --title "X" --status maybe --stdout
 
 ## Template shape
 
-```go
-struct {
-    ID, Title, Status, Now string
-    Author meta.Author // {Name, Email}
-}
-```
+`rfc` ships as a v1 YAML artifact (`internal/tmpl/templates/rfc.yaml`) — frontmatter (`id`, `status`, `type: rfc`, `title`, `deciders`, `supersedes`, …), H1 (`RFC-<shortID> — <title>`), meta_bullets, sections (`context`, `decision`, `alternatives_considered`, `consequences`, `references`). Template expressions reference `.Meta.<Field>` for `ID`, `Title`, `Status`, `Now`, `Author.Name`, `Author.Email`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

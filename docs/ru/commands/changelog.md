@@ -45,13 +45,7 @@ srekit changelog --stdout
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    Repo    string  // "<owner>/<name>"
-    Version string
-    Today   string  // RFC 3339-ish
-}
-```
+`changelog` шипится как v1 YAML-артефакт (`internal/tmpl/templates/changelog.yaml`) — H1 + `header_body` (intro-параграф) + две секции (`unreleased` и `initial_release`). Заголовок секции `initial_release` динамический (`[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}`); section titles template-evaluated с v0.20.0. Template-выражения обращаются к `.Meta.<Field>` для `Today` (дата `2006-01-02`), `Repo` (`<owner>/<name>`), `InitialVersion`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 

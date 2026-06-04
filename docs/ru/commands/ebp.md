@@ -13,14 +13,13 @@ srekit ebp --service NAME [flags]
 | Флаг | Обязательный | Описание |
 |---|---|---|
 | `--service` | да | Сервис, к которому применима политика |
-| `--owner` | нет | Владелец политики (команда или человек) |
 
 Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `ebp-<slug-of-service>.md`.
 
 ## Примеры
 
 ```bash
-srekit ebp --service api-gw --owner "@platform" --out ebp-api-gw.md
+srekit ebp --service api-gw --out ebp-api-gw.md
 ```
 
 В stdout:
@@ -44,11 +43,9 @@ srekit ebp --service api-gw --stdout
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    ID, Service, Owner, Now string
-}
-```
+`ebp` шипится как v1 YAML-артефакт (`internal/tmpl/templates/ebp.yaml`) — frontmatter, H1, meta_bullets, секции (`purpose`, `triggers`, `tiered_actions`, `exceptions`, `escalation`, `review`, `references`). Template-выражения обращаются к `.Meta.<Field>` для `ID`, `Service`, `Now`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
+
+(Owner / team — это fill-in в рендереных meta_bullets; флага `--owner` нет — отредактируй рендереный файл или свой кастомизированный `ebp.yaml` напрямую.)
 
 ## См. также
 

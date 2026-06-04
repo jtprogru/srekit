@@ -16,6 +16,7 @@ srekit license [flags]
 | `--year` | no | Copyright year (default: current year) |
 | `--author` | no | Override author name |
 | `--email` | no | Override author email |
+| `--template FILE` | no | Use a custom license body from FILE instead of the inlined `wtfpl` / `mit` / `apache2` text. Honors the same FuncMap as everything else. **License is the only command that honors `--template`** — the other generators are on the v1 artifact path and ignore it. |
 
 Plus the [shared output flags](index.md#shared-output-flags). By default this command prints to **stdout** (it has no default file path) — pass `--out LICENSE` to write the file.
 
@@ -59,11 +60,7 @@ Same chain for `--email` with `SREKIT_EMAIL` / `email:` / `git config user.email
 
 ## Template shape
 
-```go
-struct {
-    Year, Author, Email string
-}
-```
+License is the **only** generator that has not migrated to the v1 YAML artifact format. The three license bodies (`mit`, `apache2`, `wtfpl`) are inlined as Go-string constants in `cmd/license.go` and rendered via plain `text/template` with the shared FuncMap. The template receives `{Year int, Author meta.Author}` where `meta.Author` is `{Name, Email string}` — reference fields as `{{ .Year }}`, `{{ .Author.Name }}`, `{{ .Author.Email }}` inside a `--template FILE` body.
 
 ## See also
 

@@ -45,11 +45,7 @@ srekit slo --service api-gw --target 99.95% --window 90d --latency 250ms \
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    ID, Service, Target, Window, Latency, Now string
-}
-```
+`slo` шипится как v1 YAML-артефакт (`internal/tmpl/templates/slo.yaml`) — frontmatter, H1, meta_bullets, секции про SLI/SLO определение, error budget и related-docs. Template-выражения обращаются к `.Meta.<Field>` для `ID`, `Service`, `Target`, `Window`, `LatencyTarget`, `Now`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 

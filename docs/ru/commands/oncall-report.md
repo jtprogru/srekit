@@ -55,12 +55,7 @@ Default-период начинается с понедельника и кон�
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    ID, Team, Start, End, Now string
-    Author meta.Author
-}
-```
+`oncall-report` шипится как v1 YAML-артефакт (`internal/tmpl/templates/oncall.yaml`) — frontmatter, H1, meta_bullets, секции (`tl_dr`, `pages`, `incidents`, `toil`, `alert_hygiene`, `follow_ups_for_next_on_caller`, `wins`, `references`). Template-выражения обращаются к `.Meta.<Field>` для `ID`, `Team`, `Start`, `End`, `Now`, `Author.Name`, `Author.Email`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 
