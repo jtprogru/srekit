@@ -1,0 +1,220 @@
+# Migration history (per-release journal)
+
+This page is the chronological record of the YAML-first migration that ran across v0.14.0 → v0.20.0. For the practical upgrade recipe, see the [migration guide](v1.md). Use this page when you need to know exactly what shipped in which release — for context on a specific commit, for reviewing how a generator was migrated, or to find the right `jq` snippet for a binary version you're stuck on.
+
+## Release sequence
+
+| Release | Generators migrated | Notes |
+|---|---|---|
+| **v0.14.0** | `postmortem` (refactor from v0.13.x sidecar format), `license` (inlined as Go constants) | Format defined; first artifact migrated. |
+| **v0.15.0** | `task`, `srekit templates migrate` command | First **fresh** migration; auto-converter for user `.tmpl` → `.yaml`. |
+| **v0.16.0** | `retro`, `slo` | Two more simple-subst migrations; `templates migrate` proven on real artifacts. |
+| **v0.17.0** | `ebp`, `capacity` | Two more simple-subst migrations; half the generator set is now on v1. |
+| **v0.18.0** | `incident`, `rfc` | Trickier: `rfc` uses `{{ shortID .ID 8 }}` — needs a separate sed for the function-call form. |
+| **v0.19.0** | `runbook`, `oncall-report` | 10 of 11 done; only `changelog` remains. `--template FILE` is now a no-op for every migrated command. |
+| **v0.20.0** | `changelog` | All 11 generators on v1. Section titles are now template-evaluated. Tests decoupled from embedded `.tmpl`. |
+| **v0.21.0** | (none) | Cleanup: removed dead `LoadManifestBytes` / `ManifestNameFor`, shrunk `tmpl.Samples` to empty, updated stale doc comments. No breaking changes. |
+| **v0.22.0** | (none) | `--template FILE` removed from every generator except `license`. Silent no-op → honest "unknown flag" error. |
+| **v0.23.0** | (none) | Doc audit: aligned user-facing docs (EN+RU) with the v0.20-v0.22 state. |
+
+## What changed in v0.14.0
+
+### Postmortem unified into a single file
+
+The v0.13.x layout shipped postmortem as `postmortem.md.tmpl` (header template) + `postmortem.sections.yaml` (sections manifest). v0.14.0 unifies both into `postmortem.yaml` — see the [`srekit postmortem` reference](../commands/postmortem.md) for the full schema.
+
+**If you have a `templates_dir`** (`sre-templates` repo or similar), run:
+
+```bash
+srekit templates upgrade <your-templates-dir>
+```
+
+This scaffolds `postmortem.yaml` from embed and seeds its `.srekit-embedded/` snapshot. The orphaned snapshots for the old `postmortem.md.tmpl` and `postmortem.sections.yaml` are garbage-collected automatically.
+
+**Customizations from your old `postmortem.md.tmpl`** (e.g. a blameless callout block) need to be moved into `postmortem.yaml`. The schema offers four customization points:
+
+- `frontmatter:` — free-form map; values run through Go templates.
+- `title:` — the H1 line.
+- `meta_bullets:` — the bullet list after H1.
+- `header_body:` — freeform Markdown escape hatch (your custom blockquote, policy text, etc.).
+- `sections:` — the section list (same as v0.13.x `.sections.yaml`).
+
+The pre-v0.14.0 files (`postmortem.md.tmpl`, `postmortem.sections.yaml`) in your user dir are **ignored** in favor of the v1 `postmortem.yaml`. The loader prints a stderr WARN listing each stale file on every postmortem invocation until you remove them or run `templates upgrade` (which leaves them in place but seeds the v1 file alongside — manual cleanup of the old files is on you).
+
+### License moved into the binary
+
+The three license templates (`license_mit.tmpl`, `license_apache2.tmpl`, `license_wtfpl.tmpl`) are now Go-string constants in the binary. They are **no longer shipped via embed FS**, no longer scaffolded by `templates init`, and no longer appear in `templates list` / `validate`.
+
+If you customized a license body in your `templates_dir`:
+- Your file is silently ignored (license cmd renders from the inlined Go constants).
+- Use `--template /path/to/your.tmpl` to keep using a custom body (this flag already exists).
+
+### Cosmetic delta in rendered postmortem markdown
+
+The frontmatter block now emits string values **quoted** (e.g. `id: "abc"`) where v0.13.x emitted some unquoted (e.g. `id: abc`). This is because `yaml.v3` preserves the quoting style of the source YAML; our v1 `postmortem.yaml` has quoted scalars with template syntax (`"{{ .Meta.ID }}"`), and the quoting is retained after substitution. Functionally identical YAML; visually a one-character-per-line diff vs v0.13.x output.
+
+## What changed in v0.15.0
+
+### `task` migrated to the v1 artifact format
+
+`task.md.tmpl` is removed from embed; `task.yaml` ships in its place. The task command now uses the artifact render path with structured `--json` (same contract as postmortem) — output is `{meta, sections: [...]}` instead of the bootstrap envelope.
+
+**JSON shape migration:**
+
+```bash
+# before (v0.14.x)
+srekit task -T "X" --json | jq '.sections[0].body'   # bootstrap envelope: one synthetic section
+# after (v0.15.0)
+srekit task -T "X" --json | jq '.sections[] | select(.id=="context").body'   # structured: per-section access
+```
+
+Anyone with a customized `task.md.tmpl` in `templates_dir` will see a stderr WARN; run `srekit templates upgrade` to get `task.yaml`, then move customizations into it (use the `header_body` field for any blameless-style callouts).
+
+### `srekit templates migrate` command
+
+New subcommand: best-effort `.tmpl` → `.yaml` converter. Defaults to `--dry-run`; pass `--apply` to write files. Sections with Go-template control flow (`{{ if }}` / `{{ range }}`) are wrapped in `git merge`-style diff markers for human review. See the [`templates migrate` reference](../commands/templates.md#templates-migrate) for full mechanics.
+
+**Note on data-shape changes**: the converter copies template expressions verbatim. If a migrated generator uses a different data root (e.g. task moved from `.Title` to `.Meta.Title`), the converted YAML will reference the old paths. Update them manually or by `sed` to match the new root.
+
+## What changed in v0.16.0
+
+### `retro` and `slo` migrated to the v1 artifact format
+
+Both followed the same dogfooded recipe as task in v0.15.0:
+
+1. `srekit templates migrate <dir> --apply` produces a starter `<name>.yaml`.
+2. `sed -E 's/{{ \.([A-Z][a-zA-Z]*)/{{ .Meta.\1/g'` rewrites the flat field references to the new `.Meta.X` data root.
+3. Ship the result in embed; delete the old `<name>.md.tmpl`.
+
+Both commands now use the artifact render path with structured `--json` (per-section access via `jq '.sections[] | select(.id=="...").body'`).
+
+**JSON shape migration** (same pattern as task in v0.15.0):
+
+```bash
+# before
+srekit retro --team platform --json | jq '.sections[0].body'
+# after
+srekit retro --team platform --json | jq '.sections[] | select(.id=="action_items").body'
+```
+
+Users with customized `retro.md.tmpl` / `slo.md.tmpl` in `templates_dir` get stderr WARN on every invocation. To migrate: `srekit templates upgrade` (scaffolds the new `.yaml`), then either move customizations manually or run `srekit templates migrate <dir> --apply` to auto-convert the legacy `.tmpl`. After migration, manually rewrite any `{{ .Field }}` → `{{ .Meta.Field }}` in the resulting YAML (the converter copies template expressions verbatim).
+
+## What changed in v0.17.0
+
+### `ebp` and `capacity` migrated to the v1 artifact format
+
+Same dogfooded recipe as retro + slo in v0.16.0:
+
+1. `srekit templates migrate <dir> --apply` produces a starter `<name>.yaml`.
+2. `sed -E 's/{{ \.([A-Z][a-zA-Z]*)/{{ .Meta.\1/g'` rewrites flat field references to `.Meta.X`.
+3. Ship the result in embed; delete the old `<name>.md.tmpl`.
+
+Both commands now use the artifact render path with structured `--json` (per-section access).
+
+**JSON shape migration** (same pattern as retro / slo):
+
+```bash
+# before
+srekit ebp --service api-gw --json | jq '.sections[0].body'
+# after
+srekit ebp --service api-gw --json | jq '.sections[] | select(.id=="tiered_actions").body'
+```
+
+Users with customized `ebp.md.tmpl` / `capacity.md.tmpl` in `templates_dir` get stderr WARN. Migrate the usual way: `templates upgrade` (scaffolds the new `.yaml`) or `templates migrate <dir> --apply` (auto-converts the legacy `.tmpl`), then manually rewrite `{{ .Field }}` → `{{ .Meta.Field }}`.
+
+## What changed in v0.18.0
+
+### `incident` and `rfc` migrated to the v1 artifact format
+
+Same dogfooded recipe as ebp + capacity in v0.17.0, with one extra twist for rfc:
+
+1. `srekit templates migrate <dir> --apply` produces a starter `<name>.yaml`.
+2. `sed -E 's/{{ \.([A-Z][a-zA-Z]*)/{{ .Meta.\1/g'` rewrites flat field references to `.Meta.X`.
+3. **For rfc only**: additionally `sed -E 's/shortID \.ID/shortID .Meta.ID/g'` — the function-call form (`{{ shortID .ID 8 }}` in the H1) isn't covered by the main regex.
+4. Ship the result in embed; delete the old `<name>.md.tmpl`.
+
+Both commands now use the artifact render path with structured `--json` (per-section access).
+
+**JSON shape migration** (same pattern as ebp / capacity):
+
+```bash
+# before
+srekit incident --title X --json | jq '.sections[0].body'
+# after
+srekit incident --title X --json | jq '.sections[] | select(.id=="current_impact").body'
+```
+
+Users with customized `incident.md.tmpl` / `rfc.md.tmpl` in `templates_dir` get stderr WARN. If your custom template uses `{{ shortID .ID … }}` or other function-call forms with `.Field`, rewrite them to `.Meta.Field` by hand after `templates migrate`.
+
+## What changed in v0.19.0
+
+### `runbook` and `oncall-report` migrated to the v1 artifact format
+
+Same dogfooded recipe as the prior releases. After v0.19.0 **only `changelog`** remains on the legacy `.tmpl` path — v0.20.0 closes out the migration.
+
+**Hand-fixes applied at ship time** (the auto-converter is heuristic, not 100%):
+
+- `oncall.yaml` "Pages" section: in the legacy `.tmpl` the GFM table was followed by a prose line `Всего пейджеров: _N_ …`. The converter classified the section as `type: table` and dropped the trailing prose. The shipped version makes the section `type: text` with the table inlined as `default_body`, preserving the original layout 1:1.
+- `runbook.yaml` "Severity & SLO impact" section: the slugifier produced `slo_severity_slo_impact` (the bilingual heading double-counted "SLO"). Renamed to `severity_slo_impact`. Section IDs are part of the structured-JSON contract, so manual cleanup is worth the diff churn.
+
+**JSON shape migration** (same pattern):
+
+```bash
+# before
+srekit runbook --title X --service api-gw --json | jq '.sections[0].body'
+# after
+srekit runbook --title X --service api-gw --json | jq '.sections[] | select(.id=="diagnose").body'
+```
+
+### `--template FILE` is now a no-op for every migrated command
+
+`--template FILE` was originally a one-shot escape hatch for the legacy `text/template` rendering path. Once a command migrates to the artifact path, the loader resolves `<name>.yaml` from embed / `templates_dir` before any TemplatePath check, so the flag silently does nothing. Affected: postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall (everything except `changelog`).
+
+The v1.x customization model for per-artifact tweaks is dropping a `<name>.yaml` into `templates_dir` (via `templates init` / `upgrade`). For `changelog` (the last bootstrap-envelope command) `--template` still works; it will become a no-op after v0.20.0 as well.
+
+Users with customized `runbook.md.tmpl` / `oncall.md.tmpl` in `templates_dir` get stderr WARN. Migrate the usual way: `templates upgrade` or `templates migrate <dir> --apply`, then rewrite `{{ .Field }}` → `{{ .Meta.Field }}`.
+
+## What changed in v0.20.0
+
+### `changelog` migrated — migration complete
+
+The final `.tmpl` moved to YAML. **All 11 generators are on v1.** The embed FS now contains only `.yaml` files; the `//go:embed templates/*.tmpl` half of the pattern was dropped (Go requires ≥1 match per glob).
+
+### Section titles are now template-evaluated
+
+Previously `RenderedSection.Title` and the `## <title>` heading in markdown were emitted verbatim — if an author put `{{ .Meta.X }}` in a section title the template syntax leaked into the output. changelog.yaml needs this for a dynamic heading: `[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}`. Now:
+
+- `sections.Merge` runs the title through the FuncMap.
+- `RenderArtifact` uses the already-rendered title (no double eval).
+- Structured `--json` and the markdown heading agree.
+
+### Test infra decoupled from embedded `.tmpl`
+
+After v0.20.0 there's no `.tmpl` in embed — render/tmpl tests that depended on a specific `<name>.md.tmpl` shipping in embed moved to a `newFixtureLoader(t)` helper (writes a per-test fixture into a temp dir, returns a `*tmpl.Loader` over `DirSource`). CLI tests in `cmd/cmd_test.go` swapped the embed-target reference from the (now-gone) `changelog.md.tmpl` to `postmortem.yaml`. `TestPerCommandTemplateOverride` was deleted (no command honors `--template`). `TestChangelogJSONBootstrap` was rewritten as `TestChangelogJSONStructured`.
+
+### JSON shape migration
+
+```bash
+# before
+srekit changelog --repo o/r --json | jq '.sections[0].body'
+# after
+srekit changelog --repo o/r --json | jq '.sections[] | select(.id=="initial_release").body'
+```
+
+Users with a customized `changelog.md.tmpl` in `templates_dir`: stderr WARN. Run `templates upgrade` to scaffold `changelog.yaml`.
+
+### `--template FILE` is now a no-op everywhere
+
+In v0.19.0 it still worked for changelog (the last bootstrap-envelope command). With changelog on the artifact path too, `--template` does nothing for any command. The flag stays on the CLI surface for backwards compatibility. Per-artifact customization is via dropping `<name>.yaml` into `templates_dir`.
+
+## What changed in v0.21.0
+
+Cleanup pass. No code-behavior changes for users. Removed dead `LoadManifestBytes` / `ManifestNameFor` (last shipped caller retired in v0.14.0), shrunk `tmpl.Samples` to an empty map (the `.tmpl` typo-detection fixture registry — every shipped artifact is YAML now), updated stale doc comments, narrowed the legacy WARN wording from "pre-v0.14.0 format" to "legacy pre-v1.0 format".
+
+## What changed in v0.22.0
+
+**Breaking — `--template FILE` removed from every generator except `license`.** The flag was a silent no-op on every artifact-path command (postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall-report, changelog) because the loader resolves `<name>.yaml` before any TemplatePath check. Now those commands reject `--template` with `Error: unknown flag: --template` — an honest error instead of a silent no-op. The flag still works on `srekit license`, which is the only command whose render path genuinely honors `opts.TemplatePath`.
+
+## What changed in v0.23.0
+
+Doc-only release. Aligned user-facing docs (EN+RU) with the v0.20-v0.22 state: removed bootstrap-envelope examples from `json-output.md`, dropped `--template FILE` from the shared-flags tables, updated architecture/recipes/custom-templates/templates/task docs.

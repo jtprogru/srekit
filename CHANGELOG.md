@@ -21,6 +21,22 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.24.0] - 2026-06-04
+
+### Added
+
+- **`docs/{en,ru}/migration/v1-history.md`** — per-release journal of the YAML-first migration (v0.14.0 → v0.20.0 plus the v0.21–v0.23 stabilization releases). Lifted from the old `v1.md`, plus new entries for v0.21–v0.23 that weren't documented in the migration tree before.
+
+### Changed
+
+- **`docs/{en,ru}/migration/v1.md` rewritten as an action-oriented upgrade guide.** The old page was a chronological journal of "what changed in vX.Y.Z" — useful for git-archaeology, useless for someone on v0.13.x who wants to know "what do I run now". The rewrite leads with a quick "where am I?" check, then a 5-step copy-pasteable upgrade recipe (`templates upgrade` → `templates migrate` → `sed` rewrites → `templates validate` → delete legacy files). The journal moves to the new `v1-history.md` appendix. Stability boundaries are now split into three clean buckets (stable / compat-only / not-yet-stable). Troubleshooting kept and expanded with the section-title raw-syntax case.
+
+- **`mkdocs.yml` nav** updated: `Migration → Upgrade guide` + `Migration → History`.
+
+### Fixed
+
+-
+
 ## [0.23.0] - 2026-06-04
 
 ### Changed
@@ -464,7 +480,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/jtprogru/srekit/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/jtprogru/srekit/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/jtprogru/srekit/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/jtprogru/srekit/compare/v0.20.0...v0.21.0
