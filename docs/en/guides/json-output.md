@@ -1,43 +1,78 @@
 # JSON output for pipelines
 
-Every generator command supports `--json`. The flag short-circuits the template engine: instead of rendering Markdown, srekit emits the template's data payload as indented JSON. The payload is whatever the underlying Go template would have seen.
+Every generator command supports `--json`. The flag emits a structured payload instead of rendering Markdown, so agent workflows and shell pipelines can read the document field-by-field and (for `postmortem`) round-trip it back.
 
-## Contract
+## Contract (v0.13.0+)
 
 - Default sink is **stdout**. `--out FILE` writes the JSON there.
 - Field names are **camelCase** across every command (`id`, `title`, `latencyTarget`, …).
 - With `--json`, the Markdown default path (`Tasker - <title>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md`, etc.) is **not** used — so JSON never accidentally lands in a `.md` file.
+- **Every payload has the shape `{meta, sections}`.** Metadata lives under `meta`; the rendered document is a list of sections under `sections`. Each section has `{id, title, type, required, body}` with `type` one of `text` / `list` / `table` and `body` always a string.
 
-!!! note "One JSON contract"
-    Every command — generators and introspection alike
-    (`templates list --json`) — emits **camelCase** keys. Earlier 0.x
-    releases split generators (PascalCase) from `templates list`
-    (camelCase); that split is gone, so a single `jq` convention works
-    everywhere.
+There are two flavors of the contract:
+
+| Mode | Used by | Sections |
+|---|---|---|
+| **Structured** | `postmortem` (driven by `postmortem.sections.yaml`) | Multiple typed sections, one per slot in the manifest, in manifest order. |
+| **Bootstrap** | every other generator (`task`, `incident`, `rfc`, `runbook`, `retro`, `slo`, `oncall-report`, `ebp`, `capacity`, `license`, `changelog`) | A single synthetic section `{id: "body", type: "text", title: <H1>, body: <rendered markdown>}`. |
+
+The two flavors share the same outer shape (`{meta, sections}`) so a script written for one command works for any other.
+
+!!! warning "Breaking change in 0.13.0"
+    The shape changed from the flat `{title, severity, …}` of 0.12.x to `{meta: {…}, sections: […]}` in 0.13.0. Migration: replace `jq '.title'` with `jq '.meta.title'`, and `jq '.body'` (if you were `grep`'ing rendered markdown) with `jq -r '.sections[0].body'` (bootstrap commands) or `jq -r '.sections[] | select(.id == "summary").body'` (postmortem).
 
 ## Patterns
 
-### Extract a single field
+### Extract a field from `meta`
 
 ```bash
-srekit task --title "Tail latency" --json | jq -r '.id'
+srekit task --title "Tail latency" --json | jq -r '.meta.id'
 # 085883a2-32d0-4d50-9bc6-ac219e29409c
 ```
+
+### List sections of a postmortem
+
+```bash
+srekit postmortem -T X --json | jq '.sections[] | {id, type, required}'
+```
+
+### Get one section's body
+
+```bash
+# Postmortem (multi-section) — pull the summary
+srekit postmortem -T X --json | jq -r '.sections[] | select(.id == "summary").body'
+
+# Any other generator (single bootstrap section) — pull the full rendered markdown
+srekit runbook --service api-gw --alert APIHighLatency --json | jq -r '.sections[0].body'
+```
+
+### Round-trip a postmortem
+
+```bash
+# Dump
+srekit postmortem -T "API outage" --severity SEV-1 --json > pm.json
+
+# Edit one section in pm.json (any tool — jq, sed, your editor, an LLM)
+jq '.sections.summary = "27-minute checkout 5xx, mitigated by failing back to cache."' pm.json > pm.edited.json
+
+# Re-render
+srekit postmortem -T "API outage" --from pm.edited.json
+```
+
+Note that `--from` reads sections from a **map** keyed by ID (`{"summary": "…"}`), not a list. The JSON output uses a list to preserve manifest order; `--from` uses a map because order is irrelevant on the input side.
 
 ### Project to your own shape
 
 ```bash
 srekit postmortem --title "API outage" --severity SEV-1 --json |
-  jq '{title: .title, severity: .severity, started: .start, owner: .owner}'
+  jq '{title: .meta.title, severity: .meta.severity, started: .meta.start, owner: .meta.owner}'
 ```
 
 ### Drive another tool
 
-Generate an SLO, take the params, register them with a metrics tool:
-
 ```bash
 srekit slo --service api-gw --target 99.95% --window 30d --json |
-  jq -r '"\(.service) \(.target) \(.window)"' |
+  jq -r '.meta | "\(.service) \(.target) \(.window)"' |
   xargs my-slo-registrar register
 ```
 
@@ -60,30 +95,32 @@ srekit oncall-report --team platform --json --out oncall.json
 
 ## Per-command payload shape
 
-The full struct passed to each template is listed on its command page (under "Template shape"). Template authors address fields by their Go names (`.Title`); `--json` emits the camelCase keys below:
+The `meta` object mirrors the per-command flag set. Template authors address fields by their Go names (`.Meta.Title` for postmortem; legacy `.Title` for other commands until they migrate); `--json` emits camelCase under `meta`:
 
 ```jsonc
-// task
-{ "id", "creationDate", "modificationDate", "title" }
+// task (bootstrap)
+{ "meta": { "id", "creationDate", "modificationDate", "title" },
+  "sections": [{ "id": "body", "title": "<H1>", "type": "text", "required": true, "body": "<markdown>" }] }
 
-// postmortem
-{ "id", "title", "severity", "start", "end", "owner", "now" }
+// postmortem (structured — sections from postmortem.sections.yaml)
+{ "meta": { "id", "title", "severity", "start", "end", "owner", "now" },
+  "sections": [ ...12 section objects in manifest order... ] }
 
-// rfc
-{ "id", "title", "status", "now", "author": { "name", "email" } }
+// rfc (bootstrap)
+{ "meta": { "id", "title", "status", "now", "author": { "name", "email" } },
+  "sections": [{ "id": "body", ... }] }
 
-// oncall-report
-{ "id", "team", "start", "end", "now", "author": { "name", "email" } }
-
-// slo
-{ "id", "service", "target", "window", "latencyTarget", "now" }
+// slo (bootstrap)
+{ "meta": { "id", "service", "target", "window", "latencyTarget", "now" },
+  "sections": [{ "id": "body", ... }] }
 ```
 
-`author` is a nested object (`{ "name", "email" }`), addressed as `.author.name` / `.author.email` in `jq`.
+`author` (where present) is a nested object (`{ "name", "email" }`), addressed as `.meta.author.name` / `.meta.author.email`.
 
 ## When to use `--json`
 
-- Scripting / automation: any time you'd otherwise `grep` Markdown to pluck a field, use `--json | jq` instead — far more reliable.
+- **Agent workflows**: read a section, modify it, write it back. Postmortem is the first command optimized for this — `--from` round-trip works out of the box.
+- Scripting / automation: any time you'd otherwise `grep` Markdown to pluck a field, use `--json | jq` instead.
 - Drift checks: stash the JSON output of a previous generation and diff against a new one to detect template/field changes.
 - Cross-tool integration: feed values directly into Linear, Jira, or internal CLIs.
 
@@ -96,4 +133,5 @@ The full struct passed to each template is listed on its command page (under "Te
 ## See also
 
 - [Recipes](../recipes.md) — concrete `--json` pipelines.
-- [`templates list --json`](../commands/templates.md#templates-list) — the introspection JSON (same camelCase keys).
+- [`srekit postmortem`](../commands/postmortem.md) — the first structured generator; documents `--from` in detail.
+- [`templates list --json`](../commands/templates.md#templates-list) — introspection JSON (same camelCase keys, flat list shape — different from generator output).

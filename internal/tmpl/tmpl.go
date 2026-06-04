@@ -15,7 +15,7 @@ import (
 	"github.com/jtprogru/srekit/internal/ids"
 )
 
-//go:embed templates/*.tmpl
+//go:embed templates/*.tmpl templates/*.sections.yaml
 var FS embed.FS
 
 // DocsMD is the placeholder/FuncMap reference shipped to user templates
@@ -118,6 +118,69 @@ func (l *Loader) Parse(name string) (*template.Template, error) {
 // over the embedded fallback.
 func (l *Loader) AddDirSource(dir string) {
 	l.Sources = append([]Source{DirSource{Dir: dir}}, l.Sources...)
+}
+
+// ManifestNameFor maps a template filename (e.g. "postmortem.md.tmpl") to
+// the conventional sidecar manifest filename ("postmortem.sections.yaml").
+// Both `.md.tmpl` and the bare `.tmpl` suffix are stripped, so the same
+// rule applies to text templates (e.g. license_*.tmpl → license_*.sections.yaml).
+func ManifestNameFor(templateName string) string {
+	name := strings.TrimSuffix(templateName, ".tmpl")
+	name = strings.TrimSuffix(name, ".md")
+	return name + ".sections.yaml"
+}
+
+// LoadManifestBytes resolves the sidecar manifest for a template and
+// returns its raw YAML bytes. Walks Sources in the same order as Parse,
+// so a user-dir manifest shadows the embedded one. Returns fs.ErrNotExist
+// when no source has the manifest; that's the signal for "this template
+// renders the legacy way" and is not a fatal error.
+//
+// Parsing is intentionally left to callers (internal/sections.ParseManifest)
+// to keep this package free of a manifest-type dependency.
+func (l *Loader) LoadManifestBytes(templateName string) ([]byte, error) {
+	manifestName := ManifestNameFor(templateName)
+	for _, s := range l.Sources {
+		b, err := s.Read(manifestName)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("manifest %q: %w", manifestName, err)
+		}
+		return b, nil
+	}
+	return nil, fs.ErrNotExist
+}
+
+// IsTemplateArtifact reports whether a filename is one of the artifact
+// types srekit ships from the embedded FS / user templates dir
+// (rendering templates and their sidecar manifests).
+func IsTemplateArtifact(name string) bool {
+	return strings.HasSuffix(name, ".tmpl") ||
+		strings.HasSuffix(name, ".sections.yaml")
+}
+
+// EmbeddedNames returns the filenames of every artifact embedded under
+// `templates/` (both `.tmpl` and `.sections.yaml`). It is the single
+// enumeration surface used by `srekit templates init/upgrade/diff/list`
+// so adding a new artifact type only requires updating IsTemplateArtifact.
+func EmbeddedNames() ([]string, error) {
+	entries, err := fs.ReadDir(FS, "templates")
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if !IsTemplateArtifact(e.Name()) {
+			continue
+		}
+		out = append(out, e.Name())
+	}
+	return out, nil
 }
 
 // ParseFile reads a template from an arbitrary file path and parses it

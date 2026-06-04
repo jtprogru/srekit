@@ -11,15 +11,53 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- **Structured `--json` via sidecar sections manifest.** `srekit postmortem` is the first generator backed by a `<template>.sections.yaml` file that declares typed slots (`text` / `list` / `table`), required-flags, and default content. `--json` exposes the document section-by-section in manifest order:
+
+  ```jsonc
+  { "meta": {…},
+    "sections": [
+      { "id": "summary", "type": "text", "required": true, "body": "…" },
+      { "id": "impact",  "type": "list", "required": true, "body": "- …" },
+      …
+    ] }
+  ```
+
+- **`srekit postmortem --from FILE`** (and `-` for stdin) — round-trip: read structured input (`{meta?, sections}`), merge over manifest defaults, render Markdown. Unknown section IDs are a hard error with the offending IDs and the known set listed (typo guard). Section bodies pass through verbatim — no template evaluation — so arbitrary markdown round-trips safely.
+
+- **`internal/sections` package** — Manifest / Section / RenderedSection types, YAML parsing, default-body rendering, merge. Reusable when other generators migrate.
 
 ### Changed
 
--
+- **Breaking — `--json` shape across every generator** (`postmortem`, `incident`, `rfc`, `runbook`, `retro`, `slo`, `oncall-report`, `task`, `ebp`, `capacity`, `license`, `changelog`). Output is now `{meta, sections}` instead of the previous flat structure. `postmortem` ships the full structured shape; every other command wraps the rendered markdown in a single synthetic section (`{id: "body", type: "text", title: <H1>, required: true, body: <markdown>}`) so a single `jq` recipe works across all generators.
 
-### Fixed
+  This is the second `--json` shape change in 0.x (after camelCase in 0.12.0). The shape stabilizes at 1.0; treat `--json` as pre-stable until then. Migration:
 
--
+  ```bash
+  # before (0.12.x)
+  srekit task -T "X" --json | jq '.title'
+  # after (0.13.0)
+  srekit task -T "X" --json | jq '.meta.title'
+
+  # before — grep'ing rendered markdown
+  srekit runbook --service api --json | jq '.body'  # never existed
+  # after — first (and only) bootstrap section's body
+  srekit runbook --service api --json | jq -r '.sections[0].body'
+
+  # postmortem — multi-section, by ID
+  srekit postmortem -T X --json | jq -r '.sections[] | select(.id == "summary").body'
+  ```
+
+- **Breaking — `postmortem.md.tmpl` structure**. The template shrinks from a hardcoded body to a header (frontmatter + H1 + meta-bullets) followed by `{{ range .Sections }}…{{ end }}`. Section content now lives in the new `postmortem.sections.yaml`. If you customized `postmortem.md.tmpl` in your `templates_dir`, `srekit templates upgrade` will almost certainly report a 3-way merge conflict — that's expected. Migration:
+
+  - Move section-level customizations (titles, default content, item lists, table columns) into `postmortem.sections.yaml`.
+  - Adapt the header portion of the new `postmortem.md.tmpl` (frontmatter, H1, meta bullets) to taste.
+  - Anything that depended on flat `{{ .Title }}` / `{{ .ID }}` / etc. in the template body becomes `{{ .Meta.Title }}` / `{{ .Meta.ID }}` / etc. — the data root is now `{Meta, Sections}`.
+
+- **`templates init/upgrade/diff/list/validate`** now treat `.sections.yaml` as a first-class artifact alongside `.tmpl`. Enumeration is centralized in `tmpl.EmbeddedNames()` / `tmpl.IsTemplateArtifact()` — adding a new artifact type in the future is one helper update, not five duplicated changes. `templates validate` parses `.sections.yaml` as a manifest and surfaces schema errors (unknown type, missing ID, etc.) on a `FAIL` line.
+
+### Notes for v1.0 direction
+
+This release introduces the manifest format on a single command as a prototype. After 2-3 months of practice, the project will decide whether to migrate the remaining generators to YAML-first templates as part of v1.0 — see `plans/srekit-plan.md` for the roadmap. Until then, the bootstrap wrapper gives those commands a uniform JSON contract without forcing their migration.
 
 ## [0.12.1] - 2026-06-04
 

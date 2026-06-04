@@ -38,16 +38,33 @@ func (o *Output) Bind(cmd *cobra.Command, outDesc string) {
 // RenderOptions converts the flag state into render.Options. defaultPath is
 // the file path used when the user passed neither --out nor --stdout. The cmd
 // is used to read the inherited persistent --quiet flag.
+//
+// This is the default for legacy commands that have not migrated to a
+// sections manifest: BootstrapJSON is true, so --json wraps the rendered
+// markdown into the uniform `{meta, sections:[{id:"body", ...}]}` envelope.
+// Commands that own their {meta, sections} payload (postmortem) call
+// RenderOptionsStructured instead.
 func (o *Output) RenderOptions(cmd *cobra.Command, defaultPath string) render.Options {
 	quiet, _ := cmd.Flags().GetBool("quiet")
 	return render.Options{
-		Out:          o.Out,
-		Stdout:       o.Stdout,
-		Force:        o.Force,
-		DryRun:       o.DryRun,
-		Default:      defaultPath,
-		TemplatePath: o.TemplatePath,
-		JSON:         o.JSON,
-		Quiet:        quiet,
+		Out:           o.Out,
+		Stdout:        o.Stdout,
+		Force:         o.Force,
+		DryRun:        o.DryRun,
+		Default:       defaultPath,
+		TemplatePath:  o.TemplatePath,
+		JSON:          o.JSON,
+		Quiet:         quiet,
+		BootstrapJSON: true,
 	}
+}
+
+// RenderOptionsStructured is for commands that build a {meta, sections}
+// payload themselves (e.g. postmortem with its sidecar manifest). It
+// returns the same Options as RenderOptions but with BootstrapJSON cleared
+// so --json short-circuits straight to MarshalIndent without re-wrapping.
+func (o *Output) RenderOptionsStructured(cmd *cobra.Command, defaultPath string) render.Options {
+	opts := o.RenderOptions(cmd, defaultPath)
+	opts.BootstrapJSON = false
+	return opts
 }

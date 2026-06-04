@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/jtprogru/srekit/internal/sections"
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
@@ -148,16 +149,16 @@ func resolveListDir(cmd *cobra.Command, args []string) (string, error) {
 
 func classifyTemplates(userDir string) ([]templateEntry, error) {
 	embedded := map[string][]byte{}
-	embEntries, err := fs.ReadDir(tmpl.FS, "templates")
+	embNames, err := tmpl.EmbeddedNames()
 	if err != nil {
 		return nil, fmt.Errorf("read embedded templates: %w", err)
 	}
-	for _, e := range embEntries {
-		body, err := fs.ReadFile(tmpl.FS, "templates/"+e.Name())
+	for _, name := range embNames {
+		body, err := fs.ReadFile(tmpl.FS, "templates/"+name)
 		if err != nil {
-			return nil, fmt.Errorf("read embedded %s: %w", e.Name(), err)
+			return nil, fmt.Errorf("read embedded %s: %w", name, err)
 		}
-		embedded[e.Name()] = body
+		embedded[name] = body
 	}
 
 	user := map[string][]byte{}
@@ -167,7 +168,7 @@ func classifyTemplates(userDir string) ([]templateEntry, error) {
 			return nil, fmt.Errorf("read %s: %w", userDir, err)
 		}
 		for _, e := range userFiles {
-			if e.IsDir() || !strings.HasSuffix(e.Name(), ".tmpl") {
+			if e.IsDir() || !tmpl.IsTemplateArtifact(e.Name()) {
 				continue
 			}
 			body, err := os.ReadFile(filepath.Join(userDir, e.Name()))
@@ -265,7 +266,7 @@ func runTemplatesUpgrade(cmd *cobra.Command, args []string, force, dryRun bool) 
 	if err != nil {
 		return err
 	}
-	entries, err := fs.ReadDir(tmpl.FS, "templates")
+	names, err := tmpl.EmbeddedNames()
 	if err != nil {
 		return fmt.Errorf("read embedded templates: %w", err)
 	}
@@ -273,8 +274,7 @@ func runTemplatesUpgrade(cmd *cobra.Command, args []string, force, dryRun bool) 
 	out := cmd.OutOrStdout()
 	ctx := cmd.Context()
 	var added, updated, mergedCount, conflictCount, unchanged, skipped int
-	for _, e := range entries {
-		name := e.Name()
+	for _, name := range names {
 		embedded, err := fs.ReadFile(tmpl.FS, "templates/"+name)
 		if err != nil {
 			return fmt.Errorf("read embedded %s: %w", name, err)
@@ -461,18 +461,18 @@ func runTemplatesInit(cmd *cobra.Command, dir string, force, noGit bool) error {
 		return fmt.Errorf("create %s: %w", dir, err)
 	}
 
-	entries, err := fs.ReadDir(tmpl.FS, "templates")
+	names, err := tmpl.EmbeddedNames()
 	if err != nil {
 		return fmt.Errorf("read embedded templates: %w", err)
 	}
 
 	written := 0
-	for _, e := range entries {
-		target := filepath.Join(dir, e.Name())
+	for _, name := range names {
+		target := filepath.Join(dir, name)
 		if _, err := os.Stat(target); err == nil && !force {
 			return fmt.Errorf("%s already exists; pass --force to overwrite", target)
 		}
-		b, err := fs.ReadFile(tmpl.FS, "templates/"+e.Name())
+		b, err := fs.ReadFile(tmpl.FS, "templates/"+name)
 		if err != nil {
 			return err
 		}
@@ -482,7 +482,7 @@ func runTemplatesInit(cmd *cobra.Command, dir string, force, noGit bool) error {
 		}
 		// Seed the merge-base snapshot so a future 'templates upgrade' can do
 		// a true 3-way merge instead of falling back to additive logic.
-		if err := writeSnapshot(dir, e.Name(), b); err != nil {
+		if err := writeSnapshot(dir, name, b); err != nil {
 			return err
 		}
 		written++
@@ -613,14 +613,14 @@ func runTemplatesValidate(cmd *cobra.Command, args []string) error {
 	}
 	var names []string
 	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".tmpl") {
+		if e.IsDir() || !tmpl.IsTemplateArtifact(e.Name()) {
 			continue
 		}
 		names = append(names, e.Name())
 	}
 	sort.Strings(names)
 	if len(names) == 0 {
-		fmt.Fprintf(cmd.OutOrStdout(), "no .tmpl files in %s\n", dir)
+		fmt.Fprintf(cmd.OutOrStdout(), "no template artifacts in %s\n", dir)
 		return nil
 	}
 
@@ -632,6 +632,15 @@ func runTemplatesValidate(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			fmt.Fprintf(errOut, "FAIL  %s: read: %v\n", name, err)
 			failed++
+			continue
+		}
+		if strings.HasSuffix(name, ".sections.yaml") {
+			if _, err := sections.ParseManifest(body); err != nil {
+				fmt.Fprintf(errOut, "FAIL  %s: %v\n", name, err)
+				failed++
+				continue
+			}
+			fmt.Fprintf(out, "OK    %s\n", name)
 			continue
 		}
 		switch err := tmpl.Validate(name, body); {
@@ -700,14 +709,14 @@ func runTemplatesDiff(cmd *cobra.Command, args []string, nameOnly, noColor bool)
 	}
 	var names []string
 	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".tmpl") {
+		if e.IsDir() || !tmpl.IsTemplateArtifact(e.Name()) {
 			continue
 		}
 		names = append(names, e.Name())
 	}
 	sort.Strings(names)
 	if len(names) == 0 {
-		fmt.Fprintf(cmd.OutOrStdout(), "no .tmpl files in %s\n", dir)
+		fmt.Fprintf(cmd.OutOrStdout(), "no template artifacts in %s\n", dir)
 		return nil
 	}
 

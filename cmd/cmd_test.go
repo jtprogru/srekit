@@ -259,7 +259,9 @@ func TestTemplatesDirOverride(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	custom := []byte("# CUSTOM POSTMORTEM: {{ .Title }}\n")
+	// As of v0.13.0 the postmortem template sees a {Meta, Sections} struct
+	// rather than a flat one — custom templates reference .Meta.Title.
+	custom := []byte("# CUSTOM POSTMORTEM: {{ .Meta.Title }}\n")
 	if err := os.WriteFile(filepath.Join(dir, "postmortem.md.tmpl"), custom, 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -320,17 +322,24 @@ func TestTemplatesInitScaffolds(t *testing.T) {
 		t.Fatalf("init failed: %v (output: %s)", err, out)
 	}
 
-	// At least the SRE-doc templates we ship must be there.
+	// At least the SRE-doc templates we ship must be there, plus the
+	// sidecar manifest that the postmortem command now consumes.
 	for _, name := range []string{
 		"task.md.tmpl", "incident.md.tmpl", "postmortem.md.tmpl",
 		"runbook.md.tmpl", "rfc.md.tmpl", "slo.md.tmpl",
 		"ebp.md.tmpl", "capacity.md.tmpl",
 		"oncall.md.tmpl", "retro.md.tmpl", "changelog.md.tmpl",
+		"postmortem.sections.yaml",
 		"TEMPLATES.md",
 	} {
 		if _, err := os.Stat(filepath.Join(target, name)); err != nil {
 			t.Errorf("expected %s to be written: %v", name, err)
 		}
+	}
+	// Snapshot for the new sidecar must be seeded too so future 3-way
+	// merges work without falling back to additive mode.
+	if _, err := os.Stat(filepath.Join(target, ".srekit-embedded", "postmortem.sections.yaml")); err != nil {
+		t.Errorf("expected snapshot for postmortem.sections.yaml: %v", err)
 	}
 	if !strings.Contains(out, "Templates scaffolded in") {
 		t.Errorf("expected friendly summary, got: %s", out)
@@ -541,6 +550,48 @@ func TestTemplatesValidateUserOnlyTemplate(t *testing.T) {
 	}
 	if !strings.Contains(out, "my-custom.md.tmpl (parse-only") {
 		t.Errorf("expected parse-only note for user-only template, got: %s", out)
+	}
+}
+
+// TestTemplatesValidateAcceptsManifest verifies that .sections.yaml files
+// are recognized by `templates validate` and parsed as section manifests.
+func TestTemplatesValidateAcceptsManifest(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	out, err := runCLI(t, "templates", "validate", dir)
+	if err != nil {
+		t.Fatalf("validate failed: %v\noutput: %s", err, out)
+	}
+	if !strings.Contains(out, "OK    postmortem.sections.yaml") {
+		t.Errorf("expected OK line for sidecar manifest, got: %s", out)
+	}
+}
+
+// TestTemplatesValidateRejectsBrokenManifest verifies that a malformed
+// .sections.yaml fails validation with a descriptive message.
+func TestTemplatesValidateRejectsBrokenManifest(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	// Unknown section type — manifest validation must surface it.
+	bad := []byte("version: 1\nsections:\n  - id: x\n    title: X\n    type: image\n")
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.sections.yaml"), bad, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "validate", dir)
+	if err == nil {
+		t.Fatalf("expected non-zero exit, output: %s", out)
+	}
+	if !strings.Contains(out, "FAIL  postmortem.sections.yaml") {
+		t.Errorf("expected FAIL line for manifest, got: %s", out)
+	}
+	if !strings.Contains(out, "unknown type") {
+		t.Errorf("error should mention unknown type, got: %s", out)
 	}
 }
 
@@ -783,8 +834,9 @@ func TestConfigInitMissingAuthorFails(t *testing.T) {
 	}
 }
 
-// TestTaskJSON verifies --json emits structured data with the same fields
-// the template would have seen. camelCase keys are the public contract.
+// TestTaskJSON verifies --json emits the bootstrap envelope shape (meta +
+// one synthetic "body" section) for commands that have not migrated to a
+// sections manifest. camelCase keys remain the public contract.
 func TestTaskJSON(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "task", "--title", "Tail latency", "--json")
@@ -795,16 +847,32 @@ func TestTaskJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &got); err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
 	}
-	if got["title"] != "Tail latency" {
-		t.Errorf("title mismatch: %v", got["title"])
+	meta, ok := got["meta"].(map[string]any)
+	if !ok {
+		t.Fatalf("missing meta object in %v", got)
 	}
-	if _, ok := got["id"].(string); !ok {
-		t.Errorf("expected string id, got %T: %v", got["id"], got["id"])
+	if meta["title"] != "Tail latency" {
+		t.Errorf("meta.title mismatch: %v", meta["title"])
+	}
+	if _, ok := meta["id"].(string); !ok {
+		t.Errorf("expected string meta.id, got %T: %v", meta["id"], meta["id"])
+	}
+	secs, ok := got["sections"].([]any)
+	if !ok || len(secs) != 1 {
+		t.Fatalf("expected one bootstrap section, got %v", got["sections"])
+	}
+	s0 := secs[0].(map[string]any)
+	if s0["id"] != "body" || s0["type"] != "text" {
+		t.Errorf("bootstrap section shape wrong: %v", s0)
+	}
+	if !strings.Contains(s0["body"].(string), "Tail latency") {
+		t.Errorf("bootstrap body should include rendered markdown: %v", s0["body"])
 	}
 }
 
-// TestPostmortemJSON verifies a structured field (Severity) round-trips
-// through --json on a command that exercises more flags.
+// TestPostmortemJSON verifies the structured --json shape: postmortem owns
+// a sidecar manifest, so the payload is {meta, sections:[...]} with one
+// element per section in manifest order.
 func TestPostmortemJSON(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "postmortem",
@@ -818,8 +886,119 @@ func TestPostmortemJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &got); err != nil {
 		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
 	}
-	if got["title"] != "API outage" || got["severity"] != "SEV-1" {
-		t.Errorf("field mismatch: %+v", got)
+	meta, ok := got["meta"].(map[string]any)
+	if !ok {
+		t.Fatalf("missing meta object in %v", got)
+	}
+	if meta["title"] != "API outage" || meta["severity"] != "SEV-1" {
+		t.Errorf("meta mismatch: %+v", meta)
+	}
+	secs, ok := got["sections"].([]any)
+	if !ok || len(secs) < 5 {
+		t.Fatalf("expected multiple sections, got %v", got["sections"])
+	}
+	first := secs[0].(map[string]any)
+	if first["id"] != "summary" {
+		t.Errorf("first section should be summary, got %v", first["id"])
+	}
+	// Every section has the canonical shape.
+	for i, s := range secs {
+		m := s.(map[string]any)
+		for _, key := range []string{"id", "title", "type", "required", "body"} {
+			if _, ok := m[key]; !ok {
+				t.Errorf("section[%d] missing %q: %v", i, key, m)
+			}
+		}
+	}
+}
+
+// TestPostmortemFromInput verifies the --from round-trip: an input.json
+// with overrides for a subset of section bodies renders Markdown where
+// those overrides survive and the remaining sections fall back to the
+// manifest defaults.
+func TestPostmortemFromInput(t *testing.T) {
+	t.Parallel()
+	input := `{
+	  "sections": {
+	    "summary": "Outage lasted 27 minutes during peak EU traffic.",
+	    "root_cause": "Cache eviction storm after capacity flag flip."
+	  }
+	}`
+	dir := t.TempDir()
+	inputPath := filepath.Join(dir, "input.json")
+	if err := os.WriteFile(inputPath, []byte(input), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "postmortem",
+		"--title", "Outage",
+		"--from", inputPath,
+		"--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Outage lasted 27 minutes") {
+		t.Errorf("summary override not applied:\n%s", out)
+	}
+	if !strings.Contains(out, "Cache eviction storm") {
+		t.Errorf("root_cause override not applied:\n%s", out)
+	}
+	if !strings.Contains(out, "Влияние на пользователей:") {
+		t.Errorf("expected impact section to come from defaults:\n%s", out)
+	}
+}
+
+// TestPostmortemFromUnknownSectionID verifies the typo-guard: an input
+// with an unknown section ID fails with a message that lists both the
+// offending IDs and the manifest's known set.
+func TestPostmortemFromUnknownSectionID(t *testing.T) {
+	t.Parallel()
+	input := `{"sections": {"summery": "typo"}}`
+	dir := t.TempDir()
+	inputPath := filepath.Join(dir, "input.json")
+	if err := os.WriteFile(inputPath, []byte(input), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := runCLI(t, "postmortem", "--title", "X", "--from", inputPath, "--stdout")
+	if err == nil {
+		t.Fatal("expected error for unknown section id")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "unknown section IDs") {
+		t.Errorf("error should mention 'unknown section IDs', got: %v", err)
+	}
+	if !strings.Contains(msg, "summery") {
+		t.Errorf("error should mention the bad id, got: %v", err)
+	}
+	if !strings.Contains(msg, "summary") {
+		t.Errorf("error should list known ids (e.g. summary), got: %v", err)
+	}
+}
+
+// TestIncidentJSONBootstrap is a representative test for the bootstrap
+// envelope shape used by every generator that hasn't migrated to a
+// sections manifest. (Per-command spot-checks for runbook/rfc/etc. would
+// be redundant — all go through the same RenderOptions path.)
+func TestIncidentJSONBootstrap(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "incident", "--title", "Checkout 5xx", "--severity", "SEV-1", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out)
+	}
+	meta := got["meta"].(map[string]any)
+	if meta["title"] != "Checkout 5xx" || meta["severity"] != "SEV-1" {
+		t.Errorf("meta mismatch: %v", meta)
+	}
+	secs := got["sections"].([]any)
+	if len(secs) != 1 {
+		t.Fatalf("expected one bootstrap section, got %d", len(secs))
+	}
+	s0 := secs[0].(map[string]any)
+	if s0["id"] != "body" {
+		t.Errorf("bootstrap section id should be 'body', got %v", s0["id"])
 	}
 }
 

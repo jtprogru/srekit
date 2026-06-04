@@ -189,6 +189,103 @@ func TestRenderJSONIgnoresDefaultPath(t *testing.T) {
 	}
 }
 
+// TestRenderBootstrapJSONEnvelope verifies the bootstrap wrapping path:
+// when both JSON and BootstrapJSON are set, the rendered markdown is
+// wrapped as {meta: data, sections: [{id:"body", title:H1, ...}]}.
+func TestRenderBootstrapJSONEnvelope(t *testing.T) {
+	var out bytes.Buffer
+	in := struct {
+		ID, CreationDate, ModificationDate, Title string
+	}{ID: "id-1", CreationDate: "t", ModificationDate: "t", Title: "Hello"}
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", in,
+		Options{JSON: true, BootstrapJSON: true, Default: "ignored.md"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
+	}
+	meta, ok := got["meta"].(map[string]any)
+	if !ok {
+		t.Fatalf("missing meta object: %v", got)
+	}
+	if meta["Title"] != "Hello" {
+		t.Errorf("meta.Title = %v, want Hello", meta["Title"])
+	}
+	secs, ok := got["sections"].([]any)
+	if !ok || len(secs) != 1 {
+		t.Fatalf("expected one section, got %v", got["sections"])
+	}
+	body := secs[0].(map[string]any)
+	if body["id"] != "body" {
+		t.Errorf("section id = %v, want 'body'", body["id"])
+	}
+	if body["type"] != "text" {
+		t.Errorf("section type = %v, want 'text'", body["type"])
+	}
+	if body["required"] != true {
+		t.Errorf("section required = %v, want true", body["required"])
+	}
+	if !strings.Contains(body["body"].(string), "# Расследование (Investigation) — Hello") {
+		t.Errorf("section body should contain rendered H1, got: %v", body["body"])
+	}
+	if !strings.Contains(body["title"].(string), "Hello") {
+		t.Errorf("section title should be H1 text, got: %v", body["title"])
+	}
+}
+
+func TestRenderStructuredJSONPassThrough(t *testing.T) {
+	// When BootstrapJSON is false, data is marshaled directly with no envelope.
+	var out bytes.Buffer
+	in := map[string]any{
+		"meta":     map[string]any{"title": "X"},
+		"sections": []any{map[string]any{"id": "summary", "body": "hi"}},
+	}
+	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", in,
+		Options{JSON: true, BootstrapJSON: false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	meta := got["meta"].(map[string]any)
+	if meta["title"] != "X" {
+		t.Errorf("structured pass-through dropped data: %v", got)
+	}
+	// Sections must NOT be re-wrapped as bootstrap envelope.
+	secs := got["sections"].([]any)
+	if len(secs) != 1 {
+		t.Fatalf("expected one section, got %d", len(secs))
+	}
+	s0 := secs[0].(map[string]any)
+	if s0["id"] != "summary" {
+		t.Errorf("structured path should pass sections through: %v", s0)
+	}
+}
+
+func TestExtractH1(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"# Hello", "Hello"},
+		{"# Hello\nrest", "Hello"},
+		{"prefix\n# Title here\nmore", "Title here"},
+		{"## H2 only", ""},
+		{"no headings", ""},
+		{"", ""},
+		{"#   trimmed   ", "trimmed"},
+	}
+	for _, tc := range cases {
+		got := extractH1([]byte(tc.in))
+		if got != tc.want {
+			t.Errorf("extractH1(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
 func TestRenderDryRunNoFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")

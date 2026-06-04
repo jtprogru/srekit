@@ -1,0 +1,90 @@
+version: 1
+sections:
+  - id: summary
+    title: "Краткое описание (Summary)"
+    type: text
+    required: true
+    default_body: |
+      _Один абзац: что произошло, кого затронуло, как смягчили._
+
+  - id: impact
+    title: "Влияние (Impact)"
+    type: list
+    required: true
+    items:
+      - "Влияние на пользователей:"
+      - "Расход SLO / SLI:"
+      - "Внутреннее влияние:"
+
+  - id: timeline
+    title: "Хронология (Timeline)"
+    type: table
+    required: true
+    default_body: "(Все времена в UTC.)"
+    columns: ["Время", "Событие"]
+    rows:
+      - ["{{ .Meta.Start }}", "Инцидент начался"]
+      - ["", ""]
+      - ["{{ .Meta.End }}", "Инцидент разрешён"]
+
+  - id: root_cause
+    title: "Корневая причина (Root Cause)"
+    type: text
+    required: true
+    default_body: |
+      _Что сломалось и почему. Если помогает — используй технику «5 почему»._
+
+  - id: detection
+    title: "Обнаружение (Detection)"
+    type: list
+    required: false
+    items:
+      - "Как обнаружили?"
+      - "Время до обнаружения:"
+      - "Можно было обнаружить раньше?"
+
+  - id: resolution
+    title: "Разрешение (Resolution)"
+    type: list
+    required: false
+    items:
+      - "Что остановило «кровотечение»?"
+      - "Каков долгосрочный фикс?"
+
+  - id: what_went_well
+    title: "Что сработало хорошо (What went well)"
+    type: list
+    required: false
+    items: [""]
+
+  - id: what_went_wrong
+    title: "Что пошло не так (What went wrong)"
+    type: list
+    required: false
+    items: [""]
+
+  - id: where_got_lucky
+    title: "Где нам повезло (Where we got lucky)"
+    type: list
+    required: false
+    items: [""]
+
+  - id: action_items
+    title: "Задачи (Action items)"
+    type: table
+    required: true
+    columns: ["#", "Действие", "Ответственный", "Приоритет", "Срок"]
+    rows:
+      - ["1", "", "", "P1", ""]
+
+  - id: lessons_learned
+    title: "Извлечённые уроки (Lessons learned)"
+    type: list
+    required: false
+    items: [""]
+
+  - id: references
+    title: "Ссылки (References)"
+    type: list
+    required: false
+    items: [""]

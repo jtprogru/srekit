@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/jtprogru/srekit/internal/tmpl"
@@ -22,6 +24,15 @@ type Options struct {
 	TemplatePath string // optional: read template from this file path instead of the embedded/loader chain
 	JSON         bool   // emit the template data as JSON instead of rendering the template
 	Quiet        bool   // suppress informational messages (the "wrote <file>" line, dry-run notes)
+	// BootstrapJSON controls --json shape for commands that haven't migrated
+	// to a sections manifest. When true (the default for legacy commands),
+	// the rendered markdown is wrapped in a bootstrap envelope
+	// `{meta: <data>, sections: [{id:"body", title:<H1>, type:"text",
+	// required:true, body:<rendered markdown>}]}` so every command speaks
+	// the same {meta, sections} JSON contract. When false (postmortem), the
+	// caller has already shaped `data` as {meta, sections} itself and JSON
+	// short-circuits straight to MarshalIndent without rendering markdown.
+	BootstrapJSON bool
 }
 
 func Render(stdout io.Writer, loader *tmpl.Loader, tmplName string, data any, opts Options) error {
@@ -33,7 +44,9 @@ func Render(stdout io.Writer, loader *tmpl.Loader, tmplName string, data any, op
 }
 
 func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]byte, error) {
-	if opts.JSON {
+	// Structured JSON path: the caller has already shaped data as
+	// {meta, sections}; marshal as-is without touching the template.
+	if opts.JSON && !opts.BootstrapJSON {
 		b, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
 			return nil, fmt.Errorf("encode %q as JSON: %w", tmplName, err)
@@ -55,7 +68,44 @@ func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]
 	if err := t.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("render %q: %w", tmplName, err)
 	}
-	return buf.Bytes(), nil
+	body := buf.Bytes()
+
+	// Bootstrap JSON path: render markdown first, then wrap the result in
+	// a {meta, sections:[{id:"body", ...}]} envelope so every generator
+	// command exposes a uniform JSON contract regardless of whether it has
+	// a sections manifest yet.
+	if opts.JSON && opts.BootstrapJSON {
+		envelope := map[string]any{
+			"meta": data,
+			"sections": []map[string]any{{
+				"id":       "body",
+				"title":    extractH1(body),
+				"type":     "text",
+				"required": true,
+				"body":     string(body),
+			}},
+		}
+		b, err := json.MarshalIndent(envelope, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("encode %q as JSON: %w", tmplName, err)
+		}
+		return append(b, '\n'), nil
+	}
+
+	return body, nil
+}
+
+var h1Pattern = regexp.MustCompile(`(?m)^#\s+(.+)$`)
+
+// extractH1 returns the text of the first level-1 heading in body, or "" if
+// the document has none. Used to populate the synthetic `body` section's
+// title in the bootstrap JSON envelope.
+func extractH1(body []byte) string {
+	m := h1Pattern.FindSubmatch(body)
+	if m == nil {
+		return ""
+	}
+	return strings.TrimSpace(string(m[1]))
 }
 
 func writeBody(stdout io.Writer, body []byte, opts Options) error {

@@ -38,16 +38,36 @@ var Samples = map[string]any{
 		Status:   "active",
 		Now:      "2026-01-01T00:00:00Z",
 	},
+	// postmortem now ships with a sidecar manifest (postmortem.sections.yaml)
+	// that drives section rendering, so the data shape is {Meta, Sections}.
+	// Sections is intentionally populated with one representative element so
+	// `templates validate` exercises the `{{ range .Sections }}` loop.
 	"postmortem.md.tmpl": struct {
-		ID, Title, Severity, Start, End, Owner, Now string
+		Meta struct {
+			ID, Title, Severity, Start, End, Owner, Now string
+		}
+		Sections []struct {
+			ID, Title, Type, Body string
+			Required              bool
+		}
 	}{
-		ID:       "11111111-2222-3333-4444-555555555555",
-		Title:    "Sample postmortem",
-		Severity: "SEV-3",
-		Start:    "2026-01-01T00:00:00Z",
-		End:      "2026-01-01T01:00:00Z",
-		Owner:    "@oncall",
-		Now:      "2026-01-01T02:00:00Z",
+		Meta: struct {
+			ID, Title, Severity, Start, End, Owner, Now string
+		}{
+			ID:       "11111111-2222-3333-4444-555555555555",
+			Title:    "Sample postmortem",
+			Severity: "SEV-3",
+			Start:    "2026-01-01T00:00:00Z",
+			End:      "2026-01-01T01:00:00Z",
+			Owner:    "@oncall",
+			Now:      "2026-01-01T02:00:00Z",
+		},
+		Sections: []struct {
+			ID, Title, Type, Body string
+			Required              bool
+		}{
+			{ID: "summary", Title: "Summary", Type: "text", Required: true, Body: "_sample summary_"},
+		},
 	},
 	"runbook.md.tmpl": struct {
 		ID, Title, Service, Alert, Now string

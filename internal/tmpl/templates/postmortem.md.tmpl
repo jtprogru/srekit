@@ -1,80 +1,24 @@
 ---
-id: {{ .ID }}
-creation_date: {{ .Now }}
+id: {{ .Meta.ID }}
+creation_date: {{ .Meta.Now }}
 type: postmortem
-title: {{ .Title }}
-severity: {{ .Severity }}
-owner: {{ .Owner }}
+title: {{ .Meta.Title }}
+severity: {{ .Meta.Severity }}
+owner: {{ .Meta.Owner }}
 tags:
 - postmortem
 - incident
 ---
 
-# Постмортем (Postmortem) — {{ .Title }}
+# Постмортем (Postmortem) — {{ .Meta.Title }}
 
-- **Тяжесть (Severity):** {{ .Severity }}
-- **Ответственный (Owner):** {{ .Owner | default "<incident owner>" }}
-- **Начало (Started):** {{ .Start | default "<start time>" }}
-- **Конец (Resolved):** {{ .End | default "<end time>" }}
+- **Тяжесть (Severity):** {{ .Meta.Severity }}
+- **Ответственный (Owner):** {{ .Meta.Owner | default "<incident owner>" }}
+- **Начало (Started):** {{ .Meta.Start | default "<start time>" }}
+- **Конец (Resolved):** {{ .Meta.End | default "<end time>" }}
 - **Длительность (Duration):** _заполнить после составления хронологии_
+{{ range .Sections }}
+## {{ .Title }}
 
-## Краткое описание (Summary)
-
-_Один абзац: что произошло, кого затронуло, как смягчили._
-
-## Влияние (Impact)
-
-- Влияние на пользователей:
-- Расход SLO / SLI:
-- Внутреннее влияние:
-
-## Хронология (Timeline)
-
-(Все времена в UTC.)
-
-| Время | Событие |
-|-------|---------|
-| {{ .Start }} | Инцидент начался |
-| | |
-| {{ .End }} | Инцидент разрешён |
-
-## Корневая причина (Root Cause)
-
-_Что сломалось и почему. Если помогает — используй технику «5 почему»._
-
-## Обнаружение (Detection)
-
-- Как обнаружили?
-- Время до обнаружения:
-- Можно было обнаружить раньше?
-
-## Разрешение (Resolution)
-
-- Что остановило «кровотечение»?
-- Каков долгосрочный фикс?
-
-## Что сработало хорошо (What went well)
-
--
-
-## Что пошло не так (What went wrong)
-
--
-
-## Где нам повезло (Where we got lucky)
-
--
-
-## Задачи (Action items)
-
-| # | Действие | Ответственный | Приоритет | Срок |
-|---|----------|---------------|-----------|------|
-| 1 |          |               | P1        |      |
-
-## Извлечённые уроки (Lessons learned)
-
--
-
-## Ссылки (References)
-
--
+{{ .Body }}
+{{ end }}

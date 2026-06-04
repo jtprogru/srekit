@@ -31,12 +31,12 @@ func TestShort(t *testing.T) {
 
 func TestSlug(t *testing.T) {
 	cases := map[string]string{
-		"Hello World":                 "hello-world",
-		"  Tail Latency на api-gw  ":  "tail-latency-api-gw",
-		"---":                         "untitled",
-		"":                            "untitled",
-		"Foo / Bar :: Baz!":           "foo-bar-baz",
-		"already-good-slug":           "already-good-slug",
+		"Hello World":                "hello-world",
+		"  Tail Latency на api-gw  ": "tail-latency-api-gw",
+		"---":                        "untitled",
+		"":                           "untitled",
+		"Foo / Bar :: Baz!":          "foo-bar-baz",
+		"already-good-slug":          "already-good-slug",
 	}
 	for in, want := range cases {
 		if got := Slug(in); got != want {
