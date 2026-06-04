@@ -15,11 +15,17 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Changed
 
-- `postmortem` default output filename now includes today's date: `postmortem-<YYYY-MM-DD>-<slug>.md` (was `postmortem-<slug>.md`). Postmortems land in chronological order when listed, and re-running the command for a similar incident on a different day no longer overwrites the previous file. Explicit `--out` and `--stdout` are unchanged.
+-
 
 ### Fixed
 
 -
+
+## [0.12.1] - 2026-06-04
+
+### Changed
+
+- `postmortem` default output filename now includes today's date: `postmortem-<YYYY-MM-DD>-<slug>.md` (was `postmortem-<slug>.md`). Postmortems land in chronological order when listed, and re-running the command for a similar incident on a different day no longer overwrites the previous file. Explicit `--out` and `--stdout` are unchanged.
 
 ## [0.12.0] - 2026-05-28
 
@@ -216,7 +222,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.12.1...HEAD
+[0.12.1]: https://github.com/jtprogru/srekit/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/jtprogru/srekit/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/jtprogru/srekit/compare/v0.10.2...v0.11.0
 [0.7.0]: https://github.com/jtprogru/srekit/compare/v0.6.0...v0.7.0
