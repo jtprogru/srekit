@@ -21,6 +21,20 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.21.0] - 2026-06-04
+
+### Changed
+
+- **Pruned dead code after the YAML-first migration.** Removes `internal/tmpl.LoadManifestBytes` + `ManifestNameFor` (resolved sidecar `<name>.sections.yaml` for the legacy loader path — last shipped caller was v0.13.x postmortem fallback, retired in v0.14.0; no code path reaches them in v0.20.0) and their tests. Shrinks `tmpl.Samples` to `{}` (the `.tmpl` typo-detection fixture registry — empty now that no `.tmpl` ships); the variable is kept as a hook for external tooling that ships custom `.tmpl` artifacts via `tmpl.Validate`.
+
+- **Updated doc comments to reflect the v0.20 state.** `internal/sections` package doc + Manifest type doc clarify Manifest exists for backwards compatibility (`templates validate` / `templates migrate`) rather than for shipped generators; `internal/render.Options` BootstrapJSON / RenderArtifact docs describe current defaults instead of "legacy commands"; `internal/tmpl` FS / IsTemplateArtifact / EmbeddedNames doc rewrites reflect "every shipped artifact is v1 YAML".
+
+- **`cmd/legacy_warn.go` WARN wording**: "`pre-v0.14.0 format`" → "`legacy pre-v1.0 format`". The migration spans v0.14–v0.20, not a single release.
+
+### Fixed
+
+-
+
 ## [0.20.0] - 2026-06-04
 
 ### Added
@@ -418,7 +432,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/jtprogru/srekit/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/jtprogru/srekit/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/jtprogru/srekit/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/jtprogru/srekit/compare/v0.17.0...v0.18.0
