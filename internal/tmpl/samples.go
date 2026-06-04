@@ -57,21 +57,8 @@ var Samples = map[string]any{
 		Author: authorSample{Name: "Sample Author", Email: "sample@example.com"},
 	},
 	// slo.md.tmpl was removed in v0.16.0 (migrated to slo.yaml — v1 artifact).
-	"ebp.md.tmpl": struct {
-		ID, Service, Now string
-	}{
-		ID:      "11111111-2222-3333-4444-555555555555",
-		Service: "api-gw",
-		Now:     "2026-01-01T00:00:00Z",
-	},
-	"capacity.md.tmpl": struct {
-		ID, Service, Horizon, Now string
-	}{
-		ID:      "11111111-2222-3333-4444-555555555555",
-		Service: "api-gw",
-		Horizon: "1y",
-		Now:     "2026-01-01T00:00:00Z",
-	},
+	// ebp.md.tmpl and capacity.md.tmpl were removed in v0.17.0 (migrated to
+	// ebp.yaml / capacity.yaml — v1 artifacts).
 	"oncall.md.tmpl": struct {
 		ID, Team, Start, End, Now string
 		Author                    authorSample

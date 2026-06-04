@@ -11,7 +11,24 @@ import (
 	"github.com/jtprogru/srekit/internal/clock"
 	"github.com/jtprogru/srekit/internal/ids"
 	"github.com/jtprogru/srekit/internal/render"
+	"github.com/jtprogru/srekit/internal/sections"
+	"github.com/jtprogru/srekit/internal/tmpl"
 )
+
+type ebpMeta struct {
+	ID      string `json:"id"`
+	Service string `json:"service"`
+	Now     string `json:"now"`
+}
+
+type ebpData struct {
+	Meta     ebpMeta                    `json:"meta"`
+	Sections []sections.RenderedSection `json:"sections"`
+}
+
+func (d ebpData) ArtifactPayload() ([]sections.RenderedSection, any) {
+	return d.Sections, struct{ Meta ebpMeta }{Meta: d.Meta}
+}
 
 func newEBPCmd() *cobra.Command {
 	var (
@@ -26,20 +43,43 @@ func newEBPCmd() *cobra.Command {
 			if service == "" {
 				return errors.New("--service is required")
 			}
-			data := struct {
-				ID      string `json:"id"`
-				Service string `json:"service"`
-				Now     string `json:"now"`
-			}{
+			meta := ebpMeta{
 				ID:      ids.UUID(),
 				Service: service,
 				Now:     clock.Now().Format(time.RFC3339),
 			}
+
+			loader := loaderFrom(cmd)
+			manifest, err := loadEBPManifest(cmd, loader)
+			if err != nil {
+				return err
+			}
+			rendered, err := sections.Merge(manifest, nil, struct{ Meta ebpMeta }{Meta: meta})
+			if err != nil {
+				return err
+			}
+
+			data := ebpData{Meta: meta, Sections: rendered}
 			def := fmt.Sprintf("ebp-%s.md", ids.Slug(service))
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "ebp.md.tmpl", data, out.RenderOptions(cmd, def))
+			opts := out.RenderOptionsStructured(cmd, def)
+			opts.RenderArtifact = true
+			return render.Render(cmd.OutOrStdout(), loader, "ebp.md.tmpl", data, opts)
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "", "service name (required)")
 	out.Bind(cmd, "write to file (default: ebp-<service>.md)")
 	return cmd
+}
+
+func loadEBPManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
+	artifactBytes, err := loader.LoadArtifactBytes("ebp.md.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("load ebp.yaml: %w", err)
+	}
+	a, err := sections.ParseArtifact(artifactBytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse ebp.yaml: %w", err)
+	}
+	warnStaleLegacyFiles(cmd, loader, "ebp.yaml", "ebp.md.tmpl")
+	return &sections.Manifest{Version: a.Version, Sections: a.Sections}, nil
 }

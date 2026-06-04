@@ -21,6 +21,20 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.17.0] - 2026-06-04
+
+### Changed
+
+- **`ebp` and `capacity` migrated to the v1 artifact format.** Same dogfooded recipe as retro + slo in v0.16.0: `srekit templates migrate` on the legacy `.tmpl`, then `sed`-rewrite `{{ .Field }}` → `{{ .Meta.Field }}` for the new data root. Both commands now use the artifact render path with structured `--json` (per-section access).
+
+- **Breaking — `srekit ebp --json` and `srekit capacity --json` shape.** Moves from bootstrap envelope (`sections: [{id:"body", body:<markdown>}]`) to structured (`sections: [{id:"triggers",...}, {id:"tiered_actions",...}, ...]`). Migration: replace `jq '.sections[0].body'` with `jq '.sections[] | select(.id=="...").body'`. Same pattern as retro / slo in v0.16.0; documented in `docs/{en,ru}/migration/v1.md` (v0.17.0 section).
+
+- **Breaking — `ebp.md.tmpl` / `capacity.md.tmpl` no longer ship in embed.** Users with customized copies get stderr WARN. `srekit templates upgrade` scaffolds the new `.yaml`; `srekit templates migrate` auto-converts the legacy `.tmpl` (review the result and rewrite `{{ .Field }}` references to `{{ .Meta.Field }}`).
+
+### Fixed
+
+-
+
 ## [0.16.0] - 2026-06-04
 
 ### Changed
@@ -350,7 +364,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/jtprogru/srekit/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/jtprogru/srekit/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/jtprogru/srekit/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/jtprogru/srekit/compare/v0.13.1...v0.14.0
