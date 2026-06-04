@@ -19,7 +19,7 @@ Plus the [shared output flags](index.md#shared-output-flags): `--out`, `--stdout
 
 ## Default filename
 
-If you pass neither `--out` nor `--stdout`, srekit writes to `<path>/Tasker - <title>.md` (slug-cleaned, preserving the original title casing).
+If you pass neither `--out` nor `--stdout`, srekit writes to `<path>/investigation-<slug>.md` (lowercased, slug-cleaned).
 
 ## Examples
 
@@ -33,7 +33,7 @@ Write into a specific directory:
 
 ```bash
 srekit task --title "Tail latency on api-gw" --path ./tasks
-# → ./tasks/Tasker - Tail latency on api-gw.md
+# → ./tasks/investigation-tail-latency-on-api-gw.md
 ```
 
 Pipe into `jq` to grab the generated UUID:

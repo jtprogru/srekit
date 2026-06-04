@@ -21,6 +21,22 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.25.0] - 2026-06-04
+
+### Added
+
+- **README "Стабильность и версионирование" section.** First explicit public statement of what stabilizes at v1.0 (CLI flags, `--json` shape + section IDs, `<name>.yaml` schema, section `type` vocabulary, config keys & env), what's kept for backwards compat through 1.x (legacy `.tmpl` / `.sections.yaml` reading), and what's not stable yet (`frontmatter` free-form, exact WARN wording, internal/* Go API). Includes the deprecation cycle we follow (WARN → silent no-op → removal in next major, with `--template FILE` as a worked example).
+
+### Changed
+
+- **README — removed obsolete `--template FILE` example for `srekit runbook`.** The flag was a silent no-op on every artifact-path command since v0.20.0 and rejected outright since v0.22.0; the README example showing `srekit runbook --template …` was actively misleading. Replaced with a note that `--template` is `license`-only and a pointer to the `<name>.yaml` customization model.
+- **README `templates validate` description rewritten** to reflect per-format checks (`ParseArtifact` for `.yaml`, `ParseManifest` for legacy `.sections.yaml`, parse-only for `.tmpl`). Dropped the "field-name typo detection" example — that path required a non-empty `tmpl.Samples` registry, which v0.21.0 emptied.
+- **README `templates diff` / `templates list` descriptions** updated to mention all three artifact suffixes (`.yaml` / `.tmpl` / `.sections.yaml`) instead of just `*.tmpl`.
+
+### Fixed
+
+- **`docs/{en,ru}/commands/task.md` default filename**: was `<path>/Tasker - <title>.md` (legacy from `gch sretask`), code has shipped `<path>/investigation-<slug>.md` for several releases. Doc + example fixed.
+
 ## [0.24.0] - 2026-06-04
 
 ### Added
@@ -480,7 +496,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.25.0...HEAD
+[0.25.0]: https://github.com/jtprogru/srekit/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/jtprogru/srekit/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/jtprogru/srekit/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/jtprogru/srekit/compare/v0.21.0...v0.22.0

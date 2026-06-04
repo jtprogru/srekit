@@ -193,13 +193,9 @@ echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
 # или: srekit --templates-dir ~/.srekit/templates …  (на одну команду)
 ```
 
-Подмена точечно — только один шаблон под одну команду:
-
-```bash
-srekit runbook --title "p99 spike" --template ./oneshot-runbook.tmpl --stdout
-```
-
 Если файла нет в твоей директории, `srekit` тихо берёт встроенный — можно оверрайдить только то, что нужно.
+
+`--template FILE` (one-shot подмена шаблона на одну команду) поддерживается только `srekit license` — у остальных генераторов кастомизация делается через `<name>.yaml` в `templates_dir` (см. ниже про `templates init` / `upgrade`).
 
 ### `srekit templates pull` — синхронизация с remote
 
@@ -217,13 +213,13 @@ srekit templates validate                    # configured templates_dir
 srekit templates validate ./team-templates   # явная директория
 ```
 
-Парсит каждый `*.tmpl` той же FuncMap, что использует `srekit`, и (для файлов с именами встроенных шаблонов) гоняет dry-run рендер против канонических sample-данных. Ловит:
+Per-формат проверки:
 
-- Синтаксические ошибки шаблона (unclosed `{{`, неизвестные функции).
-- Опечатки в полях: `{{ .Servce }}` (вместо `.Service`) даёт `can't evaluate field Servce in type struct { ID string; Title string; … }`.
-- Ссылки на поля, которые были у тебя в шаблоне, а в новой версии binary переименованы/удалены.
+- `<name>.yaml` (v1 артефакт) — `sections.ParseArtifact`: поддерживаемая версия, непустой sections-список, уникальные ID, известный `type` (`text` / `list` / `table`), обязательные поля.
+- `<name>.sections.yaml` (legacy v0.13.x sidecar) — `sections.ParseManifest` те же структурные проверки на старой раскладке.
+- `<name>.tmpl` — Go-template parse-only с общим FuncMap. Ловит синтаксис (unclosed `{{`, неизвестные функции); опечатки в полях не ловятся (с v0.20.0 в embed нет ни одного `.tmpl`, sample-data для exec нет).
 
-Шаблоны с нестандартными именами (твои собственные, под `--template`) валидируются только на парс-уровне — у `srekit` нет канонической data shape, против которой их рендерить.
+Не-zero exit если что-то упало.
 
 ### `srekit templates diff` — что изменилось относительно embedded-версии
 
@@ -233,7 +229,7 @@ srekit templates diff --name-only      # только имена
 srekit templates diff --no-color
 ```
 
-Сравнивает каждый `*.tmpl` в твоей templates dir с версией, зашитой в текущий binary. Полезно после `srekit templates pull` или обновления бинарника — увидеть, что у тебя осталось своё, а что отстало от апстрима. Файлы без embedded-counterpart (твои bespoke-шаблоны) маркируются как `user-only`.
+Сравнивает каждый артефакт в твоей templates dir (`.yaml` / `.tmpl` / `.sections.yaml`) с версией, зашитой в текущий binary. Полезно после `srekit templates pull` или обновления бинарника — увидеть, что у тебя осталось своё, а что отстало от апстрима. Файлы без embedded-counterpart (твои bespoke-шаблоны) маркируются как `user-only`.
 
 ### `srekit templates list` — что у тебя есть и в каком состоянии
 
@@ -244,7 +240,7 @@ srekit templates list --json | jq         # для пайплайнов
 srekit templates list --filter customized # только то, что ты переопределил
 ```
 
-Классификация для каждого `*.tmpl`:
+Классификация для каждого артефакта (`.yaml` / `.tmpl` / `.sections.yaml`):
 
 - `identical` — байт-в-байт совпадает с embedded;
 - `customized` — есть у тебя и отличается;
@@ -298,6 +294,24 @@ srekit config init --yes              # non-interactive: значения из -
 srekit config init --force            # перезаписать существующий файл
 srekit --config ./my.yaml config init # альтернативный путь
 ```
+
+## Стабильность и версионирование
+
+`srekit` следует [SemVer](https://semver.org/lang/ru/). Текущая ветка — `0.x`, поэтому breaking changes допустимы между minor-версиями (и явно помечены в [CHANGELOG](CHANGELOG.md) как `Breaking — …`).
+
+С **v1.0** релиз станет stability stamp:
+
+- **Стабильный публичный контракт.** CLI-флаги, имена и порядок section ID в `--json`, схема `<name>.yaml` (`version` / `frontmatter` / `title` / `meta_bullets` / `header_body` / `sections`), словарь section `type` (`text` / `list` / `table`), ключи в `~/.srekit.yaml` и `SREKIT_*` env. Любое из этого ломается только в major-релизе с migration-инструкцией.
+- **Соблюдение обратной совместимости через 1.x.** Поддерживается чтение legacy `.tmpl` и `.sections.yaml` файлов в user-`templates_dir` (с stderr `WARN`); их удаление — кандидат на 2.0.
+- **Deprecation-цикл.** Когда мы что-то планируем убрать, оно сначала становится no-op или начинает писать `WARN` минимум один minor-релиз, потом удаляется в следующем major. Пример из недавнего: `--template FILE` на не-license командах с v0.20.0 был silent no-op, в v0.22.0 убран с CLI-surface.
+
+Что **не** стабилизируется в 1.0 (может меняться в 1.x):
+
+- Содержимое поля `frontmatter:` — пока free-form map. Возможен переход на типизированную JSON Schema; breaking только для авторов, которые завязались на free-form структуру.
+- Точные формулировки stderr `WARN` для legacy-файлов.
+- Внутренние Go-API в `internal/*` — это `internal/` намеренно, не используйте напрямую.
+
+Полный upgrade-guide и список JSON shape changes по версиям — в [docs/migration/v1.md](https://jtprogru.github.io/srekit/migration/v1/).
 
 ## License
 

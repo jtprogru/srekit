@@ -19,7 +19,7 @@ srekit task --title TITLE [flags]
 
 ## Default имя файла
 
-Если ни `--out`, ни `--stdout` не передан — пишется в `<path>/Tasker - <title>.md` (slug-нормализованное, регистр title сохраняется).
+Если ни `--out`, ни `--stdout` не передан — пишется в `<path>/investigation-<slug>.md` (lowercased, slug-нормализованное).
 
 ## Примеры
 
@@ -33,7 +33,7 @@ srekit task --title "Tail latency on api-gw" --stdout
 
 ```bash
 srekit task --title "Tail latency on api-gw" --path ./tasks
-# → ./tasks/Tasker - Tail latency on api-gw.md
+# → ./tasks/investigation-tail-latency-on-api-gw.md
 ```
 
 Достать сгенерированный UUID через `jq`:
