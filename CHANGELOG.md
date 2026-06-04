@@ -11,7 +11,19 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- **`srekit postmortem --schema`** emits a JSON Schema (draft 2020-12) describing the `--from` input payload. Schema is recomputed from the loaded manifest on each call, so user customizations to `postmortem.sections.yaml` flow through automatically. Useful for editor tooling (point `$schema` at the file for autocomplete + validation) and for agents that want a machine-readable contract for what to fill.
+
+- **`srekit postmortem --validate FILE`** runs two checks against an input JSON: unknown section IDs are rejected (same typo guard as `--from`), and every `required: true` section must have a non-empty body (whitespace-only counts as empty). Prints a per-section `OK` / `FAIL` report and exits non-zero on any failure — drop it into CI to gate "postmortem draft" PRs.
+
+  ```bash
+  $ srekit postmortem --validate pm.json
+  OK    summary
+  FAIL  impact: required body is empty
+  OK    timeline
+  Error: 1 of 5 required section(s) failed validation
+  ```
+
+- **`sections.CheckUnknownIDs`** — the typo-guard extracted from `Merge` into a standalone function so callers (like `--validate`) can run it without triggering default-body template evaluation.
 
 ### Changed
 

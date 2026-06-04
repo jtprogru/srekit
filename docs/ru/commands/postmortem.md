@@ -20,6 +20,8 @@ srekit postmortem --title TITLE [flags]
 | `--end` | нет | Конец инцидента |
 | `--owner` | нет | Владелец постмортема (тот, кто пишет) |
 | `--from FILE` | нет | Прочитать структурный input (`{meta?, sections}`) из JSON-файла; `-` читает stdin |
+| `--schema` | нет | Отдать JSON Schema для `--from` payload (генерится из загруженного манифеста). Пишет в stdout. Несовместим с `--validate`. |
+| `--validate FILE` | нет | Проверить input-файл: required-секции должны иметь непустое body; unknown section IDs отклоняются. Печатает per-section OK / FAIL отчёт; non-zero exit при любом FAIL. |
 
 Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `postmortem-<YYYY-MM-DD>-<slug-of-title>.md` (дата — сегодняшняя, в часовом поясе системы).
 
@@ -43,6 +45,23 @@ Round-trip: выгрузить JSON, отредактировать одну с�
 srekit postmortem -T "API outage" --json > pm.json
 # отредактировать pm.json — например, заполнить sections.summary реальным текстом
 srekit postmortem -T "API outage" --from pm.json
+```
+
+Сгенерировать JSON Schema для редактора / агентской валидации:
+
+```bash
+srekit postmortem --schema > postmortem.schema.json
+# навести редактор (или LLM-тулинг) на файл — получишь автокомплит + валидацию
+```
+
+Проверить, что черновик заполнен по required-секциям:
+
+```bash
+srekit postmortem --validate pm.json
+# OK    summary
+# OK    impact
+# FAIL  timeline: required body is empty
+# Error: 1 of 5 required section(s) failed validation
 ```
 
 Достать только метаданные для трекера:

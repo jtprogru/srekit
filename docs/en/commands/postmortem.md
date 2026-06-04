@@ -20,6 +20,8 @@ srekit postmortem --title TITLE [flags]
 | `--end` | no | Incident end |
 | `--owner` | no | Postmortem owner (the person writing it up) |
 | `--from FILE` | no | Read structured input (`{meta?, sections}`) from a JSON file; `-` reads stdin |
+| `--schema` | no | Emit a JSON Schema describing the `--from` payload, derived from the loaded manifest. Output goes to stdout. Mutually exclusive with `--validate`. |
+| `--validate FILE` | no | Validate an input file: required sections must have a non-empty body; unknown section IDs are rejected. Prints a per-section OK / FAIL report; exits non-zero on any failure. |
 
 Plus the [shared output flags](index.md#shared-output-flags). Default filename: `postmortem-<YYYY-MM-DD>-<slug-of-title>.md` (the date is today, in UTC if the system clock is UTC, otherwise local time).
 
@@ -43,6 +45,23 @@ Round-trip: dump JSON, edit one section, re-render Markdown:
 srekit postmortem -T "API outage" --json > pm.json
 # edit pm.json — e.g. set sections.summary to a real summary
 srekit postmortem -T "API outage" --from pm.json
+```
+
+Generate a JSON Schema for editor tooling / agent input validation:
+
+```bash
+srekit postmortem --schema > postmortem.schema.json
+# point your editor (or an LLM tool) at the file to get autocomplete + validation
+```
+
+Validate that a draft has all required sections filled in:
+
+```bash
+srekit postmortem --validate pm.json
+# OK    summary
+# OK    impact
+# FAIL  timeline: required body is empty
+# Error: 1 of 5 required section(s) failed validation
 ```
 
 Extract just the metadata for a tracker:

@@ -974,6 +974,146 @@ func TestPostmortemFromUnknownSectionID(t *testing.T) {
 	}
 }
 
+// TestPostmortemSchema verifies --schema emits a valid JSON Schema that
+// describes the --from input payload (meta object + sections with the
+// manifest's IDs and required-flags reflected).
+func TestPostmortemSchema(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "postmortem", "--schema")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sch map[string]any
+	if err := json.Unmarshal([]byte(out), &sch); err != nil {
+		t.Fatalf("schema is not valid JSON: %v\n%s", err, out)
+	}
+	if sch["$schema"] != "https://json-schema.org/draft/2020-12/schema" {
+		t.Errorf("missing/wrong $schema field: %v", sch["$schema"])
+	}
+	props := sch["properties"].(map[string]any)
+	if _, ok := props["meta"]; !ok {
+		t.Errorf("schema missing meta")
+	}
+	sections := props["sections"].(map[string]any)
+	sectionProps := sections["properties"].(map[string]any)
+	for _, id := range []string{"summary", "impact", "timeline", "root_cause", "action_items"} {
+		if _, ok := sectionProps[id]; !ok {
+			t.Errorf("schema missing section %q", id)
+		}
+	}
+	required, ok := sections["required"].([]any)
+	if !ok || len(required) < 4 {
+		t.Errorf("required list should include at least the 4-5 required sections, got %v", sections["required"])
+	}
+}
+
+// TestPostmortemValidateOK verifies --validate exits 0 when every
+// required section has a non-empty body in the input.
+func TestPostmortemValidateOK(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	input := `{"sections": {
+	  "summary": "x",
+	  "impact": "x",
+	  "timeline": "x",
+	  "root_cause": "x",
+	  "action_items": "x"
+	}}`
+	path := filepath.Join(dir, "in.json")
+	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "postmortem", "--validate", path)
+	if err != nil {
+		t.Fatalf("validate should pass, got %v\n%s", err, out)
+	}
+	for _, id := range []string{"summary", "impact", "timeline", "root_cause", "action_items"} {
+		if !strings.Contains(out, "OK    "+id) {
+			t.Errorf("expected OK line for %q, got: %s", id, out)
+		}
+	}
+}
+
+// TestPostmortemValidateMissing verifies --validate reports per-section
+// FAIL lines and exits non-zero when required sections are absent.
+func TestPostmortemValidateMissing(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	input := `{"sections": {"summary": "only this"}}`
+	path := filepath.Join(dir, "in.json")
+	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "postmortem", "--validate", path)
+	if err == nil {
+		t.Fatalf("expected non-zero exit for missing required sections, got: %s", out)
+	}
+	if !strings.Contains(out, "OK    summary") {
+		t.Errorf("present section should still report OK, got: %s", out)
+	}
+	if !strings.Contains(out, "FAIL  impact") || !strings.Contains(out, "FAIL  timeline") {
+		t.Errorf("expected FAIL lines for missing required sections, got: %s", out)
+	}
+	if !strings.Contains(err.Error(), "failed validation") {
+		t.Errorf("error should summarize failure count, got: %v", err)
+	}
+}
+
+// TestPostmortemValidateWhitespaceOnly verifies that a body containing
+// only whitespace counts as empty (typo guard against "filled with
+// spaces but I forgot to delete the placeholder").
+func TestPostmortemValidateWhitespaceOnly(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	input := `{"sections": {"summary": "   \n  ", "impact": "x", "timeline": "x", "root_cause": "x", "action_items": "x"}}`
+	path := filepath.Join(dir, "in.json")
+	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := runCLI(t, "postmortem", "--validate", path)
+	if err == nil {
+		t.Fatal("whitespace-only body should fail validation")
+	}
+}
+
+// TestPostmortemValidateUnknownID verifies --validate runs the same
+// typo-guard as --from (unknown section IDs are a hard error before
+// completeness is checked).
+func TestPostmortemValidateUnknownID(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	input := `{"sections": {"summery": "typo", "summary": "ok"}}`
+	path := filepath.Join(dir, "in.json")
+	if err := os.WriteFile(path, []byte(input), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := runCLI(t, "postmortem", "--validate", path)
+	if err == nil {
+		t.Fatal("unknown section id should fail")
+	}
+	if !strings.Contains(err.Error(), "unknown section IDs") {
+		t.Errorf("error should mention unknown IDs, got: %v", err)
+	}
+}
+
+// TestPostmortemSchemaValidateExclusive locks in that --schema and
+// --validate can't both be set at once.
+func TestPostmortemSchemaValidateExclusive(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "in.json")
+	if err := os.WriteFile(path, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := runCLI(t, "postmortem", "--schema", "--validate", path)
+	if err == nil {
+		t.Fatal("expected error for mutually exclusive flags")
+	}
+	if !strings.Contains(err.Error(), "mutually exclusive") {
+		t.Errorf("error should explain the conflict, got: %v", err)
+	}
+}
+
 // TestIncidentJSONBootstrap is a representative test for the bootstrap
 // envelope shape used by every generator that hasn't migrated to a
 // sections manifest. (Per-command spot-checks for runbook/rfc/etc. would
