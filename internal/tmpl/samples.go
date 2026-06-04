@@ -7,13 +7,6 @@ import (
 	"text/template"
 )
 
-// authorSample mirrors meta.Author without importing internal/meta — keeps
-// the tmpl package free of cross-cuts from cmd/meta.
-type authorSample struct {
-	Name  string
-	Email string
-}
-
 // Samples is the canonical sample-data registry, keyed by builtin template
 // filename. It is the source of truth for `srekit templates validate` and
 // must stay in sync with the struct literals each cmd/*.go file builds.
@@ -29,29 +22,11 @@ var Samples = map[string]any{
 	// the v1 single-file artifact format). The artifact path doesn't go
 	// through `tmpl.Validate`; structural validation of postmortem.yaml is
 	// done by sections.ParseArtifact in `srekit templates validate`.
-	"runbook.md.tmpl": struct {
-		ID, Title, Service, Alert, Now string
-	}{
-		ID:      "11111111-2222-3333-4444-555555555555",
-		Title:   "Sample runbook",
-		Service: "api-gw",
-		Alert:   "APIHighLatency",
-		Now:     "2026-01-01T00:00:00Z",
-	},
+	// runbook.md.tmpl was removed in v0.19.0 (migrated to runbook.yaml).
 	// slo.md.tmpl was removed in v0.16.0 (migrated to slo.yaml — v1 artifact).
 	// ebp.md.tmpl and capacity.md.tmpl were removed in v0.17.0 (migrated to
 	// ebp.yaml / capacity.yaml — v1 artifacts).
-	"oncall.md.tmpl": struct {
-		ID, Team, Start, End, Now string
-		Author                    authorSample
-	}{
-		ID:     "11111111-2222-3333-4444-555555555555",
-		Team:   "platform",
-		Start:  "2026-01-05",
-		End:    "2026-01-11",
-		Now:    "2026-01-12T00:00:00Z",
-		Author: authorSample{Name: "Sample Oncaller", Email: "oncall@example.com"},
-	},
+	// oncall.md.tmpl was removed in v0.19.0 (migrated to oncall.yaml).
 	// retro.md.tmpl was removed in v0.16.0 (migrated to retro.yaml — v1 artifact).
 	"changelog.md.tmpl": struct {
 		Today, Repo, InitialVersion string

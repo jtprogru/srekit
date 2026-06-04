@@ -1,0 +1,77 @@
+version: 1
+
+frontmatter:
+  id: "{{ .Meta.ID }}"
+  creation_date: "{{ .Meta.Now }}"
+  modification_date: "{{ .Meta.Now }}"
+  type: runbook
+  title: "{{ .Meta.Title }}"
+  service: "{{ .Meta.Service }}"
+  alert: "{{ .Meta.Alert }}"
+  tags:
+    - runbook
+    - oncall
+
+title: "Рунбук (Runbook) — {{ .Meta.Title }}"
+
+meta_bullets:
+  - "**Сервис (Service):** {{ .Meta.Service | default \"<service name>\" }}"
+  - "**Алерт (Alert):** {{ .Meta.Alert | default \"<alert name>\" }}"
+  - "**Команда-владелец (Owner team):** _заполнить_"
+  - "**Эскалация дежурным (On-call escalation):** _заполнить_"
+
+sections:
+  - id: symptoms
+    title: Симптомы (Symptoms)
+    type: text
+    default_body: |
+      _Что видит пользователь / мониторинг? Конкретные сигналы: горящий алерт, панель дашборда, паттерн в логах._
+  - id: severity_slo_impact
+    title: Тяжесть и влияние на SLO (Severity & SLO impact)
+    type: text
+    default_body: |
+      - Влияние на пользователей:
+      - Какой SLO под угрозой:
+      - Будить пейджером или нет:
+  - id: diagnose
+    title: Диагностика (Diagnose)
+    type: text
+    default_body: |
+      1. Открыть дашборд: _ссылка_
+      2. Проверить недавние деплои: _ссылка_
+      3. Посмотреть логи:
+
+      ```
+      # пример запроса
+      ```
+
+      4. Частые причины (от самой вероятной к наименее):
+         - …
+         - …
+  - id: mitigate
+    title: Смягчение (Mitigate)
+    type: text
+    default_body: |
+      > Сначала останови «кровотечение» — разбираться будем потом.
+
+      1. **Немедленно (Immediate):** _действие_
+      2. **Откат (Rollback):** _команда / ссылка_
+      3. **Переключение (Failover):** _шаги_
+  - id: verify
+    title: Проверка (Verify)
+    type: text
+    default_body: |
+      - [ ] Алерт погас
+      - [ ] Уровень ошибок вернулся к базовой линии
+      - [ ] Нет повторных алертов в течение 15 минут
+  - id: after_the_fact
+    title: Постфактум (After the fact)
+    type: text
+    default_body: |
+      - Заводим постмортем, если SEV ≥ _уровень_.
+      - Обнови этот рунбук всем, что удивило.
+  - id: references
+    title: Ссылки (References)
+    type: text
+    default_body: |
+      -

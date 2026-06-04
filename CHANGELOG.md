@@ -21,6 +21,24 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.19.0] - 2026-06-04
+
+### Changed
+
+- **`runbook` and `oncall-report` migrated to the v1 artifact format.** Same dogfooded recipe as incident + rfc in v0.18.0. After this release, **only `changelog`** remains as a `.tmpl` artifact; v0.20.0 finishes the YAML-first migration. Both commands now use the artifact render path with structured `--json` (per-section access).
+
+- **Breaking — `srekit runbook --json` and `srekit oncall --json` shape.** Moves from bootstrap envelope (`sections: [{id:"body", body:<markdown>}]`) to structured. Migration: replace `jq '.sections[0].body'` with `jq '.sections[] | select(.id=="...").body'`. Same pattern as every prior YAML-first migration; documented in `docs/{en,ru}/migration/v1.md` (v0.19.0 section).
+
+- **Breaking — `runbook.md.tmpl` / `oncall.md.tmpl` no longer ship in embed.** Users with customized copies get stderr WARN. `srekit templates upgrade` scaffolds the new `.yaml`; `srekit templates migrate` auto-converts the legacy `.tmpl`.
+
+- **Breaking — `--template FILE` flag is now effectively a no-op for migrated commands.** It was originally a one-shot escape hatch for the legacy `text/template` rendering path. Artifact-path commands (postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall) ignore it because the artifact loader is consulted before any TemplatePath check; only `changelog` (the last bootstrap-envelope command) still honors it. For per-artifact customization, drop a `<name>.yaml` into your `templates_dir` — that path is the v1 customization model.
+
+### Fixed
+
+- **`oncall.yaml` "Pages" section preserves the trailing prose line** ("Всего пейджеров: …") that sat after the GFM table in the legacy `.tmpl`. The auto-converter heuristic classified the section as `type: table` and dropped that line; the shipped artifact stores the whole section as `type: text` with the table embedded verbatim, preserving the original layout byte-for-byte.
+
+- **`runbook.yaml` section id rewritten** from the slugifier's awkward `slo_severity_slo_impact` (the heading "Тяжесть и влияние на SLO (Severity & SLO impact)" double-counted "SLO") to a cleaner `severity_slo_impact`. Section IDs are part of the structured-JSON contract, so manual cleanup at ship time is worth the diff churn.
+
 ## [0.18.0] - 2026-06-04
 
 ### Changed
@@ -378,7 +396,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/jtprogru/srekit/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/jtprogru/srekit/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/jtprogru/srekit/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/jtprogru/srekit/compare/v0.15.0...v0.16.0

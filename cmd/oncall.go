@@ -13,7 +13,27 @@ import (
 	"github.com/jtprogru/srekit/internal/ids"
 	"github.com/jtprogru/srekit/internal/meta"
 	"github.com/jtprogru/srekit/internal/render"
+	"github.com/jtprogru/srekit/internal/sections"
+	"github.com/jtprogru/srekit/internal/tmpl"
 )
+
+type oncallMeta struct {
+	ID     string      `json:"id"`
+	Team   string      `json:"team"`
+	Start  string      `json:"start"`
+	End    string      `json:"end"`
+	Now    string      `json:"now"`
+	Author meta.Author `json:"author"`
+}
+
+type oncallData struct {
+	Meta     oncallMeta                 `json:"meta"`
+	Sections []sections.RenderedSection `json:"sections"`
+}
+
+func (d oncallData) ArtifactPayload() ([]sections.RenderedSection, any) {
+	return d.Sections, struct{ Meta oncallMeta }{Meta: d.Meta}
+}
 
 func newOncallCmd() *cobra.Command {
 	var (
@@ -56,14 +76,7 @@ func newOncallCmd() *cobra.Command {
 					end = weekEnd.Format("2006-01-02")
 				}
 			}
-			data := struct {
-				ID     string      `json:"id"`
-				Team   string      `json:"team"`
-				Start  string      `json:"start"`
-				End    string      `json:"end"`
-				Now    string      `json:"now"`
-				Author meta.Author `json:"author"`
-			}{
+			m := oncallMeta{
 				ID:     ids.UUID(),
 				Team:   team,
 				Start:  start,
@@ -71,8 +84,22 @@ func newOncallCmd() *cobra.Command {
 				Now:    now.Format(time.RFC3339),
 				Author: a,
 			}
+
+			loader := loaderFrom(cmd)
+			manifest, err := loadOncallManifest(cmd, loader)
+			if err != nil {
+				return err
+			}
+			rendered, err := sections.Merge(manifest, nil, struct{ Meta oncallMeta }{Meta: m})
+			if err != nil {
+				return err
+			}
+
+			data := oncallData{Meta: m, Sections: rendered}
 			def := fmt.Sprintf("oncall-%s-%s.md", ids.Slug(team), start)
-			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "oncall.md.tmpl", data, out.RenderOptions(cmd, def))
+			opts := out.RenderOptionsStructured(cmd, def)
+			opts.RenderArtifact = true
+			return render.Render(cmd.OutOrStdout(), loader, "oncall.md.tmpl", data, opts)
 		},
 	}
 	cmd.Flags().StringVar(&team, "team", "", "team name (required)")
@@ -82,4 +109,17 @@ func newOncallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&email, "email", "", "on-caller email")
 	out.Bind(cmd, "write to file (default: oncall-<team>-<start>.md)")
 	return cmd
+}
+
+func loadOncallManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
+	artifactBytes, err := loader.LoadArtifactBytes("oncall.md.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("load oncall.yaml: %w", err)
+	}
+	a, err := sections.ParseArtifact(artifactBytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse oncall.yaml: %w", err)
+	}
+	warnStaleLegacyFiles(cmd, loader, "oncall.yaml", "oncall.md.tmpl")
+	return &sections.Manifest{Version: a.Version, Sections: a.Sections}, nil
 }

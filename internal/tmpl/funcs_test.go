@@ -83,9 +83,9 @@ func TestNowFuncRespectsClock(t *testing.T) {
 }
 
 func TestParseAppliesFuncMap(t *testing.T) {
-	// Sanity check: runbook.md.tmpl uses {{ .Service | default "..." }} —
-	// must parse without error.
-	if _, err := NewDefaultLoader().Parse("runbook.md.tmpl"); err != nil {
-		t.Fatalf("runbook.md.tmpl should parse with FuncMap: %v", err)
+	// Sanity check: any embedded .tmpl must parse with FuncMap applied.
+	// Functional coverage of individual funcs lives in the unit tests above.
+	if _, err := NewDefaultLoader().Parse("changelog.md.tmpl"); err != nil {
+		t.Fatalf("changelog.md.tmpl should parse with FuncMap: %v", err)
 	}
 }
