@@ -32,6 +32,7 @@ func newTemplatesCmd() *cobra.Command {
 	c.AddCommand(newTemplatesDiffCmd())
 	c.AddCommand(newTemplatesUpgradeCmd())
 	c.AddCommand(newTemplatesListCmd())
+	c.AddCommand(newTemplatesMigrateCmd())
 	return c
 }
 

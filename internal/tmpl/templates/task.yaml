@@ -1,0 +1,66 @@
+version: 1
+
+frontmatter:
+  id: "{{ .Meta.ID }}"
+  creation_date: "{{ .Meta.CreationDate }}"
+  modification_date: "{{ .Meta.ModificationDate }}"
+  type: investigation
+  title: "{{ .Meta.Title }}"
+  tags:
+    - investigation
+    - debug
+
+title: "Расследование (Investigation) — {{ .Meta.Title }}"
+
+meta_bullets:
+  - "**Начато (Started):** {{ .Meta.CreationDate }}"
+  - "**Ответственный (Owner):** _заполнить_"
+  - "**Статус (Status):** _open / in-progress / resolved_"
+  - "**Связанное (Related):** _алерты, дашборды, тикеты, инциденты_"
+
+sections:
+  - id: context
+    title: Контекст (Context)
+    type: text
+    default_body: |
+      _Что подняло этот вопрос? Какой сервис, сигнал, жалоба пользователя? Будь конкретен._
+  - id: hypothesis
+    title: Гипотезы (Hypothesis)
+    type: text
+    default_body: |
+      _Текущие лучшие догадки о причине. Обновляй по мере поступления данных._
+
+      - [ ] H1:
+      - [ ] H2:
+  - id: evidence
+    title: Наблюдения (Evidence)
+    type: text
+    default_body: |
+      _Сырые наблюдения: строки логов, снэпшоты метрик, вывод команд. Ставь временные метки._
+
+      - _<UTC time>_ —
+  - id: findings
+    title: Выводы (Findings)
+    type: text
+    default_body: |
+      _Во что мы теперь верим — в отличие от сырых наблюдений. Один пункт = один вывод._
+
+      -
+  - id: action_items
+    title: Задачи (Action items)
+    type: table
+    columns:
+      - '#'
+      - Действие
+      - Ответственный
+      - Срок
+    rows:
+      - - "1"
+        - ""
+        - ""
+        - ""
+  - id: references
+    title: Ссылки (References)
+    type: text
+    default_body: |
+      -

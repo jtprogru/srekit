@@ -111,6 +111,38 @@ srekit templates upgrade --force     # overwrite customizations (skips merge)
 
 `TEMPLATES.md` is always refreshed — it's a reference doc, not a customization point. On conflict, the command exits non-zero and writes `<<<<<<<` / `>>>>>>>` markers; resolve, then re-run.
 
+Snapshot GC (v0.14.0+): at the end of every upgrade, orphaned snapshot files in `.srekit-embedded/` for artifacts no longer in embed are removed. The summary line reports the count.
+
+---
+
+## `templates migrate [dir]` {#templates-migrate}
+
+Best-effort converter that turns legacy `.tmpl` files (and their optional `.sections.yaml` sidecars) into the v1 single-file `<name>.yaml` artifact format introduced in v0.14.0. This is the migration path for templates dirs initialized before v0.14.0.
+
+```bash
+srekit templates migrate                # dry-run: print converted YAML for each .tmpl
+srekit templates migrate ./team-templates --apply   # write <name>.yaml files
+```
+
+**What it does per file:**
+
+1. Parses the `.tmpl`'s frontmatter (between `---` / `---`), H1, meta bullets (`- **X:** Y` after the H1), and `## ` section blocks.
+2. If a sibling `<name>.sections.yaml` exists, its section list takes precedence over the heuristic-parsed sections from the `.tmpl` (the v0.13.x → v1 case).
+3. Section type inference is minimal: GFM tables → `type: table`; everything else → `type: text` with `default_body` verbatim.
+4. Sections containing Go-template control flow (`{{ if }}` / `{{ range }}` / `{{ with }}`) are wrapped in `git merge`-style diff markers — the converter doesn't try to translate control flow into the typed-sections vocabulary. The output `OK (with diff markers — review needed)` flags these so you know which files need manual cleanup.
+5. Section IDs are derived from the English portion of bilingual headings (e.g. `Контекст (Context)` → `context`); otherwise from a slugified whole heading.
+6. The new `<name>.yaml` is written next to the `.tmpl`. Original `.tmpl` and `.sections.yaml` files are **not deleted** — review the new YAML, then delete the legacy files manually when ready.
+
+**Defaults to `--dry-run`** (prints YAML preview); pass `--apply` to write files.
+
+**Limitations:**
+
+- Template expressions inside section bodies are passed through verbatim. If the new generator uses a different data shape (e.g. `.Meta.Title` instead of `.Title`), you'll need to update those references manually.
+- Lists with intro text (e.g. `_italic_` followed by `- items`) are kept as `type: text` rather than `type: list` with `default_body`. Refactor manually if you want the typed shape.
+- License templates (`license_*.tmpl`) are skipped — they're inlined in the binary since v0.14.0 and don't migrate.
+
+**Flags**: `--apply` (write files; default is dry-run).
+
 ---
 
 ## See also

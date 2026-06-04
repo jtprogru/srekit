@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -176,35 +175,10 @@ func loadPostmortemManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.
 	if err != nil {
 		return nil, fmt.Errorf("parse postmortem.yaml: %w", err)
 	}
-	warnStaleLegacyFiles(cmd, loader, "postmortem.md.tmpl", "postmortem.sections.yaml")
+	warnStaleLegacyFiles(cmd, loader, "postmortem.yaml", "postmortem.md.tmpl", "postmortem.sections.yaml")
 	return &sections.Manifest{Version: a.Version, Sections: a.Sections}, nil
 }
 
-// warnStaleLegacyFiles checks every DirSource in loader for pre-v0.14.0
-// artifact files (e.g. `postmortem.md.tmpl`, `postmortem.sections.yaml`)
-// that are now superseded by the v1 `<name>.yaml` format. Prints one
-// stderr WARN line per stale file found. Suppressed by --quiet.
-func warnStaleLegacyFiles(cmd *cobra.Command, loader *tmpl.Loader, names ...string) {
-	quiet, _ := cmd.Flags().GetBool("quiet")
-	if quiet {
-		return
-	}
-	for _, src := range loader.Sources {
-		ds, ok := src.(tmpl.DirSource)
-		if !ok {
-			continue
-		}
-		for _, name := range names {
-			if _, err := os.Stat(filepath.Join(ds.Dir, name)); err == nil {
-				fmt.Fprintf(cmd.ErrOrStderr(),
-					"WARN: %s in %s is a pre-v0.14.0 format and is being ignored. "+
-						"Run 'srekit templates upgrade' to scaffold postmortem.yaml, "+
-						"then move your customizations into it.\n",
-					name, ds.Dir)
-			}
-		}
-	}
-}
 
 // emitPostmortemSchema marshals the manifest-derived JSON Schema to the
 // command's stdout. The schema is recomputed from the loaded manifest on

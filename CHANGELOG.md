@@ -21,6 +21,28 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.15.0] - 2026-06-04
+
+### Added
+
+- **`srekit templates migrate [dir]`** — best-effort converter that turns legacy `.tmpl` files (plus their optional `.sections.yaml` sidecars) into the v1 single-file `<name>.yaml` artifact format. Parses frontmatter / H1 / meta_bullets / `## ` sections from the `.tmpl`; infers section type (GFM tables → `type: table`; everything else → `type: text` with `default_body` verbatim); slugifies bilingual headings to English-only IDs (e.g. `Контекст (Context)` → `context`); wraps sections containing Go-template control flow in `git merge`-style diff markers for human resolution. Defaults to `--dry-run`; pass `--apply` to write files. Original `.tmpl` / `.sections.yaml` are left in place for review.
+
+- **`internal/migrate` package** — public API: `migrate.Convert(tmplBody, sectionsManifest)` returns artifact YAML bytes. Reusable for tooling that wants programmatic migration.
+
+- **`task` migrated to the v1 artifact format.** First **fresh** migration (postmortem in v0.14.0 was a refactor of the existing prototype). `task.yaml` ships in embed; `task.md.tmpl` is gone. The task command now uses the artifact render path with structured `--json` (`{meta, sections: [...]}`) instead of the bootstrap envelope.
+
+### Changed
+
+- **Breaking — `srekit task --json` shape.** Moves from bootstrap envelope (`{meta, sections: [{id:"body", body:<rendered markdown>}]}`) to structured (`{meta, sections: [{id:"context",...}, {id:"hypothesis",...}, ...]}`). Migration: replace `jq '.sections[0].body'` with per-section access like `jq '.sections[] | select(.id=="context").body'`. Documented in `docs/{en,ru}/migration/v1.md` (v0.15.0 section).
+
+- **Breaking — `task.md.tmpl` no longer ships in embed.** Users with customized copies in `templates_dir` will see a stderr WARN on every task invocation. To migrate: run `srekit templates upgrade` to scaffold `task.yaml`, then port customizations into it.
+
+- **`templates init` scaffold** now writes `task.yaml` instead of `task.md.tmpl`. Documented in CHANGELOG and migration guide.
+
+### Fixed
+
+-
+
 ## [0.14.0] - 2026-06-04
 
 ### Added

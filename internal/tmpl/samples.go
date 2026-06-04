@@ -20,14 +20,9 @@ type authorSample struct {
 //
 //nolint:gochecknoglobals // intentional package-level fixture registry
 var Samples = map[string]any{
-	"task.md.tmpl": struct {
-		ID, Title, CreationDate, ModificationDate string
-	}{
-		ID:               "11111111-2222-3333-4444-555555555555",
-		Title:            "Sample title",
-		CreationDate:     "2026-01-01T00:00:00Z",
-		ModificationDate: "2026-01-01T00:00:00Z",
-	},
+	// task.md.tmpl was removed in v0.15.0 (migrated to task.yaml — the
+	// first fresh artifact migration to the v1 format). Validation goes
+	// through sections.ParseArtifact in `templates validate`.
 	"incident.md.tmpl": struct {
 		ID, Title, Severity, Lead, Status, Now string
 	}{

@@ -111,6 +111,38 @@ srekit templates upgrade --force     # перезаписать кастомиз
 
 `TEMPLATES.md` всегда обновляется — это reference, не точка кастомизации. На конфликт команда возвращает non-zero и пишет маркеры `<<<<<<<` / `>>>>>>>`; разрешаешь, потом re-run.
 
+Snapshot GC (v0.14.0+): в конце каждого upgrade orphan-снапшоты в `.srekit-embedded/` для артефактов которые больше не в embed удаляются. Summary-строка показывает их количество.
+
+---
+
+## `templates migrate [dir]` {#templates-migrate}
+
+Best-effort конвертер: превращает legacy `.tmpl` (и опц. `.sections.yaml` sidecar'ы) в v1 single-file `<name>.yaml` формат (введён в v0.14.0). Это путь миграции для templates dir'ов, инициализированных до v0.14.0.
+
+```bash
+srekit templates migrate                # dry-run: печатает converted YAML для каждого .tmpl
+srekit templates migrate ./team-templates --apply   # пишет файлы <name>.yaml
+```
+
+**Что делает per-file:**
+
+1. Парсит frontmatter `.tmpl` (между `---` / `---`), H1, meta_bullets (`- **X:** Y` после H1) и `## ` section блоки.
+2. Если рядом есть `<name>.sections.yaml`, его список секций имеет приоритет над heuristic-парсингом из `.tmpl` (это v0.13.x → v1 case).
+3. Минимальный type inference для секций: GFM-таблицы → `type: table`; всё остальное → `type: text` с `default_body` as-is.
+4. Секции, содержащие Go-template control flow (`{{ if }}` / `{{ range }}` / `{{ with }}`), оборачиваются в `git merge`-style diff-маркеры — конвертер не пытается перевести control flow в typed-sections словарь. В output `OK (with diff markers — review needed)` помечает такие файлы для ручной доработки.
+5. Section ID'ы берутся из английской части билингвальных заголовков (например `Контекст (Context)` → `context`); иначе из slug'а всего заголовка.
+6. Новый `<name>.yaml` пишется рядом с `.tmpl`. Оригинальные `.tmpl` и `.sections.yaml` **не удаляются** — посмотри новый YAML, потом руками удали legacy-файлы когда готов.
+
+**По умолчанию `--dry-run`** (печатает YAML preview); `--apply` пишет файлы.
+
+**Ограничения:**
+
+- Template-выражения внутри секционных body передаются as-is. Если новый генератор использует другую data-форму (например `.Meta.Title` вместо `.Title`), ссылки придётся обновить руками.
+- Списки с intro-текстом (`_italic_` за которым `- items`) остаются `type: text`, а не `type: list` с `default_body`. Если хочешь typed-форму — рефакторь руками.
+- License-шаблоны (`license_*.tmpl`) пропускаются — они зашиты в бинарь с v0.14.0 и не мигрируют.
+
+**Флаги**: `--apply` (пишет файлы; default — dry-run).
+
 ---
 
 ## См. также

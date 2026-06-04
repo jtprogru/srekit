@@ -336,7 +336,7 @@ func TestTemplatesInitScaffolds(t *testing.T) {
 	// ships as a single postmortem.yaml (the v1 unified format replacing
 	// the v0.13.x postmortem.md.tmpl + postmortem.sections.yaml pair).
 	for _, name := range []string{
-		"task.md.tmpl", "incident.md.tmpl",
+		"runbook.md.tmpl", "incident.md.tmpl",
 		"runbook.md.tmpl", "rfc.md.tmpl", "slo.md.tmpl",
 		"ebp.md.tmpl", "capacity.md.tmpl",
 		"oncall.md.tmpl", "retro.md.tmpl", "changelog.md.tmpl",
@@ -368,7 +368,7 @@ func TestTemplatesInitRefusesOverwrite(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "runbook.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	_, err := runCLI(t, "templates", "init", dir, "--no-git")
@@ -379,7 +379,7 @@ func TestTemplatesInitRefusesOverwrite(t *testing.T) {
 		t.Fatalf("error should mention --force, got: %v", err)
 	}
 	// Verify the file wasn't clobbered.
-	b, _ := os.ReadFile(filepath.Join(dir, "task.md.tmpl"))
+	b, _ := os.ReadFile(filepath.Join(dir, "runbook.md.tmpl"))
 	if string(b) != "MINE\n" {
 		t.Fatalf("existing file was overwritten: %q", string(b))
 	}
@@ -390,14 +390,14 @@ func TestTemplatesInitForce(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "runbook.md.tmpl"), []byte("MINE\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git", "--force"); err != nil {
 		t.Fatalf("init --force failed: %v", err)
 	}
-	b, _ := os.ReadFile(filepath.Join(dir, "task.md.tmpl"))
-	if !strings.Contains(string(b), "Расследование") {
+	b, _ := os.ReadFile(filepath.Join(dir, "runbook.md.tmpl"))
+	if !strings.Contains(string(b), "Рунбук") {
 		t.Fatalf("--force should overwrite with embedded content; got: %s", string(b))
 	}
 }
@@ -447,7 +447,7 @@ func TestTemplatesPullSyncsFromRemote(t *testing.T) {
 
 	runGit("init", "--bare", "--initial-branch=main", remote)
 	runGit("init", "--initial-branch=main", src)
-	if err := os.WriteFile(filepath.Join(src, "task.md.tmpl"), []byte("v1\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(src, "runbook.md.tmpl"), []byte("v1\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	runGit("-C", src, "add", ".")
@@ -457,12 +457,12 @@ func TestTemplatesPullSyncsFromRemote(t *testing.T) {
 	runGit("clone", remote, user)
 
 	// Sanity-check the initial clone.
-	if b, _ := os.ReadFile(filepath.Join(user, "task.md.tmpl")); string(b) != "v1\n" {
+	if b, _ := os.ReadFile(filepath.Join(user, "runbook.md.tmpl")); string(b) != "v1\n" {
 		t.Fatalf("clone produced %q, expected v1", string(b))
 	}
 
 	// Source pushes an update.
-	if err := os.WriteFile(filepath.Join(src, "task.md.tmpl"), []byte("v2\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(src, "runbook.md.tmpl"), []byte("v2\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	runGit("-C", src, "commit", "-am", "v2")
@@ -472,7 +472,7 @@ func TestTemplatesPullSyncsFromRemote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pull failed: %v (output: %s)", err, out)
 	}
-	if b, _ := os.ReadFile(filepath.Join(user, "task.md.tmpl")); string(b) != "v2\n" {
+	if b, _ := os.ReadFile(filepath.Join(user, "runbook.md.tmpl")); string(b) != "v2\n" {
 		t.Fatalf("pull did not sync to v2: %q", string(b))
 	}
 }
@@ -498,7 +498,7 @@ func TestTemplatesValidateAllPass(t *testing.T) {
 	// postmortem is the v1 .yaml artifact; others are still legacy .tmpl.
 	// (License families are inlined in the binary as of v0.14.0 and don't
 	// flow through templates dir / validate.)
-	for _, name := range []string{"task.md.tmpl", "postmortem.yaml", "runbook.md.tmpl"} {
+	for _, name := range []string{"runbook.md.tmpl", "postmortem.yaml", "runbook.md.tmpl"} {
 		if !strings.Contains(out, "OK    "+name) {
 			t.Errorf("expected OK line for %s, got: %s", name, out)
 		}
@@ -538,7 +538,7 @@ func TestTemplatesValidateCatchesSyntaxError(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"),
+	if err := os.WriteFile(filepath.Join(dir, "runbook.md.tmpl"),
 		[]byte("{{ .Title \n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -546,8 +546,8 @@ func TestTemplatesValidateCatchesSyntaxError(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected non-zero exit on syntax error, output: %s", out)
 	}
-	if !strings.Contains(out, "FAIL  task.md.tmpl") {
-		t.Errorf("expected FAIL for task.md.tmpl, got: %s", out)
+	if !strings.Contains(out, "FAIL  runbook.md.tmpl") {
+		t.Errorf("expected FAIL for runbook.md.tmpl, got: %s", out)
 	}
 	if !strings.Contains(out, "parse") {
 		t.Errorf("error should mention parse failure, got: %s", out)
@@ -613,6 +613,137 @@ func TestTemplatesValidateRejectsBrokenManifest(t *testing.T) {
 	}
 	if !strings.Contains(out, "unknown type") {
 		t.Errorf("error should mention unknown type, got: %s", out)
+	}
+}
+
+// TestTemplatesMigrateDryRun verifies the converter prints YAML to stdout
+// without writing files when --apply is omitted.
+func TestTemplatesMigrateDryRun(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	tmplBody := `---
+id: {{ .ID }}
+title: {{ .Title }}
+---
+
+# Investigation — {{ .Title }}
+
+- **Severity:** {{ .Severity }}
+
+## Context
+
+_What raised this?_
+`
+	if err := os.WriteFile(filepath.Join(dir, "bespoke.md.tmpl"), []byte(tmplBody), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "migrate", dir)
+	if err != nil {
+		t.Fatalf("migrate failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "would  bespoke.md.tmpl → bespoke.yaml") {
+		t.Errorf("expected 'would' line, got: %s", out)
+	}
+	if !strings.Contains(out, "version: 1") {
+		t.Errorf("dry-run should print converted YAML preview, got: %s", out)
+	}
+	// File should NOT have been written.
+	if _, err := os.Stat(filepath.Join(dir, "bespoke.yaml")); err == nil {
+		t.Errorf("dry-run must not write bespoke.yaml")
+	}
+}
+
+// TestTemplatesMigrateApply verifies --apply writes <name>.yaml and leaves
+// the original .tmpl in place for the user to delete after review.
+func TestTemplatesMigrateApply(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	tmplBody := `---
+title: {{ .Title }}
+---
+
+# X — {{ .Title }}
+
+## Context
+
+body
+`
+	if err := os.WriteFile(filepath.Join(dir, "bespoke.md.tmpl"), []byte(tmplBody), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "migrate", dir, "--apply")
+	if err != nil {
+		t.Fatalf("migrate failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "wrote  bespoke.md.tmpl → bespoke.yaml") {
+		t.Errorf("expected 'wrote' line, got: %s", out)
+	}
+	yamlBytes, err := os.ReadFile(filepath.Join(dir, "bespoke.yaml"))
+	if err != nil {
+		t.Fatalf("bespoke.yaml not written: %v", err)
+	}
+	if !strings.Contains(string(yamlBytes), "version: 1") {
+		t.Errorf("output yaml malformed: %s", yamlBytes)
+	}
+	// Original .tmpl is preserved.
+	if _, err := os.Stat(filepath.Join(dir, "bespoke.md.tmpl")); err != nil {
+		t.Errorf("original .tmpl should remain after --apply: %v", err)
+	}
+}
+
+// TestTemplatesMigrateSkipsExisting verifies the converter doesn't
+// overwrite an existing <name>.yaml — protects against re-running migrate
+// after a manual edit to the v1 file.
+func TestTemplatesMigrateSkipsExisting(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "bespoke.md.tmpl"), []byte("# x\n## y\nbody\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "bespoke.yaml"), []byte("preexisting\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "migrate", dir, "--apply")
+	if err != nil {
+		t.Fatalf("migrate failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "skip   bespoke.md.tmpl") {
+		t.Errorf("expected 'skip' line, got: %s", out)
+	}
+	// Existing file is untouched.
+	body, _ := os.ReadFile(filepath.Join(dir, "bespoke.yaml"))
+	if string(body) != "preexisting\n" {
+		t.Errorf("existing bespoke.yaml should not be overwritten")
+	}
+}
+
+// TestTemplatesMigrateControlFlowMarkers verifies sections with Go-template
+// control flow are wrapped in diff markers (human-resolve hint).
+func TestTemplatesMigrateControlFlowMarkers(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	tmplBody := `# T
+
+## Tricky
+
+{{ if .X }}
+yes
+{{ else }}
+no
+{{ end }}
+`
+	if err := os.WriteFile(filepath.Join(dir, "bespoke.md.tmpl"), []byte(tmplBody), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "templates", "migrate", dir)
+	if err != nil {
+		t.Fatalf("migrate failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "diff markers — review needed") {
+		t.Errorf("expected diff-marker note, got: %s", out)
+	}
+	if !strings.Contains(out, "<<<<<<< srekit migrate") {
+		t.Errorf("expected actual diff markers in YAML preview, got: %s", out)
 	}
 }
 
@@ -855,9 +986,10 @@ func TestConfigInitMissingAuthorFails(t *testing.T) {
 	}
 }
 
-// TestTaskJSON verifies --json emits the bootstrap envelope shape (meta +
-// one synthetic "body" section) for commands that have not migrated to a
-// sections manifest. camelCase keys remain the public contract.
+// TestTaskJSON verifies --json emits the structured {meta, sections}
+// shape (same contract as postmortem). task migrated to the v1 artifact
+// format in v0.15.0; --json now exposes the section list per the
+// manifest, not a bootstrap envelope.
 func TestTaskJSON(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "task", "--title", "Tail latency", "--json")
@@ -879,15 +1011,21 @@ func TestTaskJSON(t *testing.T) {
 		t.Errorf("expected string meta.id, got %T: %v", meta["id"], meta["id"])
 	}
 	secs, ok := got["sections"].([]any)
-	if !ok || len(secs) != 1 {
-		t.Fatalf("expected one bootstrap section, got %v", got["sections"])
+	if !ok || len(secs) < 3 {
+		t.Fatalf("expected multiple sections, got %v", got["sections"])
 	}
-	s0 := secs[0].(map[string]any)
-	if s0["id"] != "body" || s0["type"] != "text" {
-		t.Errorf("bootstrap section shape wrong: %v", s0)
+	// First section is "context" per the manifest order.
+	first := secs[0].(map[string]any)
+	if first["id"] != "context" {
+		t.Errorf("first section should be context, got %v", first["id"])
 	}
-	if !strings.Contains(s0["body"].(string), "Tail latency") {
-		t.Errorf("bootstrap body should include rendered markdown: %v", s0["body"])
+	for i, s := range secs {
+		m := s.(map[string]any)
+		for _, k := range []string{"id", "title", "type", "body"} {
+			if _, ok := m[k]; !ok {
+				t.Errorf("section[%d] missing %q: %v", i, k, m)
+			}
+		}
 	}
 }
 
@@ -1229,7 +1367,7 @@ func TestTemplatesUpgradeSkipsCustomized(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	target := filepath.Join(dir, "task.md.tmpl")
+	target := filepath.Join(dir, "runbook.md.tmpl")
 	customized := []byte("# MY CUSTOM TASK: {{ .Title }}\n")
 	if err := os.WriteFile(target, customized, 0o644); err != nil {
 		t.Fatal(err)
@@ -1257,7 +1395,7 @@ func TestTemplatesUpgradeForce(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	target := filepath.Join(dir, "task.md.tmpl")
+	target := filepath.Join(dir, "runbook.md.tmpl")
 	if err := os.WriteFile(target, []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -1266,10 +1404,10 @@ func TestTemplatesUpgradeForce(t *testing.T) {
 		t.Fatalf("upgrade --force failed: %v (output: %s)", err, out)
 	}
 	b, _ := os.ReadFile(target)
-	if !strings.Contains(string(b), "Расследование") {
+	if !strings.Contains(string(b), "Рунбук") {
 		t.Fatalf("--force should overwrite with embedded content; got: %s", string(b))
 	}
-	if !strings.Contains(out, "~ updated   task.md.tmpl") {
+	if !strings.Contains(out, "~ updated   runbook.md.tmpl") {
 		t.Errorf("expected '~ updated' line, got: %s", out)
 	}
 }
@@ -1319,7 +1457,7 @@ func TestTemplatesInitRespectsConfiguredDir(t *testing.T) {
 		t.Fatalf("init failed: %v", err)
 	}
 	// Files should land in the configured dir, not in defaultTemplatesDir.
-	for _, name := range []string{"task.md.tmpl", "TEMPLATES.md"} {
+	for _, name := range []string{"runbook.md.tmpl", "TEMPLATES.md"} {
 		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
 			t.Errorf("expected %s in configured dir, got: %v", name, err)
 		}
@@ -1334,7 +1472,7 @@ func TestTemplatesInitSeedsSnapshot(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	for _, name := range []string{"task.md.tmpl", "postmortem.yaml", "runbook.md.tmpl"} {
+	for _, name := range []string{"runbook.md.tmpl", "postmortem.yaml", "runbook.md.tmpl"} {
 		snap := filepath.Join(dir, ".srekit-embedded", name)
 		body, err := os.ReadFile(snap)
 		if err != nil {
@@ -1378,7 +1516,7 @@ func TestTemplatesUpgrade3WayCleanMerge(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	name := "task.md.tmpl"
+	name := "runbook.md.tmpl"
 	embeddedBody, _ := os.ReadFile(filepath.Join(dir, name)) // identical to embedded
 	snapBody := append(append([]byte{}, embeddedBody...), []byte("EXTRA_BOTTOM\n")...)
 	userBody := append([]byte("USER_TOP\n"), snapBody...)
@@ -1430,7 +1568,7 @@ func TestTemplatesUpgrade3WayConflict(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	name := "task.md.tmpl"
+	name := "runbook.md.tmpl"
 	embeddedBody, _ := os.ReadFile(filepath.Join(dir, name))
 
 	// Snapshot: embedded + leading TARGET\n. User edits to USER-EDIT,
@@ -1469,7 +1607,7 @@ func TestTemplatesUpgradeFastForward(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	name := "task.md.tmpl"
+	name := "runbook.md.tmpl"
 	// Simulate "upstream changed since snapshot": rewrite the snapshot to
 	// an older shape (the user file still matches that older shape).
 	oldShape := []byte("OLD EMBEDDED VERSION\n")
@@ -1507,7 +1645,7 @@ func TestTemplatesUpgradeNoSnapshotFallback(t *testing.T) {
 	if err := os.RemoveAll(filepath.Join(dir, ".srekit-embedded")); err != nil {
 		t.Fatal(err)
 	}
-	name := "task.md.tmpl"
+	name := "runbook.md.tmpl"
 	customized := []byte("CUSTOMIZED\n")
 	if err := os.WriteFile(filepath.Join(dir, name), customized, 0o644); err != nil {
 		t.Fatal(err)
@@ -1559,11 +1697,11 @@ func TestTemplatesListClassifies(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	// Customize one (must remain a *.tmpl).
-	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+	// Customize one (must remain a *.tmpl-format artifact in v0.15.x).
+	if err := os.WriteFile(filepath.Join(dir, "slo.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// Remove one so it becomes embedded-only.
+	// Remove a different one so it becomes embedded-only.
 	if err := os.Remove(filepath.Join(dir, "runbook.md.tmpl")); err != nil {
 		t.Fatal(err)
 	}
@@ -1577,7 +1715,7 @@ func TestTemplatesListClassifies(t *testing.T) {
 		t.Fatalf("list failed: %v (output: %s)", err, out)
 	}
 	for _, want := range []string{
-		"task.md.tmpl",
+		"slo.md.tmpl",
 		"customized",
 		"runbook.md.tmpl",
 		"embedded-only",
@@ -1601,7 +1739,7 @@ func TestTemplatesListJSON(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "runbook.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1615,15 +1753,15 @@ func TestTemplatesListJSON(t *testing.T) {
 	}
 	found := false
 	for _, e := range got {
-		if e["name"] == "task.md.tmpl" {
+		if e["name"] == "runbook.md.tmpl" {
 			if e["status"] != "customized" {
-				t.Errorf("task.md.tmpl status: got %q, want customized", e["status"])
+				t.Errorf("runbook.md.tmpl status: got %q, want customized", e["status"])
 			}
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("task.md.tmpl entry missing in JSON output: %s", out)
+		t.Errorf("runbook.md.tmpl entry missing in JSON output: %s", out)
 	}
 }
 
@@ -1634,7 +1772,7 @@ func TestTemplatesListFilter(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "task.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "runbook.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1642,8 +1780,8 @@ func TestTemplatesListFilter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list --filter failed: %v (output: %s)", err, out)
 	}
-	if !strings.Contains(out, "task.md.tmpl") {
-		t.Errorf("expected task.md.tmpl in customized filter, got: %s", out)
+	if !strings.Contains(out, "runbook.md.tmpl") {
+		t.Errorf("expected runbook.md.tmpl in customized filter, got: %s", out)
 	}
 	// No 'identical' entries should slip through.
 	if strings.Contains(out, "identical") {

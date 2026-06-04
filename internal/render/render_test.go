@@ -14,13 +14,13 @@ import (
 
 func TestRenderStdout(t *testing.T) {
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
-		ID, CreationDate, ModificationDate, Title string
-	}{"id-1", "2026-01-01T00:00:00", "2026-01-01T00:00:00", "Hello"}, Options{Stdout: true})
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", struct {
+		ID, CreationDate, ModificationDate, Title, Now, Service, Alert string
+	}{"id-1", "2026-01-01T00:00:00", "2026-01-01T00:00:00", "Hello", "2026-01-01T00:00:00", "svc", "alert"}, Options{Stdout: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "# Расследование (Investigation) — Hello") {
+	if !strings.Contains(out.String(), "# Рунбук (Runbook) — Hello") {
 		t.Fatalf("missing title in output: %s", out.String())
 	}
 }
@@ -30,9 +30,9 @@ func TestRenderToFile(t *testing.T) {
 	target := filepath.Join(dir, "sub", "out.md")
 	var out bytes.Buffer
 
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
-		ID, CreationDate, ModificationDate, Title string
-	}{"id-1", "t", "t", "Foo"}, Options{Out: target})
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", struct {
+		ID, CreationDate, ModificationDate, Title, Now, Service, Alert string
+	}{"id-1", "t", "t", "Foo", "t", "svc", "alert"}, Options{Out: target})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,9 +52,9 @@ func TestRenderRefusesOverwrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
-		ID, CreationDate, ModificationDate, Title string
-	}{"id", "t", "t", "x"}, Options{Out: target})
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", struct {
+		ID, CreationDate, ModificationDate, Title, Now, Service, Alert string
+	}{"id", "t", "t", "x", "t", "svc", "alert"}, Options{Out: target})
 	if err == nil {
 		t.Fatal("expected error on existing file without --force")
 	}
@@ -65,9 +65,9 @@ func TestRenderForceOverwrite(t *testing.T) {
 	target := filepath.Join(dir, "out.md")
 	_ = os.WriteFile(target, []byte("old"), 0o644)
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
-		ID, CreationDate, ModificationDate, Title string
-	}{"id", "t", "t", "Force"}, Options{Out: target, Force: true})
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", struct {
+		ID, CreationDate, ModificationDate, Title, Now, Service, Alert string
+	}{"id", "t", "t", "Force", "t", "svc", "alert"}, Options{Out: target, Force: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,9 +84,9 @@ func TestRenderFilePermissions(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
-		ID, CreationDate, ModificationDate, Title string
-	}{"id", "t", "t", "Perms"}, Options{Out: target})
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", struct {
+		ID, CreationDate, ModificationDate, Title, Now, Service, Alert string
+	}{"id", "t", "t", "Perms", "t", "svc", "alert"}, Options{Out: target})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func TestRenderTemplatePathOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct{ Title string }{Title: "Hi"},
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", struct{ Title string }{Title: "Hi"},
 		Options{Stdout: true, TemplatePath: tmplFile})
 	if err != nil {
 		t.Fatal(err)
@@ -127,7 +127,7 @@ func TestRenderJSONStdout(t *testing.T) {
 		Title string
 	}
 	in := payload{ID: "abc", Title: "Hello"}
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", in, Options{JSON: true, Default: "ignored.md"})
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", in, Options{JSON: true, Default: "ignored.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func TestRenderJSONToFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.json")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl",
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl",
 		struct{ Title string }{Title: "Foo"},
 		Options{Out: target, JSON: true},
 	)
@@ -175,7 +175,7 @@ func TestRenderJSONIgnoresDefaultPath(t *testing.T) {
 	dir := t.TempDir()
 	defaultPath := filepath.Join(dir, "should-not-be-written.md")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl",
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl",
 		struct{ Title string }{Title: "X"},
 		Options{JSON: true, Default: defaultPath},
 	)
@@ -196,9 +196,9 @@ func TestRenderJSONIgnoresDefaultPath(t *testing.T) {
 func TestRenderBootstrapJSONEnvelope(t *testing.T) {
 	var out bytes.Buffer
 	in := struct {
-		ID, CreationDate, ModificationDate, Title string
+		ID, CreationDate, ModificationDate, Title, Now, Service, Alert string
 	}{ID: "id-1", CreationDate: "t", ModificationDate: "t", Title: "Hello"}
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", in,
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", in,
 		Options{JSON: true, BootstrapJSON: true, Default: "ignored.md"})
 	if err != nil {
 		t.Fatal(err)
@@ -228,7 +228,7 @@ func TestRenderBootstrapJSONEnvelope(t *testing.T) {
 	if body["required"] != true {
 		t.Errorf("section required = %v, want true", body["required"])
 	}
-	if !strings.Contains(body["body"].(string), "# Расследование (Investigation) — Hello") {
+	if !strings.Contains(body["body"].(string), "# Рунбук (Runbook) — Hello") {
 		t.Errorf("section body should contain rendered H1, got: %v", body["body"])
 	}
 	if !strings.Contains(body["title"].(string), "Hello") {
@@ -243,7 +243,7 @@ func TestRenderStructuredJSONPassThrough(t *testing.T) {
 		"meta":     map[string]any{"title": "X"},
 		"sections": []any{map[string]any{"id": "summary", "body": "hi"}},
 	}
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", in,
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", in,
 		Options{JSON: true, BootstrapJSON: false})
 	if err != nil {
 		t.Fatal(err)
@@ -368,9 +368,9 @@ func TestRenderDryRunNoFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "task.md.tmpl", struct {
-		ID, CreationDate, ModificationDate, Title string
-	}{"id", "t", "t", "Dry"}, Options{Out: target, DryRun: true})
+	err := Render(&out, tmpl.NewDefaultLoader(), "runbook.md.tmpl", struct {
+		ID, CreationDate, ModificationDate, Title, Now, Service, Alert string
+	}{"id", "t", "t", "Dry", "t", "svc", "alert"}, Options{Out: target, DryRun: true})
 	if err != nil {
 		t.Fatal(err)
 	}
