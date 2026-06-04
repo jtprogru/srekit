@@ -48,6 +48,11 @@ func Convert(tmplBody, sectionsManifest []byte) ([]byte, error) {
 		m, err := sections.ParseManifest(sectionsManifest)
 		if err == nil {
 			secs = m.Sections
+			// When the sidecar provides sections, the .tmpl body between
+			// header and the first `##` was the `{{ range .Sections }}`
+			// loop that rendered them — Go-template code, not prose.
+			// Keeping it in header_body would corrupt the v1 output.
+			headerBody = ""
 		}
 	}
 	if len(secs) == 0 {

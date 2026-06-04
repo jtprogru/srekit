@@ -21,6 +21,19 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.26.0] - 2026-06-04
+
+### Fixed
+
+- **`srekit templates migrate` — sidecar-driven `.tmpl` no longer leaks `{{ range .Sections }}` into `header_body`.** When a sibling `<name>.sections.yaml` provides the section list, the `.tmpl` body between the header and the first `##` was the legacy render loop (`{{ range .Sections }}…{{ end }}`) — Go-template code, not prose. The migrator now suppresses `header_body` in that case (it was previously copied verbatim, which produced a parse error at render time: `template: section:2: unexpected EOF`). Regression test added.
+
+- **`docs/{en,ru}/migration/v1.md` — recipe correctness fixes** found during the v0.26.0 end-to-end smoke audit:
+    - **Step ordering reversed**: `templates migrate` runs **before** `templates upgrade`, not after. The old order scaffolded the embedded `.yaml` first, after which `templates migrate` skipped every customized `.tmpl` (target already exists) and silently dropped the user's customizations. New "Order matters" callout explains why.
+    - **Sed pattern made smart**: the `{{ \.([A-Z]…)` regex matches `.Meta.X` too — running it blindly on a file already on `.Meta.X` produces `.Meta.Meta.X` (a render-time error). The new recipe guards each file with `grep -q '{{ \.Meta\.' && continue`, so postmortem (the one generator that was already on `.Meta.X` in v0.13.x) is left alone.
+    - **Removed `srekit config show` reference**: that subcommand doesn't exist (only `srekit config init`). The fallback `|| echo ~/.srekit/templates` hid the error, but the snippet was misleading. Replaced with a plain note about where the templates dir is configured.
+    - Recipe step 5 now ends with a render-smoke command (`srekit --templates-dir "$TPL" postmortem --title smoke … > /dev/null`) before the `rm` of legacy files.
+    - Added the GNU-sed reminder (`-i` without trailing `''`) for Linux users.
+
 ## [0.25.0] - 2026-06-04
 
 ### Added
@@ -496,7 +509,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.25.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.26.0...HEAD
+[0.26.0]: https://github.com/jtprogru/srekit/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/jtprogru/srekit/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/jtprogru/srekit/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/jtprogru/srekit/compare/v0.22.0...v0.23.0

@@ -83,6 +83,50 @@ sections:
 	}
 }
 
+// TestConvert_SidecarSuppressesHeaderBody covers a v0.13.x postmortem.md.tmpl
+// shape: header + meta_bullets + `{{ range .Sections }}{{ .Body }}{{ end }}`
+// (no `## ` blocks in the .tmpl itself — sections live in the sidecar). The
+// migrator must not capture that range loop as header_body; doing so would
+// emit `{{ range .Sections }}` into the v1 yaml and break the renderer.
+// Regression for the v0.26.0 smoke-audit finding.
+func TestConvert_SidecarSuppressesHeaderBody(t *testing.T) {
+	t.Parallel()
+	tmpl := `---
+id: {{ .Meta.ID }}
+type: postmortem
+---
+
+# Postmortem — {{ .Meta.Title }}
+
+- **Severity:** {{ .Meta.Severity }}
+
+{{ range .Sections }}
+## {{ .Title }}
+
+{{ .Body }}
+{{ end }}
+`
+	manifest := []byte(`version: 1
+sections:
+  - id: summary
+    title: Summary
+    type: text
+    required: true
+    default_body: one-paragraph summary
+`)
+	got, err := Convert([]byte(tmpl), manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := string(got)
+	if strings.Contains(out, "header_body:") {
+		t.Errorf("header_body must be omitted when sidecar supplies sections; got:\n%s", out)
+	}
+	if strings.Contains(out, "{{ range .Sections") {
+		t.Errorf("template `{{ range .Sections }}` from sidecar-driven .tmpl leaked into v1 yaml:\n%s", out)
+	}
+}
+
 func TestConvert_BilingualHeadingsGetEnglishIDs(t *testing.T) {
 	t.Parallel()
 	tmpl := `# T
