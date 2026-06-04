@@ -1,5 +1,15 @@
 # srekit
 
+[![Release](https://img.shields.io/github/v/release/jtprogru/srekit?sort=semver)](https://github.com/jtprogru/srekit/releases)
+[![Go Reference](https://pkg.go.dev/badge/github.com/jtprogru/srekit.svg)](https://pkg.go.dev/github.com/jtprogru/srekit)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jtprogru/srekit)](https://goreportcard.com/report/github.com/jtprogru/srekit)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![tests](https://github.com/jtprogru/srekit/actions/workflows/tests.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/tests.yaml)
+[![golangci-lint](https://github.com/jtprogru/srekit/actions/workflows/lint.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/lint.yaml)
+[![security](https://github.com/jtprogru/srekit/actions/workflows/security.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/security.yaml)
+[![goreleaser](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml)
+[![Homebrew](https://img.shields.io/badge/Homebrew-jtprogru%2Ftap-FBB040?logo=homebrew&logoColor=white)](https://github.com/jtprogru/homebrew-tap)
+
 📚 **Documentation:** [jtprogru.github.io/srekit](https://jtprogru.github.io/srekit/) (EN + RU, full command reference, guides, recipes, architecture).
 
 Генератор текстовых артефактов SRE: investigation log'и, инциденты, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, capacity plans, retro, changelog'и, лицензии.
