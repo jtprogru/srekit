@@ -157,15 +157,10 @@ func newPostmortemCmd() *cobra.Command {
 }
 
 // loadPostmortemManifest resolves the postmortem section list through
-// the v1 artifact path (`postmortem.yaml`). Embed always ships the v1
-// artifact in v0.14.0+, so this path always succeeds for builds with the
-// unmodified loader chain.
-//
-// As a side-effect, the loader warns about stale pre-v0.14.0 files
-// (`postmortem.md.tmpl`, `postmortem.sections.yaml`) sitting in the
-// user's templates dir — those are now ignored in favor of the v1
-// artifact, and the warning nudges the user to migrate their
-// customizations into `postmortem.yaml`.
+// the v1 artifact path (`postmortem.yaml`). As a side-effect it warns
+// about stale legacy files (`postmortem.md.tmpl`, `postmortem.sections.yaml`)
+// in the user's templates dir, nudging the user to migrate their
+// customizations into the v1 file.
 func loadPostmortemManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
 	artifactBytes, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
 	if err != nil {
@@ -182,8 +177,8 @@ func loadPostmortemManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.
 
 // emitPostmortemSchema marshals the manifest-derived JSON Schema to the
 // command's stdout. The schema is recomputed from the loaded manifest on
-// every invocation, so user customizations to postmortem.sections.yaml
-// flow through automatically.
+// every invocation, so user customizations to postmortem.yaml flow
+// through automatically.
 func emitPostmortemSchema(cmd *cobra.Command, manifest *sections.Manifest) error {
 	schema := manifest.JSONSchema("srekit postmortem --from input", postmortemMetaFields)
 	b, err := json.MarshalIndent(schema, "", "  ")

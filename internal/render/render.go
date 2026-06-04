@@ -25,21 +25,19 @@ type Options struct {
 	TemplatePath string // optional: read template from this file path instead of the embedded/loader chain
 	JSON         bool   // emit the template data as JSON instead of rendering the template
 	Quiet        bool   // suppress informational messages (the "wrote <file>" line, dry-run notes)
-	// BootstrapJSON controls --json shape for commands that haven't migrated
-	// to a sections manifest. When true (the default for legacy commands),
-	// the rendered markdown is wrapped in a bootstrap envelope
-	// `{meta: <data>, sections: [{id:"body", title:<H1>, type:"text",
-	// required:true, body:<rendered markdown>}]}` so every command speaks
-	// the same {meta, sections} JSON contract. When false (postmortem), the
-	// caller has already shaped `data` as {meta, sections} itself and JSON
-	// short-circuits straight to MarshalIndent without rendering markdown.
+	// BootstrapJSON wraps `data` in a `{meta, sections: [{id:"body", …}]}`
+	// envelope when emitting --json, so legacy `text/template` commands
+	// produce the same shape as artifact-path commands. Every shipped
+	// generator is now on the artifact path (v0.20.0) and sets
+	// BootstrapJSON=false, but the wrapping is kept for external tooling
+	// that ships custom `.tmpl` commands via the public Render API.
 	BootstrapJSON bool
 	// RenderArtifact switches the render path from Go-template execution
-	// to the v1 YAML artifact format introduced in v0.14.0. When true,
-	// the loader resolves <name>.yaml via LoadArtifactBytes, ParseArtifact
-	// builds an Artifact, and sections.RenderArtifact composes the
-	// markdown. `data` must implement ArtifactPayload (returning the
-	// pre-merged section list and the template ctx).
+	// to the v1 YAML artifact format. When true, the loader resolves
+	// <name>.yaml via LoadArtifactBytes, ParseArtifact builds an Artifact,
+	// and sections.RenderArtifact composes the markdown. `data` must
+	// implement ArtifactPayload (returning the pre-merged section list
+	// and the template ctx). Every shipped generator sets this to true.
 	RenderArtifact bool
 }
 

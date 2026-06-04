@@ -15,18 +15,12 @@ import (
 	"github.com/jtprogru/srekit/internal/ids"
 )
 
-// The embed glob covers two generations of artifact format that coexist
-// during the YAML-first migration (v0.13.x → v1.0):
-//   - *.tmpl   — legacy Go-template files (license_*, plus generators not
-//                yet migrated to YAML).
-//   - *.yaml   — v1 single-file artifact format introduced in v0.14.0.
-//
-// Note: *.sections.yaml (v0.13.x sidecar manifest format) is no longer
-// embedded — postmortem migrated to postmortem.yaml in v0.14.0, and no
-// other artifact uses the sidecar format. The legacy `.sections.yaml`
-// fallback loader path in cmd/postmortem.go still handles user-dir
-// sidecar files via DirSource, so the transition is backward-compatible
-// even though embed doesn't ship them anymore.
+// FS is the embedded template/artifact filesystem. As of v0.20.0 every
+// shipped artifact is the v1 single-file YAML format (`<name>.yaml`).
+// Pre-v1.0 layouts (`.tmpl`, `.sections.yaml`) are still recognized by
+// IsTemplateArtifact so user files written against them remain visible
+// in `templates list` / `validate` and can be auto-converted via
+// `srekit templates migrate`.
 //
 //go:embed templates/*.yaml
 var FS embed.FS
@@ -133,42 +127,11 @@ func (l *Loader) AddDirSource(dir string) {
 	l.Sources = append([]Source{DirSource{Dir: dir}}, l.Sources...)
 }
 
-// ManifestNameFor maps a template filename (e.g. "postmortem.md.tmpl") to
-// the conventional sidecar manifest filename ("postmortem.sections.yaml").
-// Both `.md.tmpl` and the bare `.tmpl` suffix are stripped, so the same
-// rule applies to text templates (e.g. license_*.tmpl → license_*.sections.yaml).
-func ManifestNameFor(templateName string) string {
-	name := strings.TrimSuffix(templateName, ".tmpl")
-	name = strings.TrimSuffix(name, ".md")
-	return name + ".sections.yaml"
-}
-
-// LoadManifestBytes resolves the sidecar manifest for a template and
-// returns its raw YAML bytes. Walks Sources in the same order as Parse,
-// so a user-dir manifest shadows the embedded one. Returns fs.ErrNotExist
-// when no source has the manifest; that's the signal for "this template
-// renders the legacy way" and is not a fatal error.
-//
-// Parsing is intentionally left to callers (internal/sections.ParseManifest)
-// to keep this package free of a manifest-type dependency.
-func (l *Loader) LoadManifestBytes(templateName string) ([]byte, error) {
-	manifestName := ManifestNameFor(templateName)
-	for _, s := range l.Sources {
-		b, err := s.Read(manifestName)
-		if errors.Is(err, fs.ErrNotExist) {
-			continue
-		}
-		if err != nil {
-			return nil, fmt.Errorf("manifest %q: %w", manifestName, err)
-		}
-		return b, nil
-	}
-	return nil, fs.ErrNotExist
-}
-
 // IsTemplateArtifact reports whether a filename is one of the artifact
-// types srekit ships from the embedded FS / user templates dir
-// (rendering templates, sidecar manifests, and unified v1 .yaml files).
+// types srekit recognizes in the embedded FS or a user templates dir.
+// Shipped artifacts are all `.yaml` as of v0.20.0; legacy `.tmpl` and
+// `.sections.yaml` are still recognized so `templates list` / `validate`
+// surfaces user files written against pre-v1.0 layouts.
 func IsTemplateArtifact(name string) bool {
 	return strings.HasSuffix(name, ".tmpl") ||
 		strings.HasSuffix(name, ".sections.yaml") ||
@@ -188,8 +151,7 @@ func ArtifactNameFor(templateName string) string {
 // LoadArtifactBytes resolves the v1 single-file artifact for a template
 // and returns its raw YAML bytes. Walks Sources in the same order as
 // Parse, so a user-dir artifact shadows the embedded one. Returns
-// fs.ErrNotExist when no source has it; callers fall back to legacy paths
-// (LoadManifestBytes / Parse) and print a deprecation warning.
+// fs.ErrNotExist when no source has it.
 //
 // Parsing is left to internal/sections.ParseArtifact so this package
 // doesn't depend on artifact types.
@@ -209,9 +171,9 @@ func (l *Loader) LoadArtifactBytes(templateName string) ([]byte, error) {
 }
 
 // EmbeddedNames returns the filenames of every artifact embedded under
-// `templates/` (both `.tmpl` and `.sections.yaml`). It is the single
-// enumeration surface used by `srekit templates init/upgrade/diff/list`
-// so adding a new artifact type only requires updating IsTemplateArtifact.
+// `templates/`. As of v0.20.0 all embedded artifacts are v1 `.yaml`. This
+// is the single enumeration surface used by
+// `srekit templates init/upgrade/diff/list`.
 func EmbeddedNames() ([]string, error) {
 	entries, err := fs.ReadDir(FS, "templates")
 	if err != nil {

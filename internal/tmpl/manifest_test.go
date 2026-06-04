@@ -10,30 +10,11 @@ import (
 	"testing"
 )
 
-func TestManifestNameFor(t *testing.T) {
-	t.Parallel()
-	cases := []struct {
-		in, want string
-	}{
-		{"postmortem.md.tmpl", "postmortem.sections.yaml"},
-		{"license_mit.tmpl", "license_mit.sections.yaml"},
-		{"changelog.md.tmpl", "changelog.sections.yaml"},
-		{"already.sections.yaml", "already.sections.yaml.sections.yaml"}, // not idempotent — caller passes template names
-	}
-	for _, tc := range cases {
-		if got := ManifestNameFor(tc.in); got != tc.want {
-			t.Errorf("ManifestNameFor(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
-}
-
 func TestIsTemplateArtifact(t *testing.T) {
 	t.Parallel()
-	// As of v0.14.0 the bare `.yaml` suffix is a valid v1 artifact
-	// filename, so any `.yaml` in a templates dir counts as an artifact.
-	// Users are expected not to drop unrelated YAML into their templates
-	// dir (config and similar live elsewhere — config.yaml lives in
-	// $XDG_CONFIG_HOME/srekit, not in templates_dir).
+	// Recognized artifact suffixes. `.tmpl` and `.sections.yaml` are kept
+	// for backwards compatibility so user files written against pre-v0.14
+	// layouts still appear in `templates list` / `validate`.
 	cases := map[string]bool{
 		"postmortem.md.tmpl":       true,
 		"license_mit.tmpl":         true,
@@ -72,43 +53,6 @@ func TestEmbeddedNames_isAllArtifactYAML(t *testing.T) {
 		if !IsTemplateArtifact(n) {
 			t.Errorf("EmbeddedNames returned non-artifact %q", n)
 		}
-	}
-}
-
-func TestLoadManifestBytes_NotFound(t *testing.T) {
-	t.Parallel()
-	loader := NewDefaultLoader()
-	_, err := loader.LoadManifestBytes("changelog.md.tmpl")
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("want fs.ErrNotExist, got %v", err)
-	}
-}
-
-func TestLoadManifestBytes_DirOverridesEmbed(t *testing.T) {
-	t.Parallel()
-	dir := t.TempDir()
-	custom := []byte("version: 1\nsections: [{id: x, title: X, type: text}]\n")
-	if err := os.WriteFile(filepath.Join(dir, "changelog.sections.yaml"), custom, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	got, err := loader.LoadManifestBytes("changelog.md.tmpl")
-	if err != nil {
-		t.Fatalf("load: %v", err)
-	}
-	if string(got) != string(custom) {
-		t.Errorf("dir override not picked up: got %q", got)
-	}
-}
-
-func TestLoadManifestBytes_FallsThroughEmptyDir(t *testing.T) {
-	t.Parallel()
-	dir := t.TempDir()
-	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	_, err := loader.LoadManifestBytes("changelog.md.tmpl")
-	// changelog has no manifest in embed, dir is empty → fs.ErrNotExist.
-	if !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("want fs.ErrNotExist, got %v", err)
 	}
 }
 

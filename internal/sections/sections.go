@@ -1,14 +1,17 @@
-// Package sections defines the typed-section manifest format used by
-// srekit generators that ship a sidecar `<template>.sections.yaml`.
+// Package sections defines the typed-section model used by srekit
+// generators. Sections live inside the v1 `<name>.yaml` artifact format
+// (see Artifact in artifact.go); the legacy sidecar `<name>.sections.yaml`
+// layout from v0.13.x is retired in shipped generators but its parser
+// (ParseManifest) is kept so `templates validate` / `templates migrate`
+// can still process user files written against the old format.
 //
-// A manifest declares an ordered list of typed slots (text / list / table)
-// with stable IDs, optional required-flag, and default content. Commands
-// that consume a manifest assemble the document body from these slots —
-// either using the declared defaults or overrides provided via JSON input
-// (e.g. `srekit postmortem --from input.json`).
+// A section is a typed slot (text / list / table) with a stable ID,
+// optional required-flag, and default content. Commands assemble the
+// document body from these slots — using declared defaults or overrides
+// provided via JSON input (e.g. `srekit postmortem --from input.json`).
 //
-// The manifest format and on-the-wire RenderedSection shape are part of
-// the public --json contract; both stabilize at 1.0.
+// The Section schema and the on-the-wire RenderedSection shape are part
+// of the public --json contract; both stabilize at 1.0.
 package sections
 
 import (
@@ -30,7 +33,10 @@ const (
 	TypeTable SectionType = "table"
 )
 
-// Manifest is the on-disk format of a `<template>.sections.yaml` file.
+// Manifest is the legacy sidecar `<name>.sections.yaml` format. Kept for
+// `templates validate` / `templates migrate` to process user files written
+// against the pre-v0.14.0 layout. Shipped artifacts use Artifact (which
+// embeds the same Section list inline).
 type Manifest struct {
 	Sections []Section `json:"sections" yaml:"sections"`
 	Version  int       `json:"version"  yaml:"version"`
@@ -56,10 +62,11 @@ type Section struct {
 	Required    bool        `json:"required,omitempty" yaml:"required,omitempty"`
 }
 
-// RenderedSection is the unit shipped to the `.tmpl` `{{ range .Sections }}`
-// loop and emitted in structured `--json` output. Body is always a string;
-// for list/table the renderer formats Items/Columns+Rows into a markdown
-// fragment so consumers see the same value through both paths.
+// RenderedSection is the unit emitted in structured `--json` output and
+// consumed by sections.RenderArtifact when composing the markdown body.
+// Body is always a string; for list/table the renderer formats
+// Items/Columns+Rows into a markdown fragment so consumers see the same
+// value through both paths.
 type RenderedSection struct {
 	ID       string `json:"id"`
 	Title    string `json:"title"`
