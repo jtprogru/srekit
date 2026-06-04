@@ -1,6 +1,7 @@
 package tmpl
 
 import (
+	"bytes"
 	"errors"
 	"io/fs"
 	"os"
@@ -28,15 +29,22 @@ func TestManifestNameFor(t *testing.T) {
 
 func TestIsTemplateArtifact(t *testing.T) {
 	t.Parallel()
+	// As of v0.14.0 the bare `.yaml` suffix is a valid v1 artifact
+	// filename, so any `.yaml` in a templates dir counts as an artifact.
+	// Users are expected not to drop unrelated YAML into their templates
+	// dir (config and similar live elsewhere — config.yaml lives in
+	// $XDG_CONFIG_HOME/srekit, not in templates_dir).
 	cases := map[string]bool{
 		"postmortem.md.tmpl":       true,
 		"license_mit.tmpl":         true,
 		"postmortem.sections.yaml": true,
-		"random.yaml":              false,
+		"postmortem.yaml":          true,
+		"task.yaml":                true,
 		"TEMPLATES.md":             false,
 		"":                         false,
 		".srekit-embedded":         false,
 		"postmortem.md.tmpl.bak":   false,
+		"README.md":                false,
 	}
 	for name, want := range cases {
 		if got := IsTemplateArtifact(name); got != want {
@@ -106,5 +114,57 @@ func TestLoadManifestBytes_FallsThroughEmptyDir(t *testing.T) {
 	// rfc has no manifest in embed, dir is empty → fs.ErrNotExist.
 	if !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("want fs.ErrNotExist, got %v", err)
+	}
+}
+
+func TestArtifactNameFor(t *testing.T) {
+	t.Parallel()
+	cases := []struct{ in, want string }{
+		{"postmortem.md.tmpl", "postmortem.yaml"},
+		{"license_mit.tmpl", "license_mit.yaml"},
+		{"task.md.tmpl", "task.yaml"},
+	}
+	for _, tc := range cases {
+		if got := ArtifactNameFor(tc.in); got != tc.want {
+			t.Errorf("ArtifactNameFor(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestLoadArtifactBytes_FindsEmbeddedPostmortem(t *testing.T) {
+	t.Parallel()
+	loader := NewDefaultLoader()
+	body, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if !bytes.Contains(body, []byte("version: 1")) {
+		t.Errorf("body doesn't look like v1 artifact: %s", body[:min(200, len(body))])
+	}
+}
+
+func TestLoadArtifactBytes_NotFound(t *testing.T) {
+	t.Parallel()
+	loader := NewDefaultLoader()
+	_, err := loader.LoadArtifactBytes("rfc.md.tmpl") // no rfc.yaml yet
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("want fs.ErrNotExist, got %v", err)
+	}
+}
+
+func TestLoadArtifactBytes_DirOverridesEmbed(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	custom := []byte("version: 1\nsections: [{id: x, title: X, type: text}]\n")
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), custom, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
+	got, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(custom) {
+		t.Errorf("dir override not picked up")
 	}
 }

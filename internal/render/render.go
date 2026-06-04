@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/jtprogru/srekit/internal/sections"
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
@@ -33,6 +34,21 @@ type Options struct {
 	// caller has already shaped `data` as {meta, sections} itself and JSON
 	// short-circuits straight to MarshalIndent without rendering markdown.
 	BootstrapJSON bool
+	// RenderArtifact switches the render path from Go-template execution
+	// to the v1 YAML artifact format introduced in v0.14.0. When true,
+	// the loader resolves <name>.yaml via LoadArtifactBytes, ParseArtifact
+	// builds an Artifact, and sections.RenderArtifact composes the
+	// markdown. `data` must implement ArtifactPayload (returning the
+	// pre-merged section list and the template ctx).
+	RenderArtifact bool
+}
+
+// ArtifactPayload is implemented by cmd-level data structs that join the
+// v1 artifact render path (currently: postmortem). It lets the render
+// pipeline extract the pre-merged section list and the per-template ctx
+// without coupling to cmd-specific types.
+type ArtifactPayload interface {
+	ArtifactPayload() (sections []sections.RenderedSection, ctx any)
 }
 
 func Render(stdout io.Writer, loader *tmpl.Loader, tmplName string, data any, opts Options) error {
@@ -40,6 +56,14 @@ func Render(stdout io.Writer, loader *tmpl.Loader, tmplName string, data any, op
 	if err != nil {
 		return err
 	}
+	return writeBody(stdout, body, opts)
+}
+
+// WriteRaw applies the standard --out / --stdout / --force / --dry-run /
+// --quiet routing to an already-rendered body. Used by commands that
+// render their content inline (currently: license, whose template bodies
+// are Go constants rather than embedded files).
+func WriteRaw(stdout io.Writer, body []byte, opts Options) error {
 	return writeBody(stdout, body, opts)
 }
 
@@ -54,21 +78,30 @@ func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]
 		return append(b, '\n'), nil
 	}
 
-	var t *template.Template
-	var err error
-	if opts.TemplatePath != "" {
-		t, err = tmpl.ParseFile(opts.TemplatePath)
+	var body []byte
+	if opts.RenderArtifact {
+		var err error
+		body, err = renderArtifactPath(loader, tmplName, data)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		t, err = loader.Parse(tmplName)
+		var t *template.Template
+		var err error
+		if opts.TemplatePath != "" {
+			t, err = tmpl.ParseFile(opts.TemplatePath)
+		} else {
+			t, err = loader.Parse(tmplName)
+		}
+		if err != nil {
+			return nil, err
+		}
+		var buf bytes.Buffer
+		if err := t.Execute(&buf, data); err != nil {
+			return nil, fmt.Errorf("render %q: %w", tmplName, err)
+		}
+		body = buf.Bytes()
 	}
-	if err != nil {
-		return nil, err
-	}
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("render %q: %w", tmplName, err)
-	}
-	body := buf.Bytes()
 
 	// Bootstrap JSON path: render markdown first, then wrap the result in
 	// a {meta, sections:[{id:"body", ...}]} envelope so every generator
@@ -93,6 +126,28 @@ func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]
 	}
 
 	return body, nil
+}
+
+// renderArtifactPath loads the v1 single-file YAML artifact for tmplName,
+// parses it, extracts the pre-merged section list + ctx from data (which
+// must implement ArtifactPayload), and composes the markdown via
+// sections.RenderArtifact. This is the v0.14.0+ render path for commands
+// that have migrated to the YAML format.
+func renderArtifactPath(loader *tmpl.Loader, tmplName string, data any) ([]byte, error) {
+	artifactBytes, err := loader.LoadArtifactBytes(tmplName)
+	if err != nil {
+		return nil, fmt.Errorf("load artifact for %q: %w", tmplName, err)
+	}
+	artifact, err := sections.ParseArtifact(artifactBytes)
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := data.(ArtifactPayload)
+	if !ok {
+		return nil, fmt.Errorf("RenderArtifact set but data type %T does not implement ArtifactPayload", data)
+	}
+	rendered, ctx := payload.ArtifactPayload()
+	return sections.RenderArtifact(artifact, rendered, ctx)
 }
 
 var h1Pattern = regexp.MustCompile(`(?m)^#\s+(.+)$`)

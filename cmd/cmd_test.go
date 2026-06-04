@@ -259,10 +259,17 @@ func TestTemplatesDirOverride(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	// As of v0.13.0 the postmortem template sees a {Meta, Sections} struct
-	// rather than a flat one — custom templates reference .Meta.Title.
-	custom := []byte("# CUSTOM POSTMORTEM: {{ .Meta.Title }}\n")
-	if err := os.WriteFile(filepath.Join(dir, "postmortem.md.tmpl"), custom, 0o644); err != nil {
+	// As of v0.14.0 the user customizes postmortem via postmortem.yaml
+	// (v1 artifact format). The title field is rendered as the H1.
+	custom := []byte(`version: 1
+title: "CUSTOM POSTMORTEM: {{ .Meta.Title }}"
+sections:
+  - id: only
+    title: Only
+    type: text
+    default_body: "marker-from-user-dir"
+`)
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), custom, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	out, err := runCLI(t, "--templates-dir", dir, "postmortem", "--title", "X", "--stdout")
@@ -270,7 +277,10 @@ func TestTemplatesDirOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !strings.Contains(out, "# CUSTOM POSTMORTEM: X") {
-		t.Fatalf("expected custom template body, got: %s", out)
+		t.Fatalf("expected custom artifact body, got: %s", out)
+	}
+	if !strings.Contains(out, "marker-from-user-dir") {
+		t.Fatalf("expected custom section body, got: %s", out)
 	}
 }
 
@@ -322,24 +332,31 @@ func TestTemplatesInitScaffolds(t *testing.T) {
 		t.Fatalf("init failed: %v (output: %s)", err, out)
 	}
 
-	// At least the SRE-doc templates we ship must be there, plus the
-	// sidecar manifest that the postmortem command now consumes.
+	// All embedded artifacts must be scaffolded. As of v0.14.0, postmortem
+	// ships as a single postmortem.yaml (the v1 unified format replacing
+	// the v0.13.x postmortem.md.tmpl + postmortem.sections.yaml pair).
 	for _, name := range []string{
-		"task.md.tmpl", "incident.md.tmpl", "postmortem.md.tmpl",
+		"task.md.tmpl", "incident.md.tmpl",
 		"runbook.md.tmpl", "rfc.md.tmpl", "slo.md.tmpl",
 		"ebp.md.tmpl", "capacity.md.tmpl",
 		"oncall.md.tmpl", "retro.md.tmpl", "changelog.md.tmpl",
-		"postmortem.sections.yaml",
+		"postmortem.yaml",
 		"TEMPLATES.md",
 	} {
 		if _, err := os.Stat(filepath.Join(target, name)); err != nil {
 			t.Errorf("expected %s to be written: %v", name, err)
 		}
 	}
-	// Snapshot for the new sidecar must be seeded too so future 3-way
-	// merges work without falling back to additive mode.
-	if _, err := os.Stat(filepath.Join(target, ".srekit-embedded", "postmortem.sections.yaml")); err != nil {
-		t.Errorf("expected snapshot for postmortem.sections.yaml: %v", err)
+	// Snapshot for the v1 artifact is seeded so future 3-way merges work
+	// without falling back to additive mode.
+	if _, err := os.Stat(filepath.Join(target, ".srekit-embedded", "postmortem.yaml")); err != nil {
+		t.Errorf("expected snapshot for postmortem.yaml: %v", err)
+	}
+	// The v0.13.x split files must NOT be scaffolded anymore.
+	for _, gone := range []string{"postmortem.md.tmpl", "postmortem.sections.yaml"} {
+		if _, err := os.Stat(filepath.Join(target, gone)); err == nil {
+			t.Errorf("expected %s NOT to be scaffolded after v0.14.0 unification", gone)
+		}
 	}
 	if !strings.Contains(out, "Templates scaffolded in") {
 		t.Errorf("expected friendly summary, got: %s", out)
@@ -477,8 +494,11 @@ func TestTemplatesValidateAllPass(t *testing.T) {
 	if strings.Contains(out, "FAIL") {
 		t.Fatalf("expected all OK, got: %s", out)
 	}
-	// Spot-check a couple of templates appear in the per-file output.
-	for _, name := range []string{"task.md.tmpl", "postmortem.md.tmpl", "license_mit.tmpl"} {
+	// Spot-check a couple of artifacts appear in the per-file output.
+	// postmortem is the v1 .yaml artifact; others are still legacy .tmpl.
+	// (License families are inlined in the binary as of v0.14.0 and don't
+	// flow through templates dir / validate.)
+	for _, name := range []string{"task.md.tmpl", "postmortem.yaml", "runbook.md.tmpl"} {
 		if !strings.Contains(out, "OK    "+name) {
 			t.Errorf("expected OK line for %s, got: %s", name, out)
 		}
@@ -553,8 +573,9 @@ func TestTemplatesValidateUserOnlyTemplate(t *testing.T) {
 	}
 }
 
-// TestTemplatesValidateAcceptsManifest verifies that .sections.yaml files
-// are recognized by `templates validate` and parsed as section manifests.
+// TestTemplatesValidateAcceptsManifest verifies that .yaml artifact files
+// (v1 format introduced in v0.14.0) are recognized by `templates validate`
+// and parsed via sections.ParseArtifact.
 func TestTemplatesValidateAcceptsManifest(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
@@ -565,30 +586,30 @@ func TestTemplatesValidateAcceptsManifest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("validate failed: %v\noutput: %s", err, out)
 	}
-	if !strings.Contains(out, "OK    postmortem.sections.yaml") {
-		t.Errorf("expected OK line for sidecar manifest, got: %s", out)
+	if !strings.Contains(out, "OK    postmortem.yaml") {
+		t.Errorf("expected OK line for v1 artifact, got: %s", out)
 	}
 }
 
 // TestTemplatesValidateRejectsBrokenManifest verifies that a malformed
-// .sections.yaml fails validation with a descriptive message.
+// .yaml artifact fails validation with a descriptive message.
 func TestTemplatesValidateRejectsBrokenManifest(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	// Unknown section type — manifest validation must surface it.
+	// Unknown section type — artifact validation must surface it.
 	bad := []byte("version: 1\nsections:\n  - id: x\n    title: X\n    type: image\n")
-	if err := os.WriteFile(filepath.Join(dir, "postmortem.sections.yaml"), bad, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "postmortem.yaml"), bad, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	out, err := runCLI(t, "templates", "validate", dir)
 	if err == nil {
 		t.Fatalf("expected non-zero exit, output: %s", out)
 	}
-	if !strings.Contains(out, "FAIL  postmortem.sections.yaml") {
-		t.Errorf("expected FAIL line for manifest, got: %s", out)
+	if !strings.Contains(out, "FAIL  postmortem.yaml") {
+		t.Errorf("expected FAIL line for artifact, got: %s", out)
 	}
 	if !strings.Contains(out, "unknown type") {
 		t.Errorf("error should mention unknown type, got: %s", out)
@@ -1142,6 +1163,37 @@ func TestIncidentJSONBootstrap(t *testing.T) {
 	}
 }
 
+// TestTemplatesUpgradeSnapshotGC simulates a templates dir that was last
+// upgraded from v0.13.x (has stale snapshot files for postmortem.md.tmpl
+// + postmortem.sections.yaml that no longer ship in embed) and verifies
+// that `templates upgrade` removes them via the GC pass added in v0.14.0.
+func TestTemplatesUpgradeSnapshotGC(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
+		t.Fatalf("init failed: %v", err)
+	}
+	// Plant stale snapshots from a hypothetical v0.13.x layout.
+	snapDir := filepath.Join(dir, ".srekit-embedded")
+	for _, name := range []string{"postmortem.md.tmpl", "postmortem.sections.yaml"} {
+		if err := os.WriteFile(filepath.Join(snapDir, name), []byte("stale\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, err := runCLI(t, "templates", "upgrade", dir)
+	if err != nil {
+		t.Fatalf("upgrade failed: %v (output: %s)", err, out)
+	}
+	for _, gone := range []string{"postmortem.md.tmpl", "postmortem.sections.yaml"} {
+		if _, err := os.Stat(filepath.Join(snapDir, gone)); !os.IsNotExist(err) {
+			t.Errorf("stale snapshot %s should have been removed, stat=%v", gone, err)
+		}
+	}
+	if !strings.Contains(out, "orphaned snapshot") {
+		t.Errorf("upgrade summary should report GC count, got: %s", out)
+	}
+}
+
 // TestTemplatesUpgradeAddsMissing scaffolds a partial dir (one template
 // missing) and verifies upgrade copies the missing one in and reports it.
 func TestTemplatesUpgradeAddsMissing(t *testing.T) {
@@ -1282,7 +1334,7 @@ func TestTemplatesInitSeedsSnapshot(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	for _, name := range []string{"task.md.tmpl", "postmortem.md.tmpl", "runbook.md.tmpl"} {
+	for _, name := range []string{"task.md.tmpl", "postmortem.yaml", "runbook.md.tmpl"} {
 		snap := filepath.Join(dir, ".srekit-embedded", name)
 		body, err := os.ReadFile(snap)
 		if err != nil {
@@ -1536,8 +1588,8 @@ func TestTemplatesListClassifies(t *testing.T) {
 			t.Errorf("missing %q in output:\n%s", want, out)
 		}
 	}
-	// At least one identical (postmortem hasn't been touched).
-	if !strings.Contains(out, "postmortem.md.tmpl") || !strings.Contains(out, "identical") {
+	// At least one identical (postmortem.yaml hasn't been touched).
+	if !strings.Contains(out, "postmortem.yaml") || !strings.Contains(out, "identical") {
 		t.Errorf("expected an identical entry, got:\n%s", out)
 	}
 }

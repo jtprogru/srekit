@@ -117,6 +117,8 @@ nav:
       - Custom templates workflow: guides/custom-templates.md
       - JSON output for pipelines: guides/json-output.md
       - Configuration & precedence: guides/configuration.md
+  - Migration:
+      - v1.0 migration: migration/v1.md
   - Recipes: recipes.md
   - Architecture: architecture.md
   - Contributing: contributing.md

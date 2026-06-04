@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jtprogru/srekit/internal/sections"
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
@@ -264,6 +265,83 @@ func TestRenderStructuredJSONPassThrough(t *testing.T) {
 	if s0["id"] != "summary" {
 		t.Errorf("structured path should pass sections through: %v", s0)
 	}
+}
+
+// TestRenderArtifactPath_Postmortem verifies the v0.14.0 artifact render
+// path: when Options.RenderArtifact is set, the loader resolves the
+// embedded postmortem.yaml, parses it, and composes the markdown via
+// sections.RenderArtifact using the data's ArtifactPayload() method.
+func TestRenderArtifactPath_Postmortem(t *testing.T) {
+	type meta struct {
+		ID, Title, Severity, Owner, Start, End, Now string
+	}
+	m := meta{ID: "abc", Title: "Cache stampede", Severity: "SEV-1", Owner: "@oncall"}
+	rendered, err := sections.Merge(
+		mustLoadEmbeddedPostmortemManifest(t),
+		nil,
+		struct{ Meta meta }{Meta: m},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := &artifactDataStub{meta: m, sections: rendered}
+
+	var out bytes.Buffer
+	if err := Render(&out, tmpl.NewDefaultLoader(), "postmortem.md.tmpl", data,
+		Options{Stdout: true, RenderArtifact: true}); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	got := out.String()
+	for _, want := range []string{
+		"---\n",                                   // frontmatter open
+		`id: "abc"`,                               // frontmatter eval
+		"# Постмортем (Postmortem) — Cache stampede", // H1 eval
+		"**Тяжесть (Severity):** SEV-1",           // meta_bullet eval
+		"## Краткое описание (Summary)",           // first section
+		"## Хронология (Timeline)",                // table section
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in artifact-rendered output:\n%s", want, got)
+		}
+	}
+}
+
+func TestRenderArtifactPath_DataMissingInterface(t *testing.T) {
+	var out bytes.Buffer
+	err := Render(&out, tmpl.NewDefaultLoader(), "postmortem.md.tmpl",
+		struct{ Foo string }{Foo: "bar"},
+		Options{Stdout: true, RenderArtifact: true})
+	if err == nil {
+		t.Fatal("expected error when data type lacks ArtifactPayload")
+	}
+	if !strings.Contains(err.Error(), "ArtifactPayload") {
+		t.Errorf("error should mention ArtifactPayload, got: %v", err)
+	}
+}
+
+// mustLoadEmbeddedPostmortemManifest reads the embedded postmortem.yaml
+// and returns a Manifest matching its sections list. Helper for tests.
+func mustLoadEmbeddedPostmortemManifest(t *testing.T) *sections.Manifest {
+	t.Helper()
+	body, err := tmpl.NewDefaultLoader().LoadArtifactBytes("postmortem.md.tmpl")
+	if err != nil {
+		t.Fatalf("load artifact: %v", err)
+	}
+	a, err := sections.ParseArtifact(body)
+	if err != nil {
+		t.Fatalf("parse artifact: %v", err)
+	}
+	return &sections.Manifest{Version: a.Version, Sections: a.Sections}
+}
+
+// artifactDataStub implements ArtifactPayload for tests; minimal shape.
+type artifactDataStub struct {
+	meta     any
+	sections []sections.RenderedSection
+}
+
+func (a *artifactDataStub) ArtifactPayload() ([]sections.RenderedSection, any) {
+	return a.sections, struct{ Meta any }{Meta: a.meta}
 }
 
 func TestExtractH1(t *testing.T) {

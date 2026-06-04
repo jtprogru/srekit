@@ -125,42 +125,55 @@ Sections appear in manifest order. `body` is always a string regardless of `type
 - Section IDs not present in the manifest cause a hard error listing the offending IDs and the known set (typo guard).
 - Sections that are missing from the input fall back to the manifest defaults.
 
-## Customizing the manifest
+## Customizing the artifact (v1 format, v0.14.0+)
 
-`srekit templates init <dir>` writes both `postmortem.md.tmpl` (the header template) and `postmortem.sections.yaml` (the section list) to your templates dir. Edit the YAML to add, remove, or reorder sections, change titles, or tweak default content (text bodies, list items, table column headers).
+`srekit templates init <dir>` writes a single `postmortem.yaml` to your templates dir. This is the **v1 artifact format** introduced in v0.14.0: header (frontmatter / H1 / meta bullets / optional `header_body`) and sections live in the same file. The previous v0.13.x layout (`postmortem.md.tmpl` + `postmortem.sections.yaml`) is no longer scaffolded; user-dir files in that format are ignored with a stderr warning on every invocation.
 
-The manifest format (see [`internal/sections`](https://github.com/jtprogru/srekit/tree/main/internal/sections)):
+Edit `postmortem.yaml` to add, remove, or reorder sections, change titles, swap the H1, add organizational policy text via `header_body`, or tweak default content (text bodies, list items, table cells).
+
+The full artifact schema (see [`internal/sections`](https://github.com/jtprogru/srekit/tree/main/internal/sections)):
 
 ```yaml
 version: 1
+
+frontmatter:                       # free-form map; values run through Go templates
+  id: "{{ .Meta.ID }}"
+  type: postmortem
+  title: "{{ .Meta.Title }}"
+  severity: "{{ .Meta.Severity }}"
+  tags: [postmortem, incident]
+
+title: "Постмортем (Postmortem) — {{ .Meta.Title }}"   # H1 (Go template)
+
+meta_bullets:                      # bullet lines after the H1 (Go templates)
+  - "**Severity:** {{ .Meta.Severity }}"
+  - '**Owner:** {{ .Meta.Owner | default "<incident owner>" }}'
+
+header_body: |                     # optional freeform Markdown escape hatch
+  > **Blameless review:** look for causes in the system, not in people.
+
 sections:
-  - id: summary           # stable ID, used in --json and --from
-    title: "Краткое описание (Summary)"
-    type: text            # text | list | table
+  - id: summary                    # stable ID, used in --json and --from
+    title: "Summary"
+    type: text                     # text | list | table
     required: true
     default_body: |
-      _Один абзац: что произошло, кого затронуло, как смягчили._
-
-  - id: impact
-    title: "Влияние (Impact)"
-    type: list
-    required: true
-    items:
-      - "Влияние на пользователей:"
-      - "Расход SLO / SLI:"
+      _One paragraph: what happened, who was affected, how it was mitigated._
 
   - id: timeline
-    title: "Хронология (Timeline)"
+    title: "Timeline"
     type: table
     required: true
-    default_body: "(Все времена в UTC.)"
-    columns: ["Время", "Событие"]
+    default_body: "(All times in UTC.)"
+    columns: ["Time", "Event"]
     rows:
-      - ["{{ .Meta.Start }}", "Инцидент начался"]
-      - ["{{ .Meta.End }}",   "Инцидент разрешён"]
+      - ["{{ .Meta.Start }}", "Incident started"]
+      - ["{{ .Meta.End }}",   "Incident resolved"]
 ```
 
-Default-body content (text bodies, list items, table cells) is evaluated through the same Go-template FuncMap as the main template, so `{{ .Meta.Start }}`, `{{ now "2006-01-02" }}`, and other [helpers](../guides/custom-templates.md#funcmap) work.
+Every string field (frontmatter values, `title`, `meta_bullets` items, `header_body`, and section default content) is evaluated through the shared Go-template FuncMap, so `{{ .Meta.X }}`, `{{ now "2006-01-02" }}`, `{{ default "x" .Y }}`, etc. work everywhere.
+
+Frontmatter key order is preserved verbatim from the YAML source (no alphabetical sorting on output) so diffs stay stable.
 
 ## See also
 

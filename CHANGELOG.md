@@ -11,11 +11,23 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- **v1 single-file artifact format (`<name>.yaml`).** First step of the YAML-first migration toward v1.0. An artifact YAML declares `version`, optional `frontmatter` (free-form map; values run through Go templates), optional `title` (H1), optional `meta_bullets` (the bulleted list after H1), optional `header_body` (freeform Markdown escape hatch for things like blameless callouts), and a `sections` list (same schema as v0.13.x `.sections.yaml`). Frontmatter key order is preserved verbatim from source via `yaml.Node`. New: `internal/sections.Artifact`, `ParseArtifact`, `RenderArtifact`; `tmpl.LoadArtifactBytes`, `ArtifactNameFor`.
+
+- **`postmortem.yaml`** ships in embed, replacing the v0.13.x split (`postmortem.md.tmpl` + `postmortem.sections.yaml`). All section content from v0.13.x is preserved 1:1; header content (frontmatter, H1, meta bullets) is faithfully ported.
+
+- **Migration guide stub** at `docs/{en,ru}/migration/v1.md`. Tracks release-by-release progress; will grow as more generators migrate.
+
+- **Snapshot GC in `templates upgrade`.** End-of-run pass removes orphaned snapshot files in `.srekit-embedded/` for artifacts no longer in embed (e.g. `postmortem.md.tmpl` / `postmortem.sections.yaml` after v0.14.0). Summary line now reports the count.
+
+- **`templates validate`** learns the v1 `.yaml` artifact format. Bad artifacts surface their parse / schema errors on a `FAIL` line, same UX as the existing `.tmpl` / `.sections.yaml` paths.
 
 ### Changed
 
--
+- **Breaking — postmortem file layout.** `postmortem.md.tmpl` and `postmortem.sections.yaml` are removed from embed. Users with customized copies in `templates_dir` will see a stderr `WARN: <file> is a pre-v0.14.0 format and is being ignored. Run 'srekit templates upgrade' ...` on every postmortem invocation. To migrate: run `srekit templates upgrade`, then move any customizations (blameless callouts, custom meta bullets, …) into the new `postmortem.yaml` (`frontmatter`, `title`, `meta_bullets`, `header_body` fields).
+
+- **Breaking — `license_*.tmpl` no longer ship in embed.** MIT / Apache-2.0 / WTFPL bodies are inlined as Go-string constants in `cmd/license.go`. `templates init` no longer scaffolds them; they don't appear in `templates list` / `validate`. `--template FILE` still works for custom license bodies, which is the only supported customization point now.
+
+- **Cosmetic — frontmatter values now emit quoted strings.** `id: "<uuid>"` (was `id: <uuid>` in v0.13.x). `yaml.v3` preserves quoting style from source YAML, and the new `postmortem.yaml` source has quoted scalars with template syntax — quoting survives substitution. Functionally identical YAML, but a one-character-per-line diff vs v0.13.x output. Documented in the migration guide.
 
 ### Fixed
 

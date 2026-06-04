@@ -392,9 +392,23 @@ func runTemplatesUpgrade(cmd *cobra.Command, args []string, force, dryRun bool) 
 		}
 	}
 
+	// GC orphaned snapshot files for artifacts that no longer ship in
+	// embed (e.g. v0.13.x's postmortem.sections.yaml + postmortem.md.tmpl
+	// after the v0.14.0 unification into postmortem.yaml). Without this,
+	// `.srekit-embedded/` accumulates dead snapshot files release-over-
+	// release. Snapshot dir is gitignored so removal is safe.
+	orphans, err := gcOrphanSnapshots(dir, names, dryRun)
+	if err != nil {
+		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: snapshot GC failed: %v\n", err)
+	}
+
+	suffix := ""
+	if orphans > 0 {
+		suffix = fmt.Sprintf(" %d orphaned snapshot(s) removed.", orphans)
+	}
 	fmt.Fprintf(out,
-		"\n%s: %d added, %d updated, %d merged, %d conflict, %d unchanged, %d skipped. TEMPLATES.md refreshed.\n",
-		summaryLabel(dryRun), added, updated, mergedCount, conflictCount, unchanged, skipped)
+		"\n%s: %d added, %d updated, %d merged, %d conflict, %d unchanged, %d skipped. TEMPLATES.md refreshed.%s\n",
+		summaryLabel(dryRun), added, updated, mergedCount, conflictCount, unchanged, skipped, suffix)
 	if conflictCount > 0 {
 		return fmt.Errorf("%d template(s) have unresolved conflict markers (resolve and re-run)", conflictCount)
 	}
@@ -643,6 +657,15 @@ func runTemplatesValidate(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(out, "OK    %s\n", name)
 			continue
 		}
+		if strings.HasSuffix(name, ".yaml") {
+			if _, err := sections.ParseArtifact(body); err != nil {
+				fmt.Fprintf(errOut, "FAIL  %s: %v\n", name, err)
+				failed++
+				continue
+			}
+			fmt.Fprintf(out, "OK    %s\n", name)
+			continue
+		}
 		switch err := tmpl.Validate(name, body); {
 		case err == nil:
 			fmt.Fprintf(out, "OK    %s\n", name)
@@ -840,6 +863,44 @@ func gitInit(cmd *cobra.Command, dir string) error {
 		return fmt.Errorf("git init: %w", err)
 	}
 	return nil
+}
+
+// gcOrphanSnapshots removes snapshot files in `.srekit-embedded/` whose
+// names are not in the active embedded artifact set (`current`). This
+// catches files left behind when an artifact's format changes between
+// releases (e.g. v0.13.x's postmortem.sections.yaml after the v0.14.0
+// unification into postmortem.yaml).
+//
+// Returns the count removed. In dry-run mode counts but doesn't delete.
+func gcOrphanSnapshots(userDir string, current []string, dryRun bool) (int, error) {
+	snapDir := filepath.Join(userDir, snapshotSubdir)
+	entries, err := os.ReadDir(snapDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	keep := make(map[string]bool, len(current))
+	for _, name := range current {
+		keep[name] = true
+	}
+	var removed int
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if keep[e.Name()] {
+			continue
+		}
+		if !dryRun {
+			if err := os.Remove(filepath.Join(snapDir, e.Name())); err != nil {
+				return removed, err
+			}
+		}
+		removed++
+	}
+	return removed, nil
 }
 
 // snapshotSubdir is the sidecar directory inside the user's templates dir

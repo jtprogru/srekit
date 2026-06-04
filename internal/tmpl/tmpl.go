@@ -15,7 +15,20 @@ import (
 	"github.com/jtprogru/srekit/internal/ids"
 )
 
-//go:embed templates/*.tmpl templates/*.sections.yaml
+// The embed glob covers two generations of artifact format that coexist
+// during the YAML-first migration (v0.13.x → v1.0):
+//   - *.tmpl   — legacy Go-template files (license_*, plus generators not
+//                yet migrated to YAML).
+//   - *.yaml   — v1 single-file artifact format introduced in v0.14.0.
+//
+// Note: *.sections.yaml (v0.13.x sidecar manifest format) is no longer
+// embedded — postmortem migrated to postmortem.yaml in v0.14.0, and no
+// other artifact uses the sidecar format. The legacy `.sections.yaml`
+// fallback loader path in cmd/postmortem.go still handles user-dir
+// sidecar files via DirSource, so the transition is backward-compatible
+// even though embed doesn't ship them anymore.
+//
+//go:embed templates/*.tmpl templates/*.yaml
 var FS embed.FS
 
 // DocsMD is the placeholder/FuncMap reference shipped to user templates
@@ -155,10 +168,44 @@ func (l *Loader) LoadManifestBytes(templateName string) ([]byte, error) {
 
 // IsTemplateArtifact reports whether a filename is one of the artifact
 // types srekit ships from the embedded FS / user templates dir
-// (rendering templates and their sidecar manifests).
+// (rendering templates, sidecar manifests, and unified v1 .yaml files).
 func IsTemplateArtifact(name string) bool {
 	return strings.HasSuffix(name, ".tmpl") ||
-		strings.HasSuffix(name, ".sections.yaml")
+		strings.HasSuffix(name, ".sections.yaml") ||
+		strings.HasSuffix(name, ".yaml")
+}
+
+// ArtifactNameFor maps a template filename (e.g. "postmortem.md.tmpl") to
+// the v1 unified artifact filename ("postmortem.yaml"). Both `.md.tmpl`
+// and the bare `.tmpl` suffix are stripped, so the rule applies uniformly
+// to all template families.
+func ArtifactNameFor(templateName string) string {
+	name := strings.TrimSuffix(templateName, ".tmpl")
+	name = strings.TrimSuffix(name, ".md")
+	return name + ".yaml"
+}
+
+// LoadArtifactBytes resolves the v1 single-file artifact for a template
+// and returns its raw YAML bytes. Walks Sources in the same order as
+// Parse, so a user-dir artifact shadows the embedded one. Returns
+// fs.ErrNotExist when no source has it; callers fall back to legacy paths
+// (LoadManifestBytes / Parse) and print a deprecation warning.
+//
+// Parsing is left to internal/sections.ParseArtifact so this package
+// doesn't depend on artifact types.
+func (l *Loader) LoadArtifactBytes(templateName string) ([]byte, error) {
+	artifactName := ArtifactNameFor(templateName)
+	for _, s := range l.Sources {
+		b, err := s.Read(artifactName)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("artifact %q: %w", artifactName, err)
+		}
+		return b, nil
+	}
+	return nil, fs.ErrNotExist
 }
 
 // EmbeddedNames returns the filenames of every artifact embedded under

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -15,6 +16,7 @@ import (
 	"github.com/jtprogru/srekit/internal/ids"
 	"github.com/jtprogru/srekit/internal/render"
 	"github.com/jtprogru/srekit/internal/sections"
+	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
 // postmortemMeta is the JSON-tagged metadata shipped under the top-level
@@ -29,11 +31,19 @@ type postmortemMeta struct {
 	Now      string `json:"now"`
 }
 
-// postmortemData is what the template's {{ range .Sections }} loop sees and
-// what `--json` marshals: the structured-shape contract for postmortem.
+// postmortemData is what the renderer sees (for the v1 artifact path:
+// passed to render.ArtifactPayload) and what `--json` marshals (the
+// structured-shape contract for postmortem). The same struct serves both
+// because the artifact render path bypasses Go-template execution.
 type postmortemData struct {
 	Meta     postmortemMeta             `json:"meta"`
 	Sections []sections.RenderedSection `json:"sections"`
+}
+
+// ArtifactPayload satisfies render.ArtifactPayload. The ctx exposes Meta
+// under .Meta so YAML scalars like "{{ .Meta.Title }}" resolve.
+func (d postmortemData) ArtifactPayload() ([]sections.RenderedSection, any) {
+	return d.Sections, struct{ Meta postmortemMeta }{Meta: d.Meta}
 }
 
 // postmortemInput is the schema accepted by --from FILE. Both fields are
@@ -87,11 +97,7 @@ func newPostmortemCmd() *cobra.Command {
 			}
 
 			loader := loaderFrom(cmd)
-			manifestBytes, err := loader.LoadManifestBytes("postmortem.md.tmpl")
-			if err != nil {
-				return fmt.Errorf("load postmortem manifest: %w", err)
-			}
-			manifest, err := sections.ParseManifest(manifestBytes)
+			manifest, err := loadPostmortemManifest(cmd, loader)
 			if err != nil {
 				return err
 			}
@@ -134,7 +140,9 @@ func newPostmortemCmd() *cobra.Command {
 
 			data := postmortemData{Meta: meta, Sections: rendered}
 			def := fmt.Sprintf("postmortem-%s-%s.md", now.Format("2006-01-02"), ids.Slug(meta.Title))
-			return render.Render(cmd.OutOrStdout(), loader, "postmortem.md.tmpl", data, out.RenderOptionsStructured(cmd, def))
+			opts := out.RenderOptionsStructured(cmd, def)
+			opts.RenderArtifact = true
+			return render.Render(cmd.OutOrStdout(), loader, "postmortem.md.tmpl", data, opts)
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "incident title (required, unless provided via --from)")
@@ -147,6 +155,55 @@ func newPostmortemCmd() *cobra.Command {
 	cmd.Flags().StringVar(&validate, "validate", "", "validate an input file: required sections non-empty, no unknown IDs")
 	out.Bind(cmd, "write to file (default: postmortem-<YYYY-MM-DD>-<slug>.md)")
 	return cmd
+}
+
+// loadPostmortemManifest resolves the postmortem section list through
+// the v1 artifact path (`postmortem.yaml`). Embed always ships the v1
+// artifact in v0.14.0+, so this path always succeeds for builds with the
+// unmodified loader chain.
+//
+// As a side-effect, the loader warns about stale pre-v0.14.0 files
+// (`postmortem.md.tmpl`, `postmortem.sections.yaml`) sitting in the
+// user's templates dir — those are now ignored in favor of the v1
+// artifact, and the warning nudges the user to migrate their
+// customizations into `postmortem.yaml`.
+func loadPostmortemManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
+	artifactBytes, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
+	if err != nil {
+		return nil, fmt.Errorf("load postmortem.yaml: %w", err)
+	}
+	a, err := sections.ParseArtifact(artifactBytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse postmortem.yaml: %w", err)
+	}
+	warnStaleLegacyFiles(cmd, loader, "postmortem.md.tmpl", "postmortem.sections.yaml")
+	return &sections.Manifest{Version: a.Version, Sections: a.Sections}, nil
+}
+
+// warnStaleLegacyFiles checks every DirSource in loader for pre-v0.14.0
+// artifact files (e.g. `postmortem.md.tmpl`, `postmortem.sections.yaml`)
+// that are now superseded by the v1 `<name>.yaml` format. Prints one
+// stderr WARN line per stale file found. Suppressed by --quiet.
+func warnStaleLegacyFiles(cmd *cobra.Command, loader *tmpl.Loader, names ...string) {
+	quiet, _ := cmd.Flags().GetBool("quiet")
+	if quiet {
+		return
+	}
+	for _, src := range loader.Sources {
+		ds, ok := src.(tmpl.DirSource)
+		if !ok {
+			continue
+		}
+		for _, name := range names {
+			if _, err := os.Stat(filepath.Join(ds.Dir, name)); err == nil {
+				fmt.Fprintf(cmd.ErrOrStderr(),
+					"WARN: %s in %s is a pre-v0.14.0 format and is being ignored. "+
+						"Run 'srekit templates upgrade' to scaffold postmortem.yaml, "+
+						"then move your customizations into it.\n",
+					name, ds.Dir)
+			}
+		}
+	}
 }
 
 // emitPostmortemSchema marshals the manifest-derived JSON Schema to the

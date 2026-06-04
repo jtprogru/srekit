@@ -125,29 +125,40 @@ srekit postmortem --title "API outage" --severity SEV-1 --json \
 - Section ID, которых нет в манифесте, дают hard error со списком неизвестных ID и known-set (защита от опечаток).
 - Секции, которых нет в input, заполняются дефолтами из манифеста.
 
-## Кастомизация манифеста
+## Кастомизация артефакта (v1 формат, v0.14.0+)
 
-`srekit templates init <dir>` положит и `postmortem.md.tmpl` (header-шаблон), и `postmortem.sections.yaml` (список секций) в твой templates dir. Редактируй YAML, чтобы добавить, убрать или поменять порядок секций, изменить заголовки, обновить default-наполнение (text-тела, list-айтемы, columns/rows для таблиц).
+`srekit templates init <dir>` кладёт один файл `postmortem.yaml` в твой templates dir. Это **v1 артефактный формат**, появившийся в v0.14.0: header (frontmatter / H1 / meta bullets / опц. `header_body`) и секции живут в одном файле. Старый v0.13.x layout (`postmortem.md.tmpl` + `postmortem.sections.yaml`) больше не скаффолдится; user-dir файлы в том формате игнорируются с stderr-предупреждением на каждом вызове.
 
-Формат манифеста (см. [`internal/sections`](https://github.com/jtprogru/srekit/tree/main/internal/sections)):
+Редактируй `postmortem.yaml`, чтобы добавить, убрать или поменять порядок секций, изменить заголовки, поменять H1, добавить корпоративный policy-текст через `header_body`, или обновить default-наполнение (text-тела, list-айтемы, ячейки таблиц).
+
+Полная схема артефакта (см. [`internal/sections`](https://github.com/jtprogru/srekit/tree/main/internal/sections)):
 
 ```yaml
 version: 1
+
+frontmatter:                       # free-form map; значения проходят через Go templates
+  id: "{{ .Meta.ID }}"
+  type: postmortem
+  title: "{{ .Meta.Title }}"
+  severity: "{{ .Meta.Severity }}"
+  tags: [postmortem, incident]
+
+title: "Постмортем (Postmortem) — {{ .Meta.Title }}"   # H1 (Go template)
+
+meta_bullets:                      # bullet-строки после H1 (Go templates)
+  - "**Тяжесть (Severity):** {{ .Meta.Severity }}"
+  - '**Ответственный (Owner):** {{ .Meta.Owner | default "<incident owner>" }}'
+
+header_body: |                     # опц. freeform Markdown escape hatch
+  > **Безвинный разбор (blameless):** ищем причины в системе, не в людях.
+
 sections:
-  - id: summary           # стабильный ID, используется в --json и --from
+  - id: summary                    # стабильный ID, используется в --json и --from
     title: "Краткое описание (Summary)"
-    type: text            # text | list | table
+    type: text                     # text | list | table
     required: true
     default_body: |
       _Один абзац: что произошло, кого затронуло, как смягчили._
-
-  - id: impact
-    title: "Влияние (Impact)"
-    type: list
-    required: true
-    items:
-      - "Влияние на пользователей:"
-      - "Расход SLO / SLI:"
 
   - id: timeline
     title: "Хронология (Timeline)"
@@ -160,7 +171,9 @@ sections:
       - ["{{ .Meta.End }}",   "Инцидент разрешён"]
 ```
 
-Default-наполнение (text-тела, list-айтемы, ячейки таблиц) проходит через тот же Go-template FuncMap что и основной шаблон, поэтому `{{ .Meta.Start }}`, `{{ now "2006-01-02" }}` и прочие [хелперы](../guides/custom-templates.md#funcmap) работают.
+Каждое строковое поле (значения frontmatter, `title`, `meta_bullets` items, `header_body` и default-наполнение секций) проходит через тот же Go-template FuncMap, так что `{{ .Meta.X }}`, `{{ now "2006-01-02" }}`, `{{ default "x" .Y }}` и т.д. работают везде.
+
+Порядок ключей во frontmatter сохраняется как в YAML-источнике (без alphabetical sorting на выходе), чтобы diff'ы оставались стабильными.
 
 ## См. также
 

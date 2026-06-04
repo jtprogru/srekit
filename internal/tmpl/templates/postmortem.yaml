@@ -1,4 +1,25 @@
 version: 1
+
+frontmatter:
+  id: "{{ .Meta.ID }}"
+  creation_date: "{{ .Meta.Now }}"
+  type: postmortem
+  title: "{{ .Meta.Title }}"
+  severity: "{{ .Meta.Severity }}"
+  owner: "{{ .Meta.Owner }}"
+  tags:
+    - postmortem
+    - incident
+
+title: "Постмортем (Postmortem) — {{ .Meta.Title }}"
+
+meta_bullets:
+  - "**Тяжесть (Severity):** {{ .Meta.Severity }}"
+  - '**Ответственный (Owner):** {{ .Meta.Owner | default "<incident owner>" }}'
+  - '**Начало (Started):** {{ .Meta.Start | default "<start time>" }}'
+  - '**Конец (Resolved):** {{ .Meta.End | default "<end time>" }}'
+  - "**Длительность (Duration):** _заполнить после составления хронологии_"
+
 sections:
   - id: summary
     title: "Краткое описание (Summary)"

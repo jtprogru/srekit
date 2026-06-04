@@ -38,37 +38,10 @@ var Samples = map[string]any{
 		Status:   "active",
 		Now:      "2026-01-01T00:00:00Z",
 	},
-	// postmortem now ships with a sidecar manifest (postmortem.sections.yaml)
-	// that drives section rendering, so the data shape is {Meta, Sections}.
-	// Sections is intentionally populated with one representative element so
-	// `templates validate` exercises the `{{ range .Sections }}` loop.
-	"postmortem.md.tmpl": struct {
-		Meta struct {
-			ID, Title, Severity, Start, End, Owner, Now string
-		}
-		Sections []struct {
-			ID, Title, Type, Body string
-			Required              bool
-		}
-	}{
-		Meta: struct {
-			ID, Title, Severity, Start, End, Owner, Now string
-		}{
-			ID:       "11111111-2222-3333-4444-555555555555",
-			Title:    "Sample postmortem",
-			Severity: "SEV-3",
-			Start:    "2026-01-01T00:00:00Z",
-			End:      "2026-01-01T01:00:00Z",
-			Owner:    "@oncall",
-			Now:      "2026-01-01T02:00:00Z",
-		},
-		Sections: []struct {
-			ID, Title, Type, Body string
-			Required              bool
-		}{
-			{ID: "summary", Title: "Summary", Type: "text", Required: true, Body: "_sample summary_"},
-		},
-	},
+	// postmortem.md.tmpl was removed in v0.14.0 (migrated to postmortem.yaml,
+	// the v1 single-file artifact format). The artifact path doesn't go
+	// through `tmpl.Validate`; structural validation of postmortem.yaml is
+	// done by sections.ParseArtifact in `srekit templates validate`.
 	"runbook.md.tmpl": struct {
 		ID, Title, Service, Alert, Now string
 	}{
@@ -139,27 +112,9 @@ var Samples = map[string]any{
 		Repo:           "owner/repo",
 		InitialVersion: "0.1.0",
 	},
-	"license_wtfpl.tmpl": struct {
-		Year   int
-		Author authorSample
-	}{
-		Year:   2026,
-		Author: authorSample{Name: "Sample Author", Email: "sample@example.com"},
-	},
-	"license_mit.tmpl": struct {
-		Year   int
-		Author authorSample
-	}{
-		Year:   2026,
-		Author: authorSample{Name: "Sample Author", Email: "sample@example.com"},
-	},
-	"license_apache2.tmpl": struct {
-		Year   int
-		Author authorSample
-	}{
-		Year:   2026,
-		Author: authorSample{Name: "Sample Author", Email: "sample@example.com"},
-	},
+	// license_*.tmpl entries were removed in v0.14.0 — license bodies are
+	// inlined as Go constants in cmd/license.go and no longer flow through
+	// the embed FS / Samples / templates validate pipeline.
 }
 
 // ErrUnknownTemplate is returned by Validate when name is not a builtin —
