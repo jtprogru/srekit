@@ -336,10 +336,10 @@ func TestTemplatesInitScaffolds(t *testing.T) {
 	// ships as a single postmortem.yaml (the v1 unified format replacing
 	// the v0.13.x postmortem.md.tmpl + postmortem.sections.yaml pair).
 	for _, name := range []string{
-		"runbook.md.tmpl", "incident.md.tmpl",
-		"runbook.md.tmpl", "rfc.md.tmpl", "slo.md.tmpl",
+		"task.yaml", "incident.md.tmpl",
+		"runbook.md.tmpl", "rfc.md.tmpl", "slo.yaml",
 		"ebp.md.tmpl", "capacity.md.tmpl",
-		"oncall.md.tmpl", "retro.md.tmpl", "changelog.md.tmpl",
+		"oncall.md.tmpl", "retro.yaml", "changelog.md.tmpl",
 		"postmortem.yaml",
 		"TEMPLATES.md",
 	} {
@@ -804,7 +804,7 @@ func TestTemplatesDiffNameOnly(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	target := filepath.Join(dir, "slo.md.tmpl")
+	target := filepath.Join(dir, "ebp.md.tmpl")
 	b, err := os.ReadFile(target)
 	if err != nil {
 		t.Fatal(err)
@@ -816,8 +816,8 @@ func TestTemplatesDiffNameOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("diff failed: %v (output: %s)", err, out)
 	}
-	if !strings.Contains(out, "differs  slo.md.tmpl") {
-		t.Errorf("expected name-only line for slo, got: %s", out)
+	if !strings.Contains(out, "differs  ebp.md.tmpl") {
+		t.Errorf("expected name-only line for ebp, got: %s", out)
 	}
 	// Make sure we did NOT emit a full diff body.
 	if strings.Contains(out, "diff --git") {
@@ -1697,8 +1697,8 @@ func TestTemplatesListClassifies(t *testing.T) {
 	if _, err := runCLI(t, "templates", "init", dir, "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)
 	}
-	// Customize one (must remain a *.tmpl-format artifact in v0.15.x).
-	if err := os.WriteFile(filepath.Join(dir, "slo.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
+	// Customize one (must remain a *.tmpl-format artifact in v0.16.x).
+	if err := os.WriteFile(filepath.Join(dir, "ebp.md.tmpl"), []byte("CUSTOM\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	// Remove a different one so it becomes embedded-only.
@@ -1715,7 +1715,7 @@ func TestTemplatesListClassifies(t *testing.T) {
 		t.Fatalf("list failed: %v (output: %s)", err, out)
 	}
 	for _, want := range []string{
-		"slo.md.tmpl",
+		"ebp.md.tmpl",
 		"customized",
 		"runbook.md.tmpl",
 		"embedded-only",

@@ -21,6 +21,20 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.16.0] - 2026-06-04
+
+### Changed
+
+- **`retro` and `slo` migrated to the v1 artifact format.** Both followed the same dogfooded recipe as task in v0.15.0: ran `srekit templates migrate` on the legacy `.tmpl`, then `sed`-rewrote `{{ .Field }}` → `{{ .Meta.Field }}` for the new data root. Both commands now use the artifact render path with structured `--json` (per-section access).
+
+- **Breaking — `srekit retro --json` and `srekit slo --json` shape.** Moves from bootstrap envelope (`sections: [{id:"body", body:<markdown>}]`) to structured (`sections: [{id:"goals_of_this_retro",...}, {id:"action_items",...}, ...]`). Migration: replace `jq '.sections[0].body'` with `jq '.sections[] | select(.id=="...").body'`. Same migration story as task in v0.15.0; documented in `docs/{en,ru}/migration/v1.md` (v0.16.0 section).
+
+- **Breaking — `retro.md.tmpl` / `slo.md.tmpl` no longer ship in embed.** Users with customized copies get stderr WARN. `srekit templates upgrade` scaffolds the new `.yaml`; `srekit templates migrate` auto-converts the legacy `.tmpl` (review the result and rewrite `{{ .Field }}` references to `{{ .Meta.Field }}`).
+
+### Fixed
+
+-
+
 ## [0.15.0] - 2026-06-04
 
 ### Added

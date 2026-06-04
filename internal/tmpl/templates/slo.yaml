@@ -1,0 +1,104 @@
+version: 1
+
+frontmatter:
+  id: "{{ .Meta.ID }}"
+  creation_date: "{{ .Meta.Now }}"
+  modification_date: "{{ .Meta.Now }}"
+  type: slo
+  service: "{{ .Meta.Service }}"
+  tags:
+    - slo
+    - sli
+    - reliability
+
+title: "SLO — {{ .Meta.Service }}"
+
+meta_bullets:
+  - "**Сервис (Service):** {{ .Meta.Service }}"
+  - "**Команда-владелец (Owner team):** _заполнить_"
+  - "**Тир (Tier):** _T0 / T1 / T2_"
+  - "**Покрываемое пользовательское действие (User journey):** _какую пользовательскую возможность защищает этот SLO_"
+
+sections:
+  - id: sli_definition
+    title: Определение SLI (SLI definition)
+    type: text
+    default_body: |
+      > Хороший SLI — это отношение хороших событий ко всем валидным событиям.
+
+      ### Availability SLI
+
+      - **Хорошие события (Good):** _HTTP 2xx/3xx/4xx ответы (исключая 401/403) на /api/*_
+      - **Валидные события (Valid):** _все HTTP-запросы к /api/* кроме 401/403 и health-чеков_
+      - **Плохие события (Bad):** _все валидные, что не попали в «хорошие»_
+
+      ```promql
+      # 401/403 исключены и из числителя, и из знаменателя — это пользовательские
+      # ошибки, не сигнал ненадёжности сервиса.
+      sum(rate(http_requests_total{service="{{ .Meta.Service }}",code!~"5..",code!~"401|403"}[5m]))
+      /
+      sum(rate(http_requests_total{service="{{ .Meta.Service }}",code!~"401|403"}[5m]))
+      ```
+
+      ### Latency SLI
+
+      - **Хорошие события (Good):** _запросы, обслуженные быстрее {{ .Meta.LatencyTarget }}_
+      - **Валидные события (Valid):** _все HTTP-запросы к /api/* кроме health-чеков_
+
+      ```promql
+      # Замени значение le="..." на свой latency-таргет в секундах.
+      sum(rate(http_request_duration_seconds_bucket{service="{{ .Meta.Service }}",le="0.3"}[5m]))
+      /
+      sum(rate(http_request_duration_seconds_count{service="{{ .Meta.Service }}"}[5m]))
+      ```
+  - id: slo_target
+    title: Цель SLO (SLO target)
+    type: table
+    columns:
+      - SLI
+      - Цель
+      - Окно
+      - Заметки
+    rows:
+      - - Availability
+        - '**{{ .Meta.Target }}**'
+        - '{{ .Meta.Window }}'
+        - скользящее
+      - - Latency (p99)
+        - < {{ .Meta.LatencyTarget }}
+        - '{{ .Meta.Window }}'
+        - скользящее
+  - id: error_budget
+    title: Бюджет ошибок (Error budget)
+    type: text
+    default_body: |
+      - Окно: {{ .Meta.Window }}
+      - Бюджет: `(1 − {{ .Meta.Target }}) × window_seconds` = _посчитать_
+      - Burn-rate алерты:
+        - **Быстрое сгорание (Fast burn):** 14.4× за 1ч (пейджер)
+        - **Медленное сгорание (Slow burn):** 6× за 6ч (тикет)
+  - id: consequences_of_budget_exhaustion
+    title: Последствия истощения бюджета (Consequences of budget exhaustion)
+    type: text
+    default_body: |
+      - Заморозка некритичных изменений в затронутом сервисе.
+      - Приоритет надёжностной работы над фичами.
+  - id: dependencies
+    title: Зависимости (Dependencies)
+    type: text
+    default_body: |
+      - Upstream-сервисы, от которых зависит этот SLO:
+        -
+      - Downstream-потребители, которых защищает этот SLO:
+        -
+  - id: review_cadence
+    title: Регулярность пересмотра (Review cadence)
+    type: text
+    default_body: |
+      - Ежеквартальный пересмотр SLO.
+      - Пересчёт цели после каждого крупного архитектурного изменения.
+  - id: references
+    title: Ссылки (References)
+    type: text
+    default_body: |
+      -

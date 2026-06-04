@@ -1,0 +1,74 @@
+version: 1
+
+frontmatter:
+  id: "{{ .Meta.ID }}"
+  creation_date: "{{ .Meta.Now }}"
+  type: retrospective
+  team: "{{ .Meta.Team }}"
+  sprint: "{{ .Meta.Sprint }}"
+  tags:
+    - retro
+    - team
+
+title: "Ретро (Retro) — {{ .Meta.Team }} / {{ .Meta.Sprint }}"
+
+meta_bullets:
+  - "**Команда (Team):** {{ .Meta.Team }}"
+  - "**Спринт / период (Sprint):** {{ .Meta.Sprint }}"
+  - "**Ведущий (Facilitator):** _заполнить_"
+  - "**Дата (Date):** {{ .Meta.Now }}"
+
+sections:
+  - id: goals_of_this_retro
+    title: Цели этого ретро (Goals of this retro)
+    type: text
+    default_body: |
+      - Поднять немногие вещи, которые стоит изменить.
+      - Выбрать задачи с конкретными ответственными и сроками.
+  - id: start_stop_continue
+    title: 'Формат: Start / Stop / Continue'
+    type: text
+    default_body: |
+      ### Начать делать (Start doing)
+
+      -
+
+      ### Перестать делать (Stop doing)
+
+      -
+
+      ### Продолжать делать (Continue doing)
+
+      -
+  - id: what_confused_us
+    title: Что нас смутило (What confused us)
+    type: text
+    default_body: |
+      _Вещи, которые никто не смог объяснить, решения с непонятной мотивацией, сюрпризы._
+
+      -
+  - id: action_items
+    title: Задачи (Action items)
+    type: table
+    columns:
+      - '#'
+      - Действие
+      - Ответственный
+      - Срок
+      - Статус
+    rows:
+      - - "1"
+        - ""
+        - ""
+        - ""
+        - open
+  - id: follow_ups_from_previous_retros
+    title: Хвосты с прошлых ретро (Follow-ups from previous retros)
+    type: text
+    default_body: |
+      - [ ]
+  - id: notes
+    title: Заметки (Notes)
+    type: text
+    default_body: |
+      -

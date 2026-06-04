@@ -56,16 +56,7 @@ var Samples = map[string]any{
 		Now:    "2026-01-01T00:00:00Z",
 		Author: authorSample{Name: "Sample Author", Email: "sample@example.com"},
 	},
-	"slo.md.tmpl": struct {
-		ID, Service, Target, Window, LatencyTarget, Now string
-	}{
-		ID:            "11111111-2222-3333-4444-555555555555",
-		Service:       "api-gw",
-		Target:        "99.9%",
-		Window:        "30d",
-		LatencyTarget: "300ms",
-		Now:           "2026-01-01T00:00:00Z",
-	},
+	// slo.md.tmpl was removed in v0.16.0 (migrated to slo.yaml — v1 artifact).
 	"ebp.md.tmpl": struct {
 		ID, Service, Now string
 	}{
@@ -92,14 +83,7 @@ var Samples = map[string]any{
 		Now:    "2026-01-12T00:00:00Z",
 		Author: authorSample{Name: "Sample Oncaller", Email: "oncall@example.com"},
 	},
-	"retro.md.tmpl": struct {
-		ID, Team, Sprint, Now string
-	}{
-		ID:     "11111111-2222-3333-4444-555555555555",
-		Team:   "platform",
-		Sprint: "2026-W01",
-		Now:    "2026-01-01T00:00:00Z",
-	},
+	// retro.md.tmpl was removed in v0.16.0 (migrated to retro.yaml — v1 artifact).
 	"changelog.md.tmpl": struct {
 		Today, Repo, InitialVersion string
 	}{
