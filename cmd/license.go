@@ -142,6 +142,10 @@ func newLicenseCmd() *cobra.Command {
 	cmd.Flags().StringVar(&licEmail, "email", "", "author email")
 	cmd.Flags().IntVar(&licYear, "year", 0, "copyright year (default: current year)")
 	out.Bind(cmd, "write to file (default: stdout)")
+	// license is the only command that honors --template (the v1 artifact
+	// loader doesn't run for license, so the flag genuinely routes to a
+	// custom body file via render.Render's TemplatePath branch).
+	out.BindTemplateFlag(cmd)
 	return cmd
 }
 

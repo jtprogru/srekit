@@ -21,6 +21,18 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.22.0] - 2026-06-04
+
+### Changed
+
+- **Breaking — `--template FILE` removed from every generator except `license`.** As of v0.20.0 the flag was a silent no-op on every artifact-path command (postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall-report, changelog) because the loader resolves `<name>.yaml` before any TemplatePath check. A silently-ignored CLI flag is worse than a missing one, so the binding is removed. Users running `srekit postmortem --template foo.tmpl` (or any other migrated generator) now get an honest `Error: unknown flag: --template` instead of having their flag swallowed. The flag still works on `srekit license`, which is the only command whose render path genuinely honors `opts.TemplatePath`. Per-artifact customization for the other commands remains: drop a `<name>.yaml` into `templates_dir`.
+
+- **`cliflags.Output.Bind` no longer registers `--template`.** New helper `cliflags.Output.BindTemplateFlag(cmd)` registers the flag explicitly; only `cmd/license.go` calls it. Same `Output.TemplatePath` field, same render plumbing — only the CLI surface narrows.
+
+### Fixed
+
+-
+
 ## [0.21.0] - 2026-06-04
 
 ### Changed
@@ -432,7 +444,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/jtprogru/srekit/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/jtprogru/srekit/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/jtprogru/srekit/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/jtprogru/srekit/compare/v0.18.0...v0.19.0
