@@ -25,7 +25,7 @@ func newPostmortemCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "postmortem",
 		Short: "Generate a Google SRE-style postmortem template",
-		Example: `  # Write postmortem-<slug>.md
+		Example: `  # Write postmortem-<YYYY-MM-DD>-<slug>.md
   srekit postmortem --title "Checkout outage" --severity SEV-1 --owner bob
 
   # Pipe to stdout for review
@@ -34,6 +34,7 @@ func newPostmortemCmd() *cobra.Command {
 			if title == "" {
 				return errors.New("--title is required")
 			}
+			now := clock.Now()
 			data := struct {
 				ID       string `json:"id"`
 				Title    string `json:"title"`
@@ -49,9 +50,9 @@ func newPostmortemCmd() *cobra.Command {
 				Start:    start,
 				End:      end,
 				Owner:    owner,
-				Now:      clock.Now().Format(time.RFC3339),
+				Now:      now.Format(time.RFC3339),
 			}
-			def := fmt.Sprintf("postmortem-%s.md", ids.Slug(title))
+			def := fmt.Sprintf("postmortem-%s-%s.md", now.Format("2006-01-02"), ids.Slug(title))
 			return render.Render(cmd.OutOrStdout(), loaderFrom(cmd), "postmortem.md.tmpl", data, out.RenderOptions(cmd, def))
 		},
 	}
@@ -60,6 +61,6 @@ func newPostmortemCmd() *cobra.Command {
 	cmd.Flags().StringVar(&start, "start", "", "incident start time (RFC3339 or human)")
 	cmd.Flags().StringVar(&end, "end", "", "incident end time")
 	cmd.Flags().StringVar(&owner, "owner", "", "incident owner")
-	out.Bind(cmd, "write to file (default: postmortem-<slug>.md)")
+	out.Bind(cmd, "write to file (default: postmortem-<YYYY-MM-DD>-<slug>.md)")
 	return cmd
 }

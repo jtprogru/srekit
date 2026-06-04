@@ -15,7 +15,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Changed
 
--
+- `postmortem` default output filename now includes today's date: `postmortem-<YYYY-MM-DD>-<slug>.md` (was `postmortem-<slug>.md`). Postmortems land in chronological order when listed, and re-running the command for a similar incident on a different day no longer overwrites the previous file. Explicit `--out` and `--stdout` are unchanged.
 
 ### Fixed
 

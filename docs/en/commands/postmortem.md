@@ -18,7 +18,7 @@ srekit postmortem --title TITLE [flags]
 | `--end` | no | Incident end |
 | `--owner` | no | Postmortem owner (the person writing it up) |
 
-Plus the [shared output flags](index.md#shared-output-flags). Default filename: `postmortem-<slug-of-title>.md`.
+Plus the [shared output flags](index.md#shared-output-flags). Default filename: `postmortem-<YYYY-MM-DD>-<slug-of-title>.md` (the date is today, in UTC if the system clock is UTC, otherwise local time).
 
 ## Examples
 

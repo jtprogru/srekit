@@ -6,7 +6,7 @@
 
 - Default sink — **stdout**. `--out FILE` пишет JSON туда.
 - Имена полей — **camelCase** во всех командах (`id`, `title`, `latencyTarget`, …).
-- С `--json` Markdown default-путь (`Tasker - <title>.md`, `postmortem-<slug>.md` и т.п.) **не** используется — JSON не попадёт случайно в `.md` файл.
+- С `--json` Markdown default-путь (`Tasker - <title>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md` и т.п.) **не** используется — JSON не попадёт случайно в `.md` файл.
 
 !!! note "Единый JSON-контракт"
     Все команды — и генераторы, и introspection

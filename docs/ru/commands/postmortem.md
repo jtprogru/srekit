@@ -18,7 +18,7 @@ srekit postmortem --title TITLE [flags]
 | `--end` | нет | Конец инцидента |
 | `--owner` | нет | Владелец постмортема (тот, кто пишет) |
 
-Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `postmortem-<slug-of-title>.md`.
+Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `postmortem-<YYYY-MM-DD>-<slug-of-title>.md` (дата — сегодняшняя, в часовом поясе системы).
 
 ## Примеры
 

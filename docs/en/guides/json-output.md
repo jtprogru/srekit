@@ -6,7 +6,7 @@ Every generator command supports `--json`. The flag short-circuits the template 
 
 - Default sink is **stdout**. `--out FILE` writes the JSON there.
 - Field names are **camelCase** across every command (`id`, `title`, `latencyTarget`, …).
-- With `--json`, the Markdown default path (`Tasker - <title>.md`, `postmortem-<slug>.md`, etc.) is **not** used — so JSON never accidentally lands in a `.md` file.
+- With `--json`, the Markdown default path (`Tasker - <title>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md`, etc.) is **not** used — so JSON never accidentally lands in a `.md` file.
 
 !!! note "One JSON contract"
     Every command — generators and introspection alike
