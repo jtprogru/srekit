@@ -37,8 +37,9 @@
 | `--stdout` | напечатать в stdout |
 | `--force` | перезаписать существующий FILE |
 | `--dry-run` | показать что бы записал, не писать |
-| `--template FILE` | использовать этот файл шаблона вместо embedded |
 | `--json` | отдать данные шаблона как JSON (default sink: stdout) |
+
+`--template FILE` есть только у `srekit license` (единственная команда, чей render-путь не идёт через v1 artifact loader). Per-artifact кастомизация для остальных — положить `<name>.yaml` в `templates_dir`, см. [Custom templates workflow](../guides/custom-templates.md).
 
 Persistent-флаг `--templates-dir DIR` (или env `SREKIT_TEMPLATES_DIR`, или `templates_dir:` в `~/.srekit.yaml`) подключает кастомную директорию шаблонов, чьи файлы переопределяют embedded. Отсутствующие файлы прозрачно фолбэчатся.
 

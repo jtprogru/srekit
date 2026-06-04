@@ -15,7 +15,7 @@ srekit task --title TITLE [flags]
 | `--title` | да | Тема расследования; идёт в H1 и в default-имя файла |
 | `--path DIR` | нет | Директория для записи (default: текущая) |
 
-Плюс [общие output-флаги](index.md#shared-output-flags): `--out`, `--stdout`, `--force`, `--dry-run`, `--template`, `--json`.
+Плюс [общие output-флаги](index.md#shared-output-flags): `--out`, `--stdout`, `--force`, `--dry-run`, `--json`.
 
 ## Default имя файла
 
@@ -44,15 +44,9 @@ srekit task --title "Tail latency on api-gw" --json | jq -r '.id'
 
 ## Структура данных для шаблона
 
-```go
-struct {
-    ID, CreationDate, ModificationDate, Title string
-}
-```
-
-Секции после рендеринга: YAML front matter (`title`, `tags`, `creation_date`, `id`) → `Контекст / Context`, `Гипотеза / Hypothesis`, `Доказательства / Evidence`, `Выводы / Findings`, `Дальнейшие действия / Action items`, `Ссылки / References`.
+`task` шипится как v1 YAML-артефакт (`internal/tmpl/templates/task.yaml`) — frontmatter (`id`, `title`, `creation_date`, `tags`), H1, meta_bullets, список секций (`Контекст / Context`, `Гипотеза / Hypothesis`, `Доказательства / Evidence`, `Выводы / Findings`, `Дальнейшие действия / Action items`, `Ссылки / References`). На вход передаётся `{Meta: {ID, Title, Now string}}`; template-выражения внутри YAML обращаются к `.Meta.<Field>`.
 
 ## См. также
 
-- [Кастомные шаблоны](../guides/custom-templates.md) — переопределить embedded-шаблон своим.
-- [JSON-вывод](../guides/json-output.md) — пайплайны `--json` в другие тулзы.
+- [Кастомные шаблоны](../guides/custom-templates.md) — переопределить embedded-артефакт своим `task.yaml`.
+- [JSON-вывод](../guides/json-output.md) — пайплайны `--json` в другие тулзы (per-section access через `jq '.sections[] | select(.id=="…").body'`).

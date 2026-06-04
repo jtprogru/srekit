@@ -45,7 +45,7 @@ Output is streamed from git directly, so you see exactly what happened.
 
 ## `templates list [dir]` {#templates-list}
 
-Classify each `*.tmpl` against the embedded set: `identical`, `customized`, `user-only`, `embedded-only`.
+Classify each artifact (`.yaml` / `.tmpl` / `.sections.yaml`) in your dir against the embedded set: `identical`, `customized`, `user-only`, `embedded-only`.
 
 ```bash
 srekit templates list                       # table
@@ -64,13 +64,17 @@ srekit templates list --filter customized   # narrow to one class
 
 ## `templates validate [dir]` {#templates-validate}
 
-Parse each `*.tmpl` with the same FuncMap srekit uses, and — for files whose names match a built-in template — execute them against canonical sample data. Catches both syntax errors and field-name typos (`{{ .Servce }}` instead of `{{ .Service }}`).
+Validate each artifact in your templates dir. Per-format checks:
+
+- `<name>.yaml` (v1 artifact) — `sections.ParseArtifact` runs structural validation: supported version, non-empty sections list, unique IDs, recognized `type` (`text` / `list` / `table`), required fields populated.
+- `<name>.sections.yaml` (legacy v0.13.x sidecar) — `sections.ParseManifest` runs the same structural checks on the legacy layout.
+- `<name>.tmpl` — Go-template parse-only with the shared FuncMap. Catches syntax errors; field-name typos can't be caught (no embedded `.tmpl` ships in v0.20.0+, so there's no canonical sample data to execute against).
 
 ```bash
 srekit templates validate
 ```
 
-User-named templates (not matching a built-in filename) get parse-only validation since there's no canonical data shape to execute against. Non-zero exit if any file fails.
+Non-zero exit if any file fails.
 
 ---
 

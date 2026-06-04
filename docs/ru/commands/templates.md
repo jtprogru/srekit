@@ -64,13 +64,17 @@ srekit templates list --filter customized   # только один класс
 
 ## `templates validate [dir]` {#templates-validate}
 
-Распарсить каждый `*.tmpl` с тем же FuncMap, что использует srekit, и — для файлов с именами built-in шаблонов — выполнить против canonical sample data. Ловит и syntax errors, и опечатки в полях (`{{ .Servce }}` вместо `{{ .Service }}`).
+Провалидировать каждый артефакт в твоей templates dir. Per-формат:
+
+- `<name>.yaml` (v1 artifact) — `sections.ParseArtifact` гонит структурную валидацию: поддерживаемая версия, непустой список секций, уникальные ID, известный `type` (`text` / `list` / `table`), required-поля заполнены.
+- `<name>.sections.yaml` (legacy v0.13.x sidecar) — `sections.ParseManifest` те же структурные проверки на legacy-раскладку.
+- `<name>.tmpl` — Go-template parse-only с общим FuncMap. Ловит syntax-errors; опечатки в полях не ловятся (с v0.20.0 ни одного `.tmpl` в embed нет, sample data для exec не существует).
 
 ```bash
 srekit templates validate
 ```
 
-User-named шаблоны (не совпадают с built-in именами) получают только parse-only валидацию — нет canonical data shape для исполнения. Не-zero exit если что-то упало.
+Не-zero exit если что-то упало.
 
 ---
 

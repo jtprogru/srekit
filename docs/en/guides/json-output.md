@@ -2,24 +2,21 @@
 
 Every generator command supports `--json`. The flag emits a structured payload instead of rendering Markdown, so agent workflows and shell pipelines can read the document field-by-field and (for `postmortem`) round-trip it back.
 
-## Contract (v0.13.0+)
+## Contract (v0.20.0+)
 
 - Default sink is **stdout**. `--out FILE` writes the JSON there.
 - Field names are **camelCase** across every command (`id`, `title`, `latencyTarget`, …).
 - With `--json`, the Markdown default path (`Tasker - <title>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md`, etc.) is **not** used — so JSON never accidentally lands in a `.md` file.
-- **Every payload has the shape `{meta, sections}`.** Metadata lives under `meta`; the rendered document is a list of sections under `sections`. Each section has `{id, title, type, required, body}` with `type` one of `text` / `list` / `table` and `body` always a string.
-
-There are two flavors of the contract:
+- **Every payload has the shape `{meta, sections}`.** Metadata lives under `meta`; the rendered document is a list of typed sections under `sections`. Each section has `{id, title, type, required, body}` with `type` one of `text` / `list` / `table` and `body` always a string.
+- **Sections are per-artifact**, in manifest order, with stable IDs. Access them via `jq '.sections[] | select(.id == "<id>").body'` — never by index.
 
 | Mode | Used by | Sections |
 |---|---|---|
-| **Structured** | `postmortem` (driven by `postmortem.sections.yaml`) | Multiple typed sections, one per slot in the manifest, in manifest order. |
-| **Bootstrap** | every other generator (`task`, `incident`, `rfc`, `runbook`, `retro`, `slo`, `oncall-report`, `ebp`, `capacity`, `license`, `changelog`) | A single synthetic section `{id: "body", type: "text", title: <H1>, body: <rendered markdown>}`. |
+| **Structured** | every generator (postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall-report, changelog) | Multiple typed sections — one per slot in the artifact YAML — in declared order. |
 
-The two flavors share the same outer shape (`{meta, sections}`) so a script written for one command works for any other.
-
-!!! warning "Breaking change in 0.13.0"
-    The shape changed from the flat `{title, severity, …}` of 0.12.x to `{meta: {…}, sections: […]}` in 0.13.0. Migration: replace `jq '.title'` with `jq '.meta.title'`, and `jq '.body'` (if you were `grep`'ing rendered markdown) with `jq -r '.sections[0].body'` (bootstrap commands) or `jq -r '.sections[] | select(.id == "summary").body'` (postmortem).
+!!! warning "Migration from pre-v1 layouts"
+    - **0.12.x → 0.13.0**: shape changed from the flat `{title, severity, …}` to `{meta, sections}`. Migration: `jq '.title'` → `jq '.meta.title'`.
+    - **0.13.x → v0.20**: the YAML-first migration retired the bootstrap envelope (`sections: [{id: "body", body: <markdown>}]`) for every generator. Migration: replace `jq '.sections[0].body'` with `jq '.sections[] | select(.id == "<id>").body'` for the section you actually want. See `docs/{en,ru}/migration/v1.md` for per-release section IDs.
 
 ## Patterns
 
@@ -39,11 +36,16 @@ srekit postmortem -T X --json | jq '.sections[] | {id, type, required}'
 ### Get one section's body
 
 ```bash
-# Postmortem (multi-section) — pull the summary
+# Postmortem — pull the summary
 srekit postmortem -T X --json | jq -r '.sections[] | select(.id == "summary").body'
 
-# Any other generator (single bootstrap section) — pull the full rendered markdown
-srekit runbook --service api-gw --alert APIHighLatency --json | jq -r '.sections[0].body'
+# Runbook — pull the diagnose section
+srekit runbook --title "p99 spike" --service api-gw --alert APIHighLatency --json |
+  jq -r '.sections[] | select(.id == "diagnose").body'
+
+# Changelog — pull the initial-release section
+srekit changelog --repo owner/repo --json |
+  jq -r '.sections[] | select(.id == "initial_release").body'
 ```
 
 ### Round-trip a postmortem
@@ -95,27 +97,27 @@ srekit oncall-report --team platform --json --out oncall.json
 
 ## Per-command payload shape
 
-The `meta` object mirrors the per-command flag set. Template authors address fields by their Go names (`.Meta.Title` for postmortem; legacy `.Title` for other commands until they migrate); `--json` emits camelCase under `meta`:
+Every generator is on the v1 artifact path: `meta` mirrors the per-command flag set, `sections` is the list declared in the artifact YAML. Template authors address meta fields as `.Meta.<Field>` inside the YAML; `--json` emits camelCase under `meta`.
 
 ```jsonc
-// task (bootstrap)
-{ "meta": { "id", "creationDate", "modificationDate", "title" },
-  "sections": [{ "id": "body", "title": "<H1>", "type": "text", "required": true, "body": "<markdown>" }] }
+// task
+{ "meta": { "id", "title", "now" },
+  "sections": [ ...sections from internal/tmpl/templates/task.yaml... ] }
 
-// postmortem (structured — sections from postmortem.sections.yaml)
+// postmortem
 { "meta": { "id", "title", "severity", "start", "end", "owner", "now" },
-  "sections": [ ...12 section objects in manifest order... ] }
+  "sections": [ ...sections from postmortem.yaml (12 by default)... ] }
 
-// rfc (bootstrap)
+// rfc
 { "meta": { "id", "title", "status", "now", "author": { "name", "email" } },
-  "sections": [{ "id": "body", ... }] }
+  "sections": [ ...sections from rfc.yaml... ] }
 
-// slo (bootstrap)
+// slo
 { "meta": { "id", "service", "target", "window", "latencyTarget", "now" },
-  "sections": [{ "id": "body", ... }] }
+  "sections": [ ...sections from slo.yaml... ] }
 ```
 
-`author` (where present) is a nested object (`{ "name", "email" }`), addressed as `.meta.author.name` / `.meta.author.email`.
+`author` (where present) is a nested object (`{ "name", "email" }`), addressed as `.meta.author.name` / `.meta.author.email`. Browse `internal/tmpl/templates/<name>.yaml` for the exact section IDs each command ships.
 
 ## When to use `--json`
 

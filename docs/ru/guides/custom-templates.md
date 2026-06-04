@@ -33,7 +33,7 @@ Built-in шаблоны srekit — это разумные defaults, но люб
 
 ```bash
 srekit templates init ~/.srekit/templates
-# Templates scaffolded in /Users/you/.srekit/templates (13 files + TEMPLATES.md)
+# Templates scaffolded in /Users/you/.srekit/templates (11 .yaml + TEMPLATES.md)
 #
 # Next steps — connect a remote (SSH recommended) and push:
 #   cd /Users/you/.srekit/templates
@@ -64,11 +64,11 @@ echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
 
 ```bash
 cd ~/.srekit/templates
-$EDITOR runbook.md.tmpl
+$EDITOR runbook.yaml      # правишь v1-артефакт: добавляешь секцию, тюнишь meta_bullets, etc.
 git commit -am "runbook: add 'communications' section"
 ```
 
-Всё что ты меняешь — твоё. Embedded fallback срабатывает только для файлов, которых у тебя нет (например, новый шаблон, добавленный в будущем бинаре, которого у тебя в dir ещё нет).
+Всё что ты меняешь — твоё. Embedded fallback срабатывает только для файлов, которых у тебя нет (например, новый шаблон, добавленный в будущем бинаре, которого у тебя в dir ещё нет). Схема v1-артефакта (frontmatter / title / meta_bullets / header_body / sections) описана в [postmortem reference](../commands/postmortem.md).
 
 ### 4. Провалидировать
 
@@ -76,12 +76,12 @@ git commit -am "runbook: add 'communications' section"
 
 ```bash
 srekit templates validate
-# OK    capacity.md.tmpl
-# OK    changelog.md.tmpl
+# OK    capacity.yaml
+# OK    changelog.yaml
 # ...
 ```
 
-Опечатка в поле шаблона (`{{ .Servce }}` вместо `{{ .Service }}`) тут падает с подсвеченным проблемным полем.
+Каждый `.yaml`-артефакт парсится через `sections.ParseArtifact` — ловит структурные ошибки (неизвестные типы секций, дублирующиеся ID, пропущенные обязательные поля). Bespoke `.tmpl`-файлы в твоей dir получают parse-only валидацию (field-shape check невозможен без sample-data registry).
 
 ### 5. Push в team-remote
 
@@ -112,7 +112,7 @@ srekit templates upgrade          # 3-way merge новых embedded в твою 
 
 Поведение upgrade:
 
-| Состояние файла `task.md.tmpl` | Результат |
+| Состояние файла `task.yaml` | Результат |
 |---|---|
 | Отсутствует в твоей dir | Скопирован (новый шаблон в бинаре) |
 | Идентичен embedded | Skip; снапшот обновлён |

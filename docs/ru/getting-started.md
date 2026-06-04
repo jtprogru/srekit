@@ -83,8 +83,9 @@ srekit postmortem --title "API outage" --severity SEV-1 \
 | `--stdout` | напечатать в stdout |
 | `--force` | перезаписать существующий FILE |
 | `--dry-run` | показать что бы записал, не писать |
-| `--template FILE` | использовать этот файл шаблона вместо embedded |
 | `--json` | отдать данные шаблона как JSON вместо рендеринга |
+
+`--template FILE` поддерживается только командой `srekit license` (единственная, чей render-путь не идёт через v1 artifact loader). Для остальных генераторов кастомизация per-artifact — положить `<name>.yaml` в `templates_dir`, см. [Custom templates workflow](guides/custom-templates.md).
 
 Если не передал ни `--out`, ни `--stdout`, у каждой команды есть разумный default-путь (например `Tasker - <title>.md` для `srekit task`, `oncall-<team>-<start>.md` для отчёта дежурного).
 

@@ -84,15 +84,15 @@ After `brew upgrade srekit`:
 ```bash
 srekit templates list --json |
   jq '[.[] | select(.status == "embedded-only" or .status == "customized") | .name]'
-# ["task.md.tmpl", "runbook.md.tmpl"]   # things to look at
+# ["task.yaml", "runbook.yaml"]   # things to look at
 ```
 
 Or just diff:
 
 ```bash
 srekit templates diff --name-only
-# differs  runbook.md.tmpl
-# differs  capacity.md.tmpl
+# differs  runbook.yaml
+# differs  capacity.yaml
 ```
 
 Then `srekit templates upgrade` to 3-way-merge them in.

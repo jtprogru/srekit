@@ -83,8 +83,9 @@ Every generator command supports the same output flags:
 | `--stdout` | print to stdout |
 | `--force` | overwrite existing FILE |
 | `--dry-run` | show what would be written, do not write |
-| `--template FILE` | use this template file instead of the embedded one |
 | `--json` | emit the template data payload as JSON instead of rendering |
+
+`--template FILE` is supported only by `srekit license` (the one command whose render path doesn't go through the v1 artifact loader). For the other generators, per-artifact customization is done by dropping a `<name>.yaml` into your `templates_dir` — see [Custom templates workflow](guides/custom-templates.md).
 
 If you pass neither `--out` nor `--stdout`, each command has a sensible default filename (e.g. `Tasker - <title>.md` for `srekit task`, `oncall-<team>-<start>.md` for the on-call report).
 

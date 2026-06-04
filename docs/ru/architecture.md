@@ -1,6 +1,6 @@
 # Архитектура
 
-Карта кода для контрибьюторов и любопытных пользователей. Пин на [v0.10.1](https://github.com/jtprogru/srekit/tree/v0.10.1) — структура стабильна на эту версию.
+Карта кода для контрибьюторов и любопытных пользователей.
 
 ## Раскладка пакетов
 
@@ -15,10 +15,12 @@ srekit/
 │   ├── ids/              # UUID v4 + slug
 │   ├── clock/            # var Now = time.Now (overridable в тестах)
 │   ├── meta/             # Author.Resolve + DetectRepo (парсинг git remote)
-│   ├── cliflags/         # общий бандл --out / --stdout / --force / --dry-run / --template / --json
-│   ├── tmpl/             # //go:embed templates/*.tmpl + Funcs + Source/Loader + Samples + Validate + DocsMD
-│   │   └── templates/    # embedded SRE-шаблоны
-│   └── render/           # Render() — buildBody/writeBody + JSON short-circuit
+│   ├── cliflags/         # общий бандл --out / --stdout / --force / --dry-run / --json (--template через BindTemplateFlag, только license)
+│   ├── tmpl/             # //go:embed templates/*.yaml + Funcs + Source/Loader + Samples + Validate + DocsMD
+│   │   └── templates/    # v1 single-file YAML артефакты, по одному на генератор
+│   ├── sections/         # Artifact (v1 single-file) + Section/Manifest + Merge + RenderArtifact + JSONSchema
+│   ├── migrate/          # `srekit templates migrate` — heuristic .tmpl → .yaml конвертер
+│   └── render/           # Render() — buildBody/writeBody + JSON short-circuit + artifact branch
 ├── docs/                 # этот сайт (MkDocs Material с i18n)
 ├── .github/
 │   ├── workflows/        # tests / lint / goreleaser / docs
@@ -40,17 +42,27 @@ type Source interface {
 }
 ```
 
-`EmbedSource` читает из `//go:embed templates/*.tmpl`. `DirSource{Dir}` читает с диска. `Loader{Sources}` идёт по ним по порядку с `fs.ErrNotExist`-as-fallthrough семантикой — отсутствующий файл в user dir прозрачно фолбэчится на embedded.
+`EmbedSource` читает из `//go:embed templates/*.yaml`. `DirSource{Dir}` читает с диска. `Loader{Sources}` идёт по ним по порядку с `fs.ErrNotExist`-as-fallthrough семантикой — отсутствующий файл в user dir прозрачно фолбэчится на embedded.
 
-Production-код использует package-level `tmpl.Default` (`EmbedSource` по default; заменяется на `Loader{DirSource, EmbedSource}` когда сконфигурирована templates dir). Это package-level mutable state, с которым тесты работают через хелпер `resetTmplDefault(t)`.
+Каждая команда строит `*tmpl.Loader` через `configureTemplates` и кладёт его в `cmd.Context()`; downstream код достаёт через `loaderFrom(cmd)`. Никакого package-level mutable state — loader scoped per command tree, и `--templates-dir` тесты остаются parallel-safe.
+
+### `internal/sections`
+
+Runtime v1 артефакта. `Artifact` — это распаршенный `<name>.yaml`: frontmatter (`yaml.Node` для сохранения порядка), title, meta_bullets, header_body, список секций. `ParseArtifact` валидирует структурные инварианты; `Merge` накладывает per-section override'ы и template-evaluate'ит section titles; `RenderArtifact` собирает markdown (frontmatter блок → H1 → meta_bullets → header_body → `## section` блоки).
+
+Генераторы передают `Options.RenderArtifact = true` и реализуют `ArtifactPayload()` на data-структуре, чтобы отдать merged section list + ctx обратно в `RenderArtifact`.
 
 ### `internal/render.Render()`
 
-Общий рендеринг-пайплайн. Берёт имя шаблона, data-структуру и `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default}`. Зовёт `buildBody()` (при `Options.JSON` пропускает шаблон и сразу пишет JSON), потом `writeBody()` (решает stdout vs file по флагам и `Default` имени файла).
+Общий рендеринг-пайплайн. Берёт имя шаблона, data-структуру и `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default, BootstrapJSON, RenderArtifact}`. Три ветки:
+
+1. `--json` short-circuit: `MarshalIndent` data (structured pass-through).
+2. `RenderArtifact = true`: загрузить `<name>.yaml`, распарсить, отдать в `sections.RenderArtifact`.
+3. Иначе: legacy `text/template` execution. Ни один shipped-генератор не использует эту ветку с v0.20; оставлено для `--template FILE` на `license` и для external tooling.
 
 ### `internal/cliflags.Output`
 
-Каждый генератор-cmd содержит `Output` и зовёт `.Bind(cmd, "default-path-description")`. Это и даёт им единый набор флагов без per-command boilerplate. `RenderOptions(def)` превращает значения флагов в `render.Options`.
+Каждый генератор-cmd содержит `Output` и зовёт `.Bind(cmd, "default-path-description")`. Это шипит общие флаги (`--out` / `--stdout` / `--force` / `--dry-run` / `--json`). Флаг `--template FILE` — opt-in через `BindTemplateFlag(cmd)`; зовёт только `cmd/license.go`, потому что все остальные генераторы идут через artifact path и игнорируют `TemplatePath`. `RenderOptions(def)` превращает значения флагов в `render.Options`; `RenderOptionsStructured(def)` чистит `BootstrapJSON` для artifact-path команд.
 
 ### `internal/meta.Resolve` и `DetectRepo`
 
@@ -85,18 +97,21 @@ Flow релиза:
 
 | Слой | Что тестируется | Файл |
 |---|---|---|
-| Unit | `ids.UUID`/`Slug`, `meta.Resolve`/`DetectRepo`, `tmpl.Funcs`/`Loader`/`Samples`/`Validate`, `cliflags`, `render` (file/stdout/dry-run/JSON) | `internal/*/*_test.go` |
-| Integration | Smoke через `cobra.Command.SetArgs` + captured stdout для каждой команды, включая templates pull/validate/diff/upgrade/list и config init | `cmd/cmd_test.go` |
+| Unit | `ids.UUID`/`Slug`, `meta.Resolve`/`DetectRepo`, `tmpl.Funcs`/`Loader`, `sections.*`, `cliflags`, `render` (file/stdout/dry-run/JSON/artifact) | `internal/*/*_test.go` |
+| Integration | Smoke через `cobra.Command.SetArgs` + captured stdout для каждой команды, включая templates pull/validate/diff/upgrade/list/migrate и config init | `cmd/cmd_test.go` |
 | Race | `go test -race ./...` на CI | `.github/workflows/tests.yaml` |
 | Lint | `golangci-lint v2.12` с ~50 линтерами | `.golangci.yaml`, `.github/workflows/lint.yaml` |
+
+Render/tmpl unit-тесты строят loader через `newFixtureLoader(t)` helper, который пишет per-test `.tmpl` fixture во временную dir — они не зависят от того, что лежит в embed, что и удержало suite стабильным через v0.14–v0.20 миграционный churn.
 
 ## Что трогать по фиче
 
 | Если хочешь... | Старт здесь |
 |---|---|
-| Добавить новый SRE-артефакт | `cmd/<name>.go` (скопируй существующий генератор) + `internal/tmpl/templates/<name>.md.tmpl` + sample data в `internal/tmpl/samples.go` |
+| Добавить новый SRE-артефакт | `cmd/<name>.go` (скопируй существующий генератор) + `internal/tmpl/templates/<name>.yaml` (v1 артефакт) |
 | Добавить флаг существующему генератору | Соответствующий `cmd/<name>.go`; для общих output-флагов — `internal/cliflags/cliflags.go` |
-| Изменить контент шаблона | Правь `internal/tmpl/templates/<name>.md.tmpl` |
+| Изменить контент шаблона | Правь `internal/tmpl/templates/<name>.yaml` |
+| Подкрутить layout rendered markdown (frontmatter, H1, section composition) | `internal/sections/render_artifact.go` |
 | Добавить helper-функцию шаблонов | `internal/tmpl/funcs.go` |
 | Модифицировать жизненный цикл шаблонов | `cmd/templates.go` |
 

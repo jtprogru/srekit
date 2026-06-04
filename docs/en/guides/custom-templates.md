@@ -33,7 +33,7 @@ The `.srekit-embedded/` sidecar inside your templates dir holds a byte-exact cop
 
 ```bash
 srekit templates init ~/.srekit/templates
-# Templates scaffolded in /Users/you/.srekit/templates (13 files + TEMPLATES.md)
+# Templates scaffolded in /Users/you/.srekit/templates (11 .yaml + TEMPLATES.md)
 #
 # Next steps — connect a remote (SSH recommended) and push:
 #   cd /Users/you/.srekit/templates
@@ -64,11 +64,11 @@ echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
 
 ```bash
 cd ~/.srekit/templates
-$EDITOR runbook.md.tmpl
+$EDITOR runbook.yaml      # edit the v1 artifact: add a section, tweak meta_bullets, etc.
 git commit -am "runbook: add 'communications' section"
 ```
 
-Anything you change is yours. Embedded fallback only kicks in for files you haven't created (e.g. a new template added in a future binary that isn't in your dir yet).
+Anything you change is yours. Embedded fallback only kicks in for files you haven't created (e.g. a new template added in a future binary that isn't in your dir yet). The v1 artifact schema (frontmatter / title / meta_bullets / header_body / sections) is documented in the [postmortem reference](../commands/postmortem.md).
 
 ### 4. Validate
 
@@ -76,12 +76,12 @@ Before pushing edits, make sure templates still render:
 
 ```bash
 srekit templates validate
-# OK    capacity.md.tmpl
-# OK    changelog.md.tmpl
+# OK    capacity.yaml
+# OK    changelog.yaml
 # ...
 ```
 
-A typo in a Go template field (`{{ .Servce }}` instead of `{{ .Service }}`) fails here with the offending field highlighted.
+Each `.yaml` artifact is parsed via `sections.ParseArtifact`, which catches structural errors (unknown section types, duplicate IDs, missing required fields). Bespoke `.tmpl` files in your dir get parse-only validation (no field-shape check is possible without a sample data registry).
 
 ### 5. Push to your shared remote
 
@@ -112,7 +112,7 @@ srekit templates upgrade          # 3-way merge new embedded into your dir
 
 The upgrade flow:
 
-| State of file `task.md.tmpl` | Result |
+| State of file `task.yaml` | Result |
 |---|---|
 | Missing in your dir | Copied in (new template in the binary) |
 | Identical to embedded | Skip; snapshot updated |

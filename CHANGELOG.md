@@ -21,6 +21,26 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.23.0] - 2026-06-04
+
+### Changed
+
+- **Docs aligned with the v0.20–v0.22 state.** Doc-only release; no code changes. The migration through v0.20 retired every embedded `.tmpl` and every bootstrap-envelope `--json` shape, and v0.22 narrowed `--template FILE` to the `license` command. Most user-facing docs hadn't caught up; this release sweeps them.
+
+  Notable updates (EN + RU parallel):
+
+  - `guides/json-output.md`: removed the "structured vs bootstrap" two-mode table — every shipped generator is structured. The `.sections[0].body` example for "any other generator" was the most user-visible lie; replaced with per-section `jq '.sections[] | select(.id=="…").body'` examples for runbook + changelog. Per-command payload shapes updated (no more `[{id:"body", …}]` envelopes). Breaking-change callout now covers both the 0.12→0.13 flat→nested change and the 0.13→0.20 bootstrap→structured change.
+  - `getting-started.md` + `commands/index.md`: dropped `--template FILE` from the shared-flags table; added an explicit note that it's a `license`-only flag now, with a pointer to `templates_dir` customization for the rest.
+  - `architecture.md`: dropped the "pin to v0.10.1" callout (the structure has moved on); embed pattern now `*.yaml`; added `internal/sections` and `internal/migrate` to the package tour; `tmpl.Default` mention removed (it was retired in v0.10.2); render section documents the three current branches (JSON / RenderArtifact / legacy); cliflags section documents `BindTemplateFlag`; "add new artifact" recipe now points at `<name>.yaml` instead of `.md.tmpl`; added `internal/sections/render_artifact.go` as the spot for markdown-layout tweaks; test-strategy row mentions `newFixtureLoader(t)`.
+  - `guides/custom-templates.md`: scaffold count `13 files + TEMPLATES.md` → `11 .yaml + TEMPLATES.md`; customization example edits `runbook.yaml` (not `runbook.md.tmpl`); validate output shows `.yaml` files; upgrade-flow table headed by `task.yaml`. Added a sentence pointing at the postmortem reference for the v1 artifact schema, and clarified that bespoke `.tmpl` gets parse-only validation now.
+  - `recipes.md`: drift-detection example shows `.yaml` filenames instead of `.md.tmpl`.
+  - `commands/templates.md`: `templates list` now describes the embedded-set comparison as covering `.yaml` / `.tmpl` / `.sections.yaml`; `templates validate` rewritten with per-format checks (ParseArtifact for `.yaml`, ParseManifest for legacy `.sections.yaml`, parse-only for `.tmpl`).
+  - `commands/task.md`: shared-flags list drops `--template`; "Template shape" section rewritten to describe the v1 YAML artifact and `.Meta.<Field>` template syntax (the old struct snippet was outdated since v0.15.0).
+
+### Fixed
+
+-
+
 ## [0.22.0] - 2026-06-04
 
 ### Changed
@@ -444,7 +464,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/jtprogru/srekit/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/jtprogru/srekit/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/jtprogru/srekit/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/jtprogru/srekit/compare/v0.19.0...v0.20.0

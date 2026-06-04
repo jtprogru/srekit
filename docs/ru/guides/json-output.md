@@ -2,24 +2,21 @@
 
 Каждый генератор поддерживает `--json`. Флаг отдаёт структурный payload вместо рендеринга Markdown, чтобы агентские флоу и shell-пайплайны могли читать документ по полям и (для `postmortem`) round-trip'ить его обратно.
 
-## Контракт (v0.13.0+)
+## Контракт (v0.20.0+)
 
 - Default sink — **stdout**. `--out FILE` пишет JSON туда.
 - Имена полей — **camelCase** во всех командах (`id`, `title`, `latencyTarget`, …).
 - С `--json` Markdown default-путь (`Tasker - <title>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md` и т.п.) **не** используется — JSON не попадёт случайно в `.md` файл.
-- **У каждого payload форма `{meta, sections}`.** Метаданные живут под `meta`; отрендеренный документ — список секций под `sections`. У каждой секции `{id, title, type, required, body}`, где `type` — это `text` / `list` / `table`, а `body` всегда строка.
-
-Контракт есть в двух вариантах:
+- **У каждого payload форма `{meta, sections}`.** Метаданные живут под `meta`; отрендеренный документ — список типизированных секций под `sections`. У каждой секции `{id, title, type, required, body}`, где `type` — это `text` / `list` / `table`, а `body` всегда строка.
+- **Секции per-artifact**, в порядке манифеста, со стабильными ID. Обращайся `jq '.sections[] | select(.id == "<id>").body'` — никогда по индексу.
 
 | Режим | Команды | Секции |
 |---|---|---|
-| **Structured** | `postmortem` (управляется `postmortem.sections.yaml`) | Несколько типизированных секций, по одной на слот манифеста, в порядке манифеста. |
-| **Bootstrap** | все остальные генераторы (`task`, `incident`, `rfc`, `runbook`, `retro`, `slo`, `oncall-report`, `ebp`, `capacity`, `license`, `changelog`) | Одна синтетическая секция `{id: "body", type: "text", title: <H1>, body: <rendered markdown>}`. |
+| **Structured** | все генераторы (postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall-report, changelog) | Несколько типизированных секций — одна на слот в YAML-артефакте — в декларированном порядке. |
 
-Оба варианта делят одну внешнюю форму (`{meta, sections}`), так что скрипт, написанный для одной команды, работает с любой другой.
-
-!!! warning "Breaking change в 0.13.0"
-    Форма изменилась с плоской `{title, severity, …}` в 0.12.x на `{meta: {…}, sections: […]}` в 0.13.0. Миграция: заменяй `jq '.title'` на `jq '.meta.title'`, а `jq '.body'` (если ты `grep`'ал rendered markdown) на `jq -r '.sections[0].body'` (bootstrap-команды) или `jq -r '.sections[] | select(.id == "summary").body'` (postmortem).
+!!! warning "Миграция с pre-v1 раскладок"
+    - **0.12.x → 0.13.0**: форма изменилась с плоской `{title, severity, …}` на `{meta, sections}`. Миграция: `jq '.title'` → `jq '.meta.title'`.
+    - **0.13.x → v0.20**: YAML-first миграция убрала bootstrap envelope (`sections: [{id: "body", body: <markdown>}]`) у всех генераторов. Миграция: заменяй `jq '.sections[0].body'` на `jq '.sections[] | select(.id == "<id>").body'` для нужной секции. Per-release section ID см. в `docs/{en,ru}/migration/v1.md`.
 
 ## Паттерны
 
@@ -39,11 +36,16 @@ srekit postmortem -T X --json | jq '.sections[] | {id, type, required}'
 ### Достать body одной секции
 
 ```bash
-# Postmortem (multi-section) — забрать summary
+# Postmortem — забрать summary
 srekit postmortem -T X --json | jq -r '.sections[] | select(.id == "summary").body'
 
-# Любой другой генератор (одна bootstrap-секция) — забрать весь rendered markdown
-srekit runbook --service api-gw --alert APIHighLatency --json | jq -r '.sections[0].body'
+# Runbook — забрать diagnose
+srekit runbook --title "p99 spike" --service api-gw --alert APIHighLatency --json |
+  jq -r '.sections[] | select(.id == "diagnose").body'
+
+# Changelog — забрать initial release
+srekit changelog --repo owner/repo --json |
+  jq -r '.sections[] | select(.id == "initial_release").body'
 ```
 
 ### Round-trip постмортема
@@ -95,27 +97,27 @@ srekit oncall-report --team platform --json --out oncall.json
 
 ## Per-command структура payload
 
-Объект `meta` отражает per-command набор флагов. Авторы шаблонов обращаются к полям по Go-именам (`.Meta.Title` для постмортема; legacy `.Title` для остальных команд пока они не мигрируют); `--json` отдаёт camelCase под `meta`:
+Все генераторы на v1 artifact path: `meta` отражает per-command набор флагов, `sections` — список из YAML-артефакта. Авторы шаблонов обращаются к meta-полям как `.Meta.<Field>` внутри YAML; `--json` отдаёт camelCase под `meta`.
 
 ```jsonc
-// task (bootstrap)
-{ "meta": { "id", "creationDate", "modificationDate", "title" },
-  "sections": [{ "id": "body", "title": "<H1>", "type": "text", "required": true, "body": "<markdown>" }] }
+// task
+{ "meta": { "id", "title", "now" },
+  "sections": [ ...секции из internal/tmpl/templates/task.yaml... ] }
 
-// postmortem (structured — секции из postmortem.sections.yaml)
+// postmortem
 { "meta": { "id", "title", "severity", "start", "end", "owner", "now" },
-  "sections": [ ...12 объектов секций в порядке манифеста... ] }
+  "sections": [ ...секции из postmortem.yaml (по умолчанию 12)... ] }
 
-// rfc (bootstrap)
+// rfc
 { "meta": { "id", "title", "status", "now", "author": { "name", "email" } },
-  "sections": [{ "id": "body", ... }] }
+  "sections": [ ...секции из rfc.yaml... ] }
 
-// slo (bootstrap)
+// slo
 { "meta": { "id", "service", "target", "window", "latencyTarget", "now" },
-  "sections": [{ "id": "body", ... }] }
+  "sections": [ ...секции из slo.yaml... ] }
 ```
 
-`author` (где есть) — вложенный объект (`{ "name", "email" }`), обращаться `.meta.author.name` / `.meta.author.email`.
+`author` (где есть) — вложенный объект (`{ "name", "email" }`), обращаться `.meta.author.name` / `.meta.author.email`. Точные section ID каждой команды смотри в `internal/tmpl/templates/<name>.yaml`.
 
 ## Когда использовать `--json`
 

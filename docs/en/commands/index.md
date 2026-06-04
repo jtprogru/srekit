@@ -37,8 +37,9 @@ Every generator command accepts:
 | `--stdout` | print to stdout |
 | `--force` | overwrite an existing FILE |
 | `--dry-run` | show what would be written, do not write |
-| `--template FILE` | use this template file instead of the embedded one |
 | `--json` | emit the template data payload as JSON (default sink: stdout) |
+
+`--template FILE` is only on `srekit license` (the one command whose render path doesn't go through the v1 artifact loader). Per-artifact customization for the other generators is via dropping a `<name>.yaml` into your `templates_dir` — see [Custom templates workflow](../guides/custom-templates.md).
 
 The persistent flag `--templates-dir DIR` (or env `SREKIT_TEMPLATES_DIR`, or `templates_dir:` in `~/.srekit.yaml`) installs a custom templates directory whose files override the embedded ones. Missing files fall back transparently.
 

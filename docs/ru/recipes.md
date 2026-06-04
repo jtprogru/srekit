@@ -84,15 +84,15 @@ srekit oncall-report --team platform --stdout |
 ```bash
 srekit templates list --json |
   jq '[.[] | select(.status == "embedded-only" or .status == "customized") | .name]'
-# ["task.md.tmpl", "runbook.md.tmpl"]   # вот это посмотреть
+# ["task.yaml", "runbook.yaml"]   # вот это посмотреть
 ```
 
 Или просто diff:
 
 ```bash
 srekit templates diff --name-only
-# differs  runbook.md.tmpl
-# differs  capacity.md.tmpl
+# differs  runbook.yaml
+# differs  capacity.yaml
 ```
 
 Дальше `srekit templates upgrade` смержит их через 3-way.

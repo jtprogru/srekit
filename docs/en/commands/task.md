@@ -15,7 +15,7 @@ srekit task --title TITLE [flags]
 | `--title` | yes | Subject of the investigation; used in the H1 and the default filename |
 | `--path DIR` | no | Directory to write into (default: current dir) |
 
-Plus the [shared output flags](index.md#shared-output-flags): `--out`, `--stdout`, `--force`, `--dry-run`, `--template`, `--json`.
+Plus the [shared output flags](index.md#shared-output-flags): `--out`, `--stdout`, `--force`, `--dry-run`, `--json`.
 
 ## Default filename
 
@@ -44,17 +44,9 @@ srekit task --title "Tail latency on api-gw" --json | jq -r '.id'
 
 ## Template shape
 
-The data passed to the template:
-
-```go
-struct {
-    ID, CreationDate, ModificationDate, Title string
-}
-```
-
-Section structure (post-render): YAML front matter (`title`, `tags`, `creation_date`, `id`) followed by `Контекст / Context`, `Гипотеза / Hypothesis`, `Доказательства / Evidence`, `Выводы / Findings`, `Дальнейшие действия / Action items`, `Ссылки / References`.
+`task` ships as a v1 YAML artifact (`internal/tmpl/templates/task.yaml`) — frontmatter (`id`, `title`, `creation_date`, `tags`), H1, meta_bullets, and the section list (`Контекст / Context`, `Гипотеза / Hypothesis`, `Доказательства / Evidence`, `Выводы / Findings`, `Дальнейшие действия / Action items`, `Ссылки / References`). The data passed in is `{Meta: {ID, Title, Now string}}`; template expressions inside the YAML reference `.Meta.<Field>`.
 
 ## See also
 
-- [Custom templates workflow](../guides/custom-templates.md) — override the embedded template with your own.
-- [JSON output](../guides/json-output.md) — pipe `--json` into other tools.
+- [Custom templates workflow](../guides/custom-templates.md) — override the embedded artifact with your own `task.yaml`.
+- [JSON output](../guides/json-output.md) — pipe `--json` into other tools (per-section access via `jq '.sections[] | select(.id=="…").body'`).
