@@ -21,6 +21,12 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.29.0] - 2026-06-05
+
+### Removed
+
+- **Breaking — `srekit incident` subcommand removed.** The live-incident report is no longer scaffolded by srekit. Rationale: a markdown file edited manually during an active incident is the wrong substrate for live coordination — that work belongs in an IM tool (Slack/PagerDuty/incident.io) or a future API-driven log ingestion path, not in a one-shot CLI scaffold. The artifact had the thinnest content-guidance surface of any generator (status / lead / comms / update log — four rules) and overlapped heavily with `srekit postmortem`'s timeline, where it could be linked from when needed. Affected: the `incident` command itself, `internal/tmpl/templates/incident.yaml`, `docs/{en,ru}/commands/incident.md`, the mkdocs nav entry, and cross-references from `runbook` / `postmortem` / `commands/index` / `guides/json-output`. Generator count drops from 12 to 11. Migration: if you had `templates_dir/incident.yaml`, it becomes a `user-only` artifact (`templates list` will surface it) — delete it manually or keep it as a private template; the CLI no longer reads it. Historical references in `docs/{en,ru}/migration/v1*.md` are intentionally preserved as a record of the v0.18 / v0.22 migrations.
+
 ## [0.28.0] - 2026-06-04
 
 ### Added

@@ -8,7 +8,6 @@
 |---|---|---|
 | [`srekit task`](task.md) | Investigation log (alias: `sretask`) | `--title` |
 | [`srekit license`](license.md) | `LICENSE` файл (alias: `lic`) | — |
-| [`srekit incident`](incident.md) | Live-incident report | `--title` |
 | [`srekit postmortem`](postmortem.md) | Постмортем (Google SRE-style) | `--title` |
 | [`srekit rfc`](rfc.md) | RFC / ADR | `--title` |
 | [`srekit runbook`](runbook.md) | Operational runbook | `--title` |

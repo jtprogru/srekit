@@ -106,14 +106,6 @@ srekit postmortem --title "API outage" --severity SEV-1 \
   --owner "@oncall" --out postmortem-2026-05-06.md
 ```
 
-### `srekit incident` — «живой» инцидент-док
-
-```bash
-srekit incident --title "API down" --severity SEV-1 --lead alice --stdout
-```
-
-Шаблон для заполнения **во время** инцидента (статус, лид, коммс, лог апдейтов) — в отличие от постмортема, который пишется после. Статусы: `investigated | active | contained | resolved`.
-
 ### `srekit rfc` — RFC / ADR
 
 ```bash

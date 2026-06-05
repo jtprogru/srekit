@@ -1,6 +1,6 @@
 # srekit
 
-**srekit** is a CLI that generates the text artifacts SREs deal with every day — investigation logs, live-incident reports, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs, and licenses — all from embedded Markdown templates.
+**srekit** is a CLI that generates the text artifacts SREs deal with every day — investigation logs, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs, and licenses — all from embedded Markdown templates.
 
 It is small, focused, and self-contained: a single binary with every template baked in via `//go:embed`, plus a transparent fallback path for custom templates you keep under your own git remote.
 
@@ -12,7 +12,7 @@ SRE work produces a lot of structured documents that read 80 % the same and diff
 
 ## What you get
 
-- **12 generator commands** — `task`, `license`, `incident`, `postmortem`, `rfc`, `runbook`, `changelog`, `oncall-report`, `slo`, `ebp`, `capacity`, `retro`.
+- **11 generator commands** — `task`, `license`, `postmortem`, `rfc`, `runbook`, `changelog`, `oncall-report`, `slo`, `ebp`, `capacity`, `retro`.
 - **Templates as your contract** — every template is bilingual (Russian headings + English technical terms), shipped embedded, and overridable via a custom directory under your own git remote.
 - **Full template lifecycle** — `templates init / pull / list / validate / diff / upgrade`, with a true 3-way merge on upgrade.
 - **JSON output** — every generator supports `--json` for piping into `jq` and other tools.

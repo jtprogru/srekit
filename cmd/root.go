@@ -44,8 +44,8 @@ func NewRootCmd() *cobra.Command {
 	var cfgFile string
 	root := &cobra.Command{
 		Use:   "srekit",
-		Short: "Generator of SRE text artifacts: investigations, incidents, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs",
-		Long: `srekit generates text artifacts SREs deal with daily — investigation logs, live-incident reports, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs, licenses — all from embedded templates.
+		Short: "Generator of SRE text artifacts: investigations, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs",
+		Long: `srekit generates text artifacts SREs deal with daily — investigation logs, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, capacity plans, retros, changelogs, licenses — all from embedded templates.
 
 Docs:  https://jtprogru.github.io/srekit/
 Source & issues:  https://github.com/jtprogru/srekit`,
@@ -72,7 +72,6 @@ built by: ` + BuiltBy + `
 	root.AddCommand(
 		newLicenseCmd(),
 		newTaskCmd(),
-		newIncidentCmd(),
 		newPostmortemCmd(),
 		newRFCCmd(),
 		newRunbookCmd(),

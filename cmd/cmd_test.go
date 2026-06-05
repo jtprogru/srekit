@@ -211,25 +211,6 @@ func TestChangelogMissingRepoFails(t *testing.T) {
 	}
 }
 
-func TestIncidentReport(t *testing.T) {
-	t.Parallel()
-	out, err := runCLI(t, "incident", "--title", "API down", "--severity", "SEV-1", "--lead", "alice", "--stdout")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(out, "Инцидент (Incident) — API down") || !strings.Contains(out, "SEV-1") || !strings.Contains(out, "alice") {
-		t.Fatalf("incident body wrong: %s", out)
-	}
-}
-
-func TestIncidentInvalidStatus(t *testing.T) {
-	t.Parallel()
-	_, err := runCLI(t, "incident", "--title", "X", "--status", "broken", "--stdout")
-	if err == nil {
-		t.Fatal("expected error on invalid status")
-	}
-}
-
 func TestErrorBudgetPolicy(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "ebp", "--service", "api-gw", "--stdout")
@@ -324,7 +305,7 @@ func TestTemplatesInitScaffolds(t *testing.T) {
 	// ships as a single postmortem.yaml (the v1 unified format replacing
 	// the v0.13.x postmortem.md.tmpl + postmortem.sections.yaml pair).
 	for _, name := range []string{
-		"task.yaml", "incident.yaml",
+		"task.yaml",
 		"runbook.yaml", "rfc.yaml", "slo.yaml",
 		"ebp.yaml", "capacity.yaml",
 		"oncall.yaml", "retro.yaml", "changelog.yaml",

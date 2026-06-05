@@ -177,6 +177,5 @@ sections:
 
 ## См. также
 
-- [`srekit incident`](incident.md) — документ *во время* инцидента.
 - [`srekit retro`](retro.md) — sprint-level ретроспектива.
 - [JSON output guide](../guides/json-output.md) — кросс-командный контракт `{meta, sections}`.

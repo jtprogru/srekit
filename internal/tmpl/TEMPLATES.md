@@ -99,17 +99,6 @@ srekit templates diff --name-only  # только список изменённ�
 | `.CreationDate` | string | RFC3339 |
 | `.ModificationDate` | string | RFC3339, при инициализации = CreationDate |
 
-### `incident.md.tmpl` — live incident
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `.ID` | string | UUID |
-| `.Title` | string | Заголовок инцидента |
-| `.Severity` | string | SEV-1, SEV-2, … |
-| `.Lead` | string | Инцидент-лид (может быть пустой) |
-| `.Status` | string | investigated / active / contained / resolved |
-| `.Now` | string | RFC3339, время создания |
-
 ### `postmortem.md.tmpl`
 
 | Поле | Тип | Описание |

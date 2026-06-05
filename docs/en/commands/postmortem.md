@@ -177,6 +177,5 @@ Frontmatter key order is preserved verbatim from the YAML source (no alphabetica
 
 ## See also
 
-- [`srekit incident`](incident.md) — the *during*-incident doc.
 - [`srekit retro`](retro.md) — sprint-level retrospective.
 - [JSON output guide](../guides/json-output.md) — the cross-command `{meta, sections}` contract.

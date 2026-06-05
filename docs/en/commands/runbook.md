@@ -47,4 +47,4 @@ srekit runbook --title "DB connection storm" --stdout
 
 ## See also
 
-- [`srekit incident`](incident.md) — the live doc you create when the runbook isn't enough.
+- [`srekit postmortem`](postmortem.md) — the retrospective written after the incident the runbook was for.
