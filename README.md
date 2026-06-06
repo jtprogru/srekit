@@ -13,7 +13,7 @@
 
 📚 **Documentation:** [jtprogru.github.io/srekit](https://jtprogru.github.io/srekit/) (EN + RU, full command reference, guides, recipes, architecture).
 
-Генератор текстовых артефактов SRE: investigation log'и, инциденты, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, capacity plans, retro, changelog'и, лицензии.
+Генератор текстовых артефактов SRE: investigation log'и, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, capacity plans, retro, changelog'и, лицензии.
 
 Все markdown-шаблоны двуязычные: заголовки и метки в формате `Русский (English)`, тело — на русском. Технические идентификаторы (SLO/SLI/RFC/PromQL/UTC/SEV), ключи YAML frontmatter и PromQL-выражения остаются английскими. Шаблон `changelog` остаётся полностью английским, чтобы не ломать тулинг вокруг Keep a Changelog.
 
@@ -70,6 +70,8 @@ srekit --help
 Все команды поддерживают единый набор флагов:
 `--out FILE` (записать в файл), `--stdout` (печать в stdout), `--force` (перезаписать), `--dry-run` (показать без записи), `--json` (отдать данные шаблона как JSON вместо рендеринга).
 
+Глобальные флаги (на любой команде): `--config FILE`, `--templates-dir DIR`, `-q/--quiet` (подавить INFO-сообщения; рендер и ошибки печатаются как обычно), `-V/--version`.
+
 С `--json` команда не рендерит шаблон, а пишет в stdout (или `--out FILE`) структуру, которую увидел бы шаблон. Удобно для пайплайнов:
 
 ```bash
@@ -107,6 +109,18 @@ srekit postmortem --title "API outage" --severity SEV-1 \
   --owner "@oncall" --out postmortem-2026-05-06.md
 ```
 
+`postmortem` — канонический референс v1-схемы и единственная команда с round-trip workflow «вытащить → отредактировать → отрендерить»:
+
+```bash
+srekit postmortem -T "Cache stampede" --json > pm.json   # выгрузить sections в JSON
+# ...редактируешь pm.json...
+srekit postmortem -T X --from pm.json                    # обратно в markdown
+srekit postmortem --schema > postmortem.schema.json      # JSON Schema для тулинга/агентов
+srekit postmortem --validate pm.json                     # required sections непустые, нет unknown ID
+```
+
+`--from -` читает из stdin. `--schema` и `--validate` взаимоисключающие.
+
 ### `srekit rfc` — RFC / ADR
 
 ```bash
@@ -131,9 +145,12 @@ srekit changelog --repo jtprogru/srekit --version 0.2.0
 ### `srekit oncall-report` — недельный отчёт дежурного
 
 ```bash
-srekit oncall-report --team platform                    # период по умолчанию — текущая неделя
+srekit oncall-report --team platform                    # период по умолчанию — текущая неделя (Mon–Sun)
 srekit oncall-report --team platform --start 2026-05-04 --end 2026-05-10
+srekit oncall-report --team platform --author "Alice" --email alice@example.com
 ```
+
+Если `--author/--email` не заданы, как и в `license` / `rfc`, берётся `SREKIT_*` env → config → `git config`.
 
 ### `srekit slo` — SLO/SLI документ
 
@@ -242,6 +259,15 @@ srekit templates list --filter customized # только то, что ты пе�
 
 JSON-ключи — camelCase (`name`, `status`, `userPath`) — то же соглашение, что и у `--json` генераторов.
 
+### `srekit templates migrate` — конвертация legacy `.tmpl` → v1 `.yaml`
+
+```bash
+srekit templates migrate              # dry-run: показать, что получилось бы
+srekit templates migrate --apply      # записать <name>.yaml рядом со старыми файлами
+```
+
+Однократная миграция для тех, кто остался на pre-v0.14.0 раскладке (`<name>.tmpl` + опциональный `<name>.sections.yaml` sidecar). Создаёт `<name>.yaml` в v1-формате; оригиналы остаются на месте, чтобы их можно было сравнить и удалить руками. По умолчанию `--dry-run`. Подробный upgrade-recipe — в [docs/migration/v1.md](https://jtprogru.github.io/srekit/migration/v1/).
+
 ### `srekit templates upgrade` — подтянуть новые embedded-шаблоны
 
 ```bash
@@ -269,7 +295,7 @@ srekit completion bash > /etc/bash_completion.d/srekit
 
 ## Config
 
-`~/.srekit.yaml` (опционально):
+Путь по умолчанию — `$XDG_CONFIG_HOME/srekit/config.yaml` (т.е. `~/.config/srekit/config.yaml`). Legacy `~/.srekit.yaml` продолжает читаться, если уже существует — миграция не нужна, но новые конфиги пишутся в XDG.
 
 ```yaml
 author: Mikhail Savin
@@ -277,7 +303,7 @@ email: jtprogru@example.com
 # templates_dir: ~/.srekit/templates
 ```
 
-Или через env: `SREKIT_AUTHOR`, `SREKIT_EMAIL`, `SREKIT_TEMPLATES_DIR`.
+Или через env: `SREKIT_AUTHOR`, `SREKIT_EMAIL`, `SREKIT_TEMPLATES_DIR`. Альтернативный путь к файлу — `srekit --config ./my.yaml …`.
 
 Быстро создать файл интерактивно:
 
@@ -287,6 +313,23 @@ srekit config init --yes              # non-interactive: значения из -
 srekit config init --force            # перезаписать существующий файл
 srekit --config ./my.yaml config init # альтернативный путь
 ```
+
+## Development
+
+В репозитории лежит pre-commit hook (`.githooks/pre-commit`), который обновляет Go LoC бейдж в `README.md` через [`tokei`](https://github.com/XAMPPRocky/tokei). Хук не подключается автоматически — это делается явно:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Зависимость `tokei` ставится отдельно:
+
+```bash
+brew install tokei            # macOS / Linux
+cargo install tokei           # через cargo
+```
+
+Если `tokei` не найден в `PATH`, хук молча скипается — коммит не блокируется.
 
 ## Стабильность и версионирование
 
