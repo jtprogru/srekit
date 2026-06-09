@@ -80,6 +80,9 @@ func (EmbedSource) Read(name string) ([]byte, error) {
 type DirSource struct{ Dir string }
 
 func (d DirSource) Read(name string) ([]byte, error) {
+	if filepath.Base(name) != name || strings.ContainsAny(name, `/\`) {
+		return nil, fs.ErrNotExist
+	}
 	b, err := os.ReadFile(filepath.Join(d.Dir, name))
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {

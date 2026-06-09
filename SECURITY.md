@@ -42,6 +42,7 @@ Out of scope:
 - **Bearer** (informational) runs on every push / PR and uploads SARIF to GitHub's code scanning dashboard.
 - **Release artifacts** are built by `goreleaser` in a clean GitHub Actions runner and shipped with SHA256 checksums; the homebrew cask verifies the checksum on install.
 - **Public file permissions are intentional**: scaffolded templates and rendered documents are written `0o644` because they are public artifacts (your `CHANGELOG.md`, your team's `sre-templates` repo). The config file (`config.yaml`) is `0o600` because it may contain author identity / email.
+- **Repo hooks are opt-in**: `.githooks/pre-commit` (the `tokei`-driven LoC-badge updater) lives under `.githooks/`, not `.git/hooks/`, so cloning this repo does not execute anything. Activation requires an explicit `git config core.hooksPath .githooks` per the README. The hook itself shells out only to `tokei` (path argument is `git rev-parse --show-toplevel`, not user input) and `sed`/`awk` over `README.md`.
 
 ## Threat model — what `srekit` is NOT
 
