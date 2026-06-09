@@ -21,6 +21,16 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.29.1] - 2026-06-10
+
+### Security
+
+- **Path-hardening sweep across the artifact generators and the template loader.** Triggered by an internal security audit of v0.29.0; all findings were Low-severity hygiene gaps (no reachable RCE / no privilege boundary crossing under the documented threat model), but each is now closed.
+    - `cmd/oncall.go`: `--start` is now `ids.Slug`-ified when forming the default output filename, matching every other generator (`postmortem`, `runbook`, `slo`, `rfc`, `task`, `retro`, `ebp`, `capacity`). Previously a value like `--start ../../etc/foo` would land at a relative path under the working directory. `YYYY-MM-DD` inputs are preserved unchanged by `ids.Slug`.
+    - `internal/tmpl/tmpl.go`: `DirSource.Read` now refuses any `name` that contains path separators or is not a basename, returning `fs.ErrNotExist` (so the loader falls through to the next source). Currently unreachable — every call site uses a hard-coded artifact name — but this closes a regression hole if a dynamic template name is ever wired in (e.g. plugin-style dispatch).
+- **Release workflow actions pinned to commit SHAs.** `.github/workflows/goreleaser.yaml` now pins `actions/checkout`, `actions/setup-go`, and `crazy-max/ghaction-import-gpg` to commit SHAs (v6.0.3 / v6.4.0 / v7.0.0 respectively), matching the existing pin on `goreleaser/goreleaser-action`. A moved major tag can no longer silently swap action code in the signing-capable release runner.
+- **`SECURITY.md`**: documented that `.githooks/pre-commit` is opt-in (lives under `.githooks/`, not `.git/hooks/`) and that activation requires an explicit `git config core.hooksPath .githooks`. Clarifies for reviewers that cloning this repo does not execute the `tokei`-driven LoC-badge updater.
+
 ## [0.29.0] - 2026-06-05
 
 ### Removed
