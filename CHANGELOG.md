@@ -21,6 +21,12 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.29.2] - 2026-06-10
+
+### Changed
+
+- **CI: bumped pinned GitHub Actions in the `actions` dependabot group (#11).** `github/codeql-action/upload-sarif` v3 → v4 in `.github/workflows/security.yaml`, `codecov/codecov-action` v6 → v7 in `.github/workflows/tests.yaml`. No source changes; cuts a CI deprecation warning before v3 of codeql-action is retired.
+
 ## [0.29.1] - 2026-06-10
 
 ### Security
