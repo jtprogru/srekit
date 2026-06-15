@@ -38,8 +38,8 @@ type Author struct {
 	Email string `json:"email"`
 }
 
-// Lookup is the minimal viper surface Resolve needs. Pass viper.GetViper()
-// in production code, or a fresh *viper.Viper in tests for isolation.
+// Lookup is the minimal config surface Resolve needs. Pass config.Global() in
+// production code, or a fresh *config.Config in tests for isolation.
 type Lookup interface {
 	GetString(key string) string
 }

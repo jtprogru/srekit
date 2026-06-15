@@ -9,8 +9,8 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
+	"github.com/jtprogru/srekit/internal/config"
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
@@ -121,12 +121,9 @@ func initConfig(cfgFile string) {
 	if cfgFile == "" {
 		cfgFile = resolveConfigPath()
 	}
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	}
-	viper.SetEnvPrefix("SREKIT")
-	viper.AutomaticEnv()
-	_ = viper.ReadInConfig()
+	config.Reset()
+	// A missing config file is fine — env vars and flags can supply everything.
+	_ = config.Global().Load(cfgFile)
 }
 
 // resolveTemplatesDir returns the templates directory configured via
@@ -139,7 +136,7 @@ func resolveTemplatesDir(cmd *cobra.Command) (string, error) {
 		dir = f.Value.String()
 	}
 	if dir == "" {
-		dir = viper.GetString("templates_dir")
+		dir = config.Global().GetString("templates_dir")
 	}
 	if dir == "" {
 		return "", nil

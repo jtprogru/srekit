@@ -6,10 +6,10 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/jtprogru/srekit/internal/cliflags"
 	"github.com/jtprogru/srekit/internal/clock"
+	"github.com/jtprogru/srekit/internal/config"
 	"github.com/jtprogru/srekit/internal/meta"
 	"github.com/jtprogru/srekit/internal/render"
 	"github.com/jtprogru/srekit/internal/tmpl"
@@ -108,7 +108,7 @@ func newLicenseCmd() *cobra.Command {
 			if !ok {
 				return fmt.Errorf("unknown license type %q (supported: wtfpl, mit, apache2)", licType)
 			}
-			author, err := meta.Resolve(viper.GetViper(), licAuthor, licEmail)
+			author, err := meta.Resolve(config.Global(), licAuthor, licEmail)
 			if err != nil {
 				return err
 			}

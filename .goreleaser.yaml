@@ -20,9 +20,21 @@ builds:
     goarm:
       - "6"
       - "7"
+    flags:
+      - -trimpath
     ldflags:
       - -s -w -X github.com/jtprogru/srekit/cmd.Version={{.Version}} -X github.com/jtprogru/srekit/cmd.Commit={{.Commit}} -X github.com/jtprogru/srekit/cmd.Date={{.CommitDate}} -X github.com/jtprogru/srekit/cmd.BuiltBy=goreleaser
     builder: go
+
+# Compress only the Linux binaries. UPX-packed binaries break code signing
+# and Gatekeeper on macOS (we ship darwin via an unsigned cask and strip
+# quarantine in a post-install hook), so darwin/freebsd are left untouched.
+upx:
+  - enabled: true
+    goos:
+      - linux
+    compress: best
+    lzma: true
 
 archives:
   - formats: ["tar.gz"]

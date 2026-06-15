@@ -10,9 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/jtprogru/srekit/internal/clock"
+	"github.com/jtprogru/srekit/internal/config"
 )
 
 func runCLI(t *testing.T, args ...string) (string, error) {
@@ -48,19 +47,19 @@ func TestTaskRequiresTitle(t *testing.T) {
 	}
 }
 
-// withViper temporarily seeds the global viper for tests that go through
-// meta.Resolve(viper.GetViper(), ...). It is not parallel-safe.
-func withViper(t *testing.T, kv map[string]string) {
+// withConfig temporarily seeds the global config for tests that go through
+// meta.Resolve(config.Global(), ...). It is not parallel-safe.
+func withConfig(t *testing.T, kv map[string]string) {
 	t.Helper()
-	viper.Reset()
+	config.Reset()
 	for k, v := range kv {
-		viper.Set(k, v)
+		config.Global().Set(k, v)
 	}
-	t.Cleanup(viper.Reset)
+	t.Cleanup(config.Reset)
 }
 
 func TestLicenseWTFPLDefault(t *testing.T) {
-	withViper(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
+	withConfig(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
 
 	out, err := runCLI(t, "license", "--stdout", "--year", "2026")
 	if err != nil {
@@ -75,7 +74,7 @@ func TestLicenseWTFPLDefault(t *testing.T) {
 }
 
 func TestLicenseMIT(t *testing.T) {
-	withViper(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
+	withConfig(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
 
 	out, err := runCLI(t, "license", "--type", "mit", "--stdout", "--year", "2026")
 	if err != nil {
@@ -87,7 +86,7 @@ func TestLicenseMIT(t *testing.T) {
 }
 
 func TestLicenseUnknownType(t *testing.T) {
-	withViper(t, map[string]string{"author": "x", "email": "x@x"})
+	withConfig(t, map[string]string{"author": "x", "email": "x@x"})
 	_, err := runCLI(t, "license", "--type", "gpl", "--stdout")
 	if err == nil {
 		t.Fatal("expected error for unknown license type")
@@ -106,7 +105,7 @@ func TestPostmortem(t *testing.T) {
 }
 
 func TestRFC(t *testing.T) {
-	withViper(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
+	withConfig(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
 	out, err := runCLI(t, "rfc", "--title", "Migrate to gRPC", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +141,7 @@ func TestChangelog(t *testing.T) {
 }
 
 func TestOncallReport(t *testing.T) {
-	withViper(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
+	withConfig(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
 	out, err := runCLI(t, "oncall-report", "--team", "platform", "--start", "2026-05-04", "--end", "2026-05-10", "--stdout")
 	if err != nil {
 		t.Fatal(err)
@@ -179,7 +178,7 @@ func TestRetro(t *testing.T) {
 // for the bug where Sunday's Weekday()==0 caused the formula to roll to the
 // following Monday instead.
 func TestOncallSundayWeekBoundary(t *testing.T) {
-	withViper(t, map[string]string{"author": "X", "email": "x@x"})
+	withConfig(t, map[string]string{"author": "X", "email": "x@x"})
 	orig := clock.Now
 	t.Cleanup(func() { clock.Now = orig })
 	clock.Now = func() time.Time { return time.Date(2026, 5, 10, 12, 0, 0, 0, time.UTC) }
@@ -197,7 +196,7 @@ func TestOncallSundayWeekBoundary(t *testing.T) {
 // detection fails and --repo is omitted, we error instead of writing
 // "OWNER/REPO" into the file. The git mock returns an empty remote.
 func TestChangelogMissingRepoFails(t *testing.T) {
-	withViper(t, nil)
+	withConfig(t, nil)
 	dir := t.TempDir()
 	// chdir into a non-git directory so DetectRepo's git invocation fails.
 	t.Chdir(dir)
@@ -1415,18 +1414,18 @@ func TestTemplatesUpgradeDryRun(t *testing.T) {
 }
 
 // TestTemplatesInitRespectsConfiguredDir locks in the fix where 'templates
-// init' without a positional arg used to ignore templates_dir from viper
+// init' without a positional arg used to ignore templates_dir from config
 // and unconditionally scaffold ~/.srekit/templates. It must now resolve
 // the configured directory the same way every other subcommand does.
 func TestTemplatesInitRespectsConfiguredDir(t *testing.T) {
-	// Uses withViper (global viper) so it is not parallel-safe.
+	// Uses withConfig (global config) so it is not parallel-safe.
 	// Pre-stage an existing empty dir so configureTemplates (the root
 	// PersistentPreRunE) doesn't warn about a missing path.
 	dir := filepath.Join(t.TempDir(), "configured-templates")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	withViper(t, map[string]string{"templates_dir": dir})
+	withConfig(t, map[string]string{"templates_dir": dir})
 
 	if _, err := runCLI(t, "templates", "init", "--no-git"); err != nil {
 		t.Fatalf("init failed: %v", err)

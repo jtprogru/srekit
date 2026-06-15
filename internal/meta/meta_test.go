@@ -3,20 +3,20 @@ package meta
 import (
 	"testing"
 
-	"github.com/spf13/viper"
+	"github.com/jtprogru/srekit/internal/config"
 )
 
-func newViper(kv map[string]string) *viper.Viper {
-	v := viper.New()
+func newConfig(kv map[string]string) *config.Config {
+	c := config.New()
 	for k, val := range kv {
-		v.Set(k, val)
+		c.Set(k, val)
 	}
-	return v
+	return c
 }
 
 func TestResolveFlagsWin(t *testing.T) {
 	t.Parallel()
-	v := newViper(map[string]string{"author": "Viper Author", "email": "viper@example.com"})
+	v := newConfig(map[string]string{"author": "Config Author", "email": "config@example.com"})
 
 	a, err := Resolve(v, "Flag Author", "flag@example.com")
 	if err != nil {
@@ -27,16 +27,16 @@ func TestResolveFlagsWin(t *testing.T) {
 	}
 }
 
-func TestResolveViperFallback(t *testing.T) {
+func TestResolveConfigFallback(t *testing.T) {
 	t.Parallel()
-	v := newViper(map[string]string{"author": "Viper Author", "email": "viper@example.com"})
+	v := newConfig(map[string]string{"author": "Config Author", "email": "config@example.com"})
 
 	a, err := Resolve(v, "", "")
 	if err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
-	if a.Name != "Viper Author" || a.Email != "viper@example.com" {
-		t.Fatalf("viper fallback failed, got %+v", a)
+	if a.Name != "Config Author" || a.Email != "config@example.com" {
+		t.Fatalf("config fallback failed, got %+v", a)
 	}
 }
 
@@ -53,7 +53,7 @@ func TestResolveGitFallback(t *testing.T) {
 		return "", nil
 	}
 
-	a, err := Resolve(viper.New(), "", "")
+	a, err := Resolve(config.New(), "", "")
 	if err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestResolveMissing(t *testing.T) {
 	t.Cleanup(func() { gitRunner = orig })
 	gitRunner = func(_ ...string) (string, error) { return "", nil }
 
-	if _, err := Resolve(viper.New(), "", ""); err == nil {
+	if _, err := Resolve(config.New(), "", ""); err == nil {
 		t.Fatalf("expected error when nothing configured")
 	}
 }

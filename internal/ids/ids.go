@@ -1,14 +1,24 @@
 package ids
 
 import (
+	"fmt"
+	"math/rand/v2"
 	"regexp"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
+// UUID returns an RFC 4122 version 4 UUID. The identifiers label generated
+// artifacts (RFCs, postmortems, …) and are not security-sensitive, so we use
+// math/rand/v2 instead of crypto/rand. That keeps the whole crypto stack
+// (and the FIPS-140 module the Go toolchain links with it) out of the binary.
 func UUID() string {
-	return uuid.New().String()
+	var b [16]byte
+	for i := range b {
+		b[i] = byte(rand.UintN(256))
+	}
+	b[6] = (b[6] & 0x0f) | 0x40 // version 4
+	b[8] = (b[8] & 0x3f) | 0x80 // variant 10
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
 }
 
 // Short returns the first n characters of u, or u unchanged if it is

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/jtprogru/srekit/internal/cliflags"
 	"github.com/jtprogru/srekit/internal/clock"
+	"github.com/jtprogru/srekit/internal/config"
 	"github.com/jtprogru/srekit/internal/ids"
 	"github.com/jtprogru/srekit/internal/meta"
 	"github.com/jtprogru/srekit/internal/render"
@@ -57,7 +57,7 @@ func newOncallCmd() *cobra.Command {
 			if team == "" {
 				return errors.New("--team is required")
 			}
-			a, err := meta.Resolve(viper.GetViper(), author, email)
+			a, err := meta.Resolve(config.Global(), author, email)
 			if err != nil {
 				return err
 			}
