@@ -258,6 +258,10 @@ linters:
       - path: internal/meta/meta\.go
         linters:
           - gochecknoglobals
+      # The process-wide config singleton (replacing viper.GetViper()) is intentional package-level state.
+      - path: internal/config/global\.go
+        linters:
+          - gochecknoglobals
       # Exclude some linters from running on tests files.
       - path: _test\.go
         linters:

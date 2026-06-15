@@ -14,7 +14,7 @@ import (
 func UUID() string {
 	var b [16]byte
 	for i := range b {
-		b[i] = byte(rand.UintN(256))
+		b[i] = byte(rand.UintN(256)) //nolint:gosec // G404: artifact IDs are not security-sensitive; math/rand/v2 is deliberate (see doc comment)
 	}
 	b[6] = (b[6] & 0x0f) | 0x40 // version 4
 	b[8] = (b[8] & 0x3f) | 0x80 // variant 10
