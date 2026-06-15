@@ -21,6 +21,13 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 -
 
+## [0.29.3] - 2026-06-15
+
+### Changed
+
+- **Binary ~35% smaller (7.84 MB → 5.07 MB) by dropping two dependency chains.** Replaced `google/uuid` (which pulled `crypto/rand` → the FIPS-140 module) with a `math/rand/v2` UUIDv4 — artifact IDs are not security-sensitive. Replaced Viper with a tiny `internal/config` package over the already-present `go.yaml.in/yaml/v3`: srekit only used four `GetString` lookups, one YAML file, and `SREKIT_`-prefixed env vars, while Viper dragged in `afero` → `net/http` → `crypto/tls` + `crypto/rand` + FIPS-140, plus `go-toml`, `mapstructure`, `cast`, `gotenv`, `locafero`, `fsnotify`, and `pflag` extras. Config precedence (explicit override > env > file) is preserved; the `crypto` and `net/http` packages are now absent from the build graph entirely.
+- **Release builds: added `-trimpath` and Linux-only UPX compression.** `-trimpath` drops local filesystem paths for reproducible builds; UPX is enabled only for Linux artifacts (it breaks code signing / Gatekeeper on macOS, where srekit ships via a Homebrew cask).
+
 ## [0.29.2] - 2026-06-10
 
 ### Changed
