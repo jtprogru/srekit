@@ -1,0 +1,20 @@
+# Bearer configuration — https://docs.bearer.com/reference/configuration/
+#
+# srekit is a local CLI that scaffolds SRE artifacts. It runs with the user's
+# own privileges and reads/writes exactly the files the user points it at.
+# There is no trust boundary between "attacker" and "victim", so the gosec-style
+# rules below (designed for web backends) produce only false positives here.
+# Each was reviewed and dismissed in GitHub code scanning; we also skip them at
+# scan time so they stop reappearing on every push.
+scan:
+  skip-rule:
+    # G306: 0o644 on generated public docs/templates (README, CHANGELOG, RFC,
+    # runbooks, snapshots) — intentional, no secrets are ever written.
+    - go_gosec_file_permissions_file_perm
+    # G304: os.ReadFile on user-supplied paths (--from, --template, config path,
+    # entries under a user-specified dir) — the tool's whole job; no boundary.
+    - go_gosec_filesystem_filereadtaint
+    # G204: exec.CommandContext("git", ...) — command is hardcoded, no shell is
+    # invoked, and the only variable arg is a path guarded by -C / positional
+    # semantics, so no command or argument injection is possible.
+    - go_gosec_injection_subproc_injection
