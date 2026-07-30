@@ -81,13 +81,11 @@ brew install golangci-lint
 golangci-lint version    # should be 2.12.x
 ```
 
-### `tmpl.Default` race
+### Global state in tests
 
-`go test -race ./cmd/` flakes locally on macOS/go1.26 around `tmpl.Default` — multiple tests that go through `runCLI` trip the detector on the global Loader pointer. CI (Linux/go1.25) consistently passes; the working theory is single-CPU runners avoid the interleavings. The current workaround for mutators is `resetTmplDefault(t)` plus no `t.Parallel()` — keep that pattern in new tests. A proper fix (passing the Loader through cobra contexts instead of a global) is on the v1.0 list.
+The template loader is built per command tree in `configureTemplates` and threaded to each command through the cobra command context (`loaderFrom`), so `--templates-dir` tests are `t.Parallel()`-safe. Don't reintroduce a package-level loader — `gochecknoglobals` is enabled and the earlier global (`tmpl.Default`) was removed precisely because it tripped the race detector.
 
-### `tmpl.Default` is package-level mutable state
-
-This is the same root cause as the race above. Tests use `resetTmplDefault(t)` to snapshot/restore around mutations. Treat `tmpl.Default` as test-fragile until v1.0 stabilization.
+The one piece of global state left is the config singleton behind `config.Global()`. Tests that seed it use the `withConfig(t, kv)` helper in `cmd/cmd_test.go`, which resets the config and registers cleanup; those tests must not call `t.Parallel()`.
 
 ## See also
 
