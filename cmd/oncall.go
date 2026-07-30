@@ -99,7 +99,7 @@ func newOncallCmd() *cobra.Command {
 			def := fmt.Sprintf("oncall-%s-%s.md", ids.Slug(team), ids.Slug(start))
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "oncall.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "oncall", data, opts)
 		},
 	}
 	cmd.Flags().StringVar(&team, "team", "", "team name (required)")
@@ -112,7 +112,7 @@ func newOncallCmd() *cobra.Command {
 }
 
 func loadOncallManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("oncall.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("oncall")
 	if err != nil {
 		return nil, fmt.Errorf("load oncall.yaml: %w", err)
 	}

@@ -69,7 +69,7 @@ func newRetroCmd() *cobra.Command {
 			def := fmt.Sprintf("retro-%s-%s.md", ids.Slug(team), ids.Slug(s))
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "retro.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "retro", data, opts)
 		},
 	}
 	cmd.Flags().StringVar(&team, "team", "", "team name (required)")
@@ -79,7 +79,7 @@ func newRetroCmd() *cobra.Command {
 }
 
 func loadRetroManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("retro.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("retro")
 	if err != nil {
 		return nil, fmt.Errorf("load retro.yaml: %w", err)
 	}

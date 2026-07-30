@@ -71,7 +71,7 @@ func newRunbookCmd() *cobra.Command {
 			def := fmt.Sprintf("runbook-%s.md", ids.Slug(title))
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "runbook.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "runbook", data, opts)
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "runbook title (required)")
@@ -82,7 +82,7 @@ func newRunbookCmd() *cobra.Command {
 }
 
 func loadRunbookManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("runbook.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("runbook")
 	if err != nil {
 		return nil, fmt.Errorf("load runbook.yaml: %w", err)
 	}

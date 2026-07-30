@@ -66,7 +66,7 @@ func newCapacityCmd() *cobra.Command {
 			def := fmt.Sprintf("capacity-%s.md", ids.Slug(service))
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "capacity.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "capacity", data, opts)
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "", "service name (required)")
@@ -76,7 +76,7 @@ func newCapacityCmd() *cobra.Command {
 }
 
 func loadCapacityManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("capacity.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("capacity")
 	if err != nil {
 		return nil, fmt.Errorf("load capacity.yaml: %w", err)
 	}

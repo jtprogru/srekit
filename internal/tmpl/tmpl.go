@@ -141,25 +141,33 @@ func IsTemplateArtifact(name string) bool {
 		strings.HasSuffix(name, ".yaml")
 }
 
-// ArtifactNameFor maps a template filename (e.g. "postmortem.md.tmpl") to
-// the v1 unified artifact filename ("postmortem.yaml"). Both `.md.tmpl`
-// and the bare `.tmpl` suffix are stripped, so the rule applies uniformly
-// to all template families.
-func ArtifactNameFor(templateName string) string {
-	name := strings.TrimSuffix(templateName, ".tmpl")
+// ArtifactNameFor maps an artifact name to its v1 filename: "postmortem"
+// and "postmortem.yaml" both yield "postmortem.yaml". It is idempotent, so
+// callers may pass either spelling.
+//
+// The pre-v1.0 template filenames are also accepted (`.md.tmpl` and the
+// bare `.tmpl` suffix are stripped) so external tooling built against the
+// v0.1x names keeps resolving to the right artifact. Shipped generators
+// pass the bare name.
+func ArtifactNameFor(name string) string {
+	name = strings.TrimSuffix(name, ".tmpl")
 	name = strings.TrimSuffix(name, ".md")
+	name = strings.TrimSuffix(name, ".yaml")
 	return name + ".yaml"
 }
 
-// LoadArtifactBytes resolves the v1 single-file artifact for a template
-// and returns its raw YAML bytes. Walks Sources in the same order as
-// Parse, so a user-dir artifact shadows the embedded one. Returns
-// fs.ErrNotExist when no source has it.
+// LoadArtifactBytes resolves the v1 single-file artifact named by name
+// (the bare artifact name, e.g. "postmortem") and returns its raw YAML
+// bytes. Walks Sources in the same order as Parse, so a user-dir artifact
+// shadows the embedded one. Returns fs.ErrNotExist when no source has it.
+//
+// The name is normalized through ArtifactNameFor, so legacy spellings like
+// "postmortem.md.tmpl" resolve to the same artifact.
 //
 // Parsing is left to internal/sections.ParseArtifact so this package
 // doesn't depend on artifact types.
-func (l *Loader) LoadArtifactBytes(templateName string) ([]byte, error) {
-	artifactName := ArtifactNameFor(templateName)
+func (l *Loader) LoadArtifactBytes(name string) ([]byte, error) {
+	artifactName := ArtifactNameFor(name)
 	for _, s := range l.Sources {
 		b, err := s.Read(artifactName)
 		if errors.Is(err, fs.ErrNotExist) {

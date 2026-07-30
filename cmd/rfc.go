@@ -92,7 +92,7 @@ func newRFCCmd() *cobra.Command {
 			def := fmt.Sprintf("rfc-%s.md", ids.Slug(title))
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "rfc.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "rfc", data, opts)
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "RFC title (required)")
@@ -104,7 +104,7 @@ func newRFCCmd() *cobra.Command {
 }
 
 func loadRFCManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("rfc.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("rfc")
 	if err != nil {
 		return nil, fmt.Errorf("load rfc.yaml: %w", err)
 	}

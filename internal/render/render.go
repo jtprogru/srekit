@@ -33,9 +33,10 @@ type Options struct {
 	// that ships custom `.tmpl` commands via the public Render API.
 	BootstrapJSON bool
 	// RenderArtifact switches the render path from Go-template execution
-	// to the v1 YAML artifact format. When true, the loader resolves
-	// <name>.yaml via LoadArtifactBytes, ParseArtifact builds an Artifact,
-	// and sections.RenderArtifact composes the markdown. `data` must
+	// to the v1 YAML artifact format. When true, Render's `name` argument
+	// is the bare artifact name: the loader resolves <name>.yaml via
+	// LoadArtifactBytes, ParseArtifact builds an Artifact, and
+	// sections.RenderArtifact composes the markdown. `data` must
 	// implement ArtifactPayload (returning the pre-merged section list
 	// and the template ctx). Every shipped generator sets this to true.
 	RenderArtifact bool
@@ -49,8 +50,14 @@ type ArtifactPayload interface {
 	ArtifactPayload() (sections []sections.RenderedSection, ctx any)
 }
 
-func Render(stdout io.Writer, loader *tmpl.Loader, tmplName string, data any, opts Options) error {
-	body, err := buildBody(loader, tmplName, data, opts)
+// Render builds the document for name and routes it per opts.
+//
+// When opts.RenderArtifact is set (every shipped generator), name is the
+// bare artifact name — "slo" resolves internal/tmpl/templates/slo.yaml
+// through the loader. On the legacy text/template branch it is a template
+// filename passed straight to loader.Parse.
+func Render(stdout io.Writer, loader *tmpl.Loader, name string, data any, opts Options) error {
+	body, err := buildBody(loader, name, data, opts)
 	if err != nil {
 		return err
 	}
@@ -65,13 +72,13 @@ func WriteRaw(stdout io.Writer, body []byte, opts Options) error {
 	return writeBody(stdout, body, opts)
 }
 
-func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]byte, error) {
+func buildBody(loader *tmpl.Loader, name string, data any, opts Options) ([]byte, error) {
 	// Structured JSON path: the caller has already shaped data as
 	// {meta, sections}; marshal as-is without touching the template.
 	if opts.JSON && !opts.BootstrapJSON {
 		b, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
-			return nil, fmt.Errorf("encode %q as JSON: %w", tmplName, err)
+			return nil, fmt.Errorf("encode %q as JSON: %w", name, err)
 		}
 		return append(b, '\n'), nil
 	}
@@ -79,7 +86,7 @@ func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]
 	var body []byte
 	if opts.RenderArtifact {
 		var err error
-		body, err = renderArtifactPath(loader, tmplName, data)
+		body, err = renderArtifactPath(loader, name, data)
 		if err != nil {
 			return nil, err
 		}
@@ -89,14 +96,14 @@ func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]
 		if opts.TemplatePath != "" {
 			t, err = tmpl.ParseFile(opts.TemplatePath)
 		} else {
-			t, err = loader.Parse(tmplName)
+			t, err = loader.Parse(name)
 		}
 		if err != nil {
 			return nil, err
 		}
 		var buf bytes.Buffer
 		if err := t.Execute(&buf, data); err != nil {
-			return nil, fmt.Errorf("render %q: %w", tmplName, err)
+			return nil, fmt.Errorf("render %q: %w", name, err)
 		}
 		body = buf.Bytes()
 	}
@@ -118,7 +125,7 @@ func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]
 		}
 		b, err := json.MarshalIndent(envelope, "", "  ")
 		if err != nil {
-			return nil, fmt.Errorf("encode %q as JSON: %w", tmplName, err)
+			return nil, fmt.Errorf("encode %q as JSON: %w", name, err)
 		}
 		return append(b, '\n'), nil
 	}
@@ -126,15 +133,15 @@ func buildBody(loader *tmpl.Loader, tmplName string, data any, opts Options) ([]
 	return body, nil
 }
 
-// renderArtifactPath loads the v1 single-file YAML artifact for tmplName,
+// renderArtifactPath loads the v1 single-file YAML artifact for name,
 // parses it, extracts the pre-merged section list + ctx from data (which
 // must implement ArtifactPayload), and composes the markdown via
 // sections.RenderArtifact. This is the v0.14.0+ render path for commands
 // that have migrated to the YAML format.
-func renderArtifactPath(loader *tmpl.Loader, tmplName string, data any) ([]byte, error) {
-	artifactBytes, err := loader.LoadArtifactBytes(tmplName)
+func renderArtifactPath(loader *tmpl.Loader, name string, data any) ([]byte, error) {
+	artifactBytes, err := loader.LoadArtifactBytes(name)
 	if err != nil {
-		return nil, fmt.Errorf("load artifact for %q: %w", tmplName, err)
+		return nil, fmt.Errorf("load artifact for %q: %w", name, err)
 	}
 	artifact, err := sections.ParseArtifact(artifactBytes)
 	if err != nil {

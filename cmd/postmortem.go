@@ -141,7 +141,7 @@ func newPostmortemCmd() *cobra.Command {
 			def := fmt.Sprintf("postmortem-%s-%s.md", now.Format("2006-01-02"), ids.Slug(meta.Title))
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "postmortem.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "postmortem", data, opts)
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "incident title (required, unless provided via --from)")
@@ -162,7 +162,7 @@ func newPostmortemCmd() *cobra.Command {
 // in the user's templates dir, nudging the user to migrate their
 // customizations into the v1 file.
 func loadPostmortemManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("postmortem")
 	if err != nil {
 		return nil, fmt.Errorf("load postmortem.yaml: %w", err)
 	}

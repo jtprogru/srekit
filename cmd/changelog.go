@@ -65,7 +65,7 @@ func newChangelogCmd() *cobra.Command {
 			data := changelogData{Meta: m, Sections: rendered}
 			opts := out.RenderOptionsStructured(cmd, "CHANGELOG.md")
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "changelog.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "changelog", data, opts)
 		},
 	}
 	cmd.Flags().StringVar(&repoFlag, "repo", "", "OWNER/REPO for compare links (default: detect from git remote)")
@@ -75,7 +75,7 @@ func newChangelogCmd() *cobra.Command {
 }
 
 func loadChangelogManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("changelog.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("changelog")
 	if err != nil {
 		return nil, fmt.Errorf("load changelog.yaml: %w", err)
 	}

@@ -63,7 +63,7 @@ func newEBPCmd() *cobra.Command {
 			def := fmt.Sprintf("ebp-%s.md", ids.Slug(service))
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "ebp.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "ebp", data, opts)
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "", "service name (required)")
@@ -72,7 +72,7 @@ func newEBPCmd() *cobra.Command {
 }
 
 func loadEBPManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("ebp.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("ebp")
 	if err != nil {
 		return nil, fmt.Errorf("load ebp.yaml: %w", err)
 	}

@@ -341,7 +341,7 @@ func TestRenderArtifactPath_DataMissingInterface(t *testing.T) {
 // and returns a Manifest matching its sections list. Helper for tests.
 func mustLoadEmbeddedPostmortemManifest(t *testing.T) *sections.Manifest {
 	t.Helper()
-	body, err := tmpl.NewDefaultLoader().LoadArtifactBytes("postmortem.md.tmpl")
+	body, err := tmpl.NewDefaultLoader().LoadArtifactBytes("postmortem")
 	if err != nil {
 		t.Fatalf("load artifact: %v", err)
 	}

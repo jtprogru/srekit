@@ -54,10 +54,10 @@ Runtime v1 артефакта. `Artifact` — это распаршенный `<
 
 ### `internal/render.Render()`
 
-Общий рендеринг-пайплайн. Берёт имя шаблона, data-структуру и `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default, BootstrapJSON, RenderArtifact}`. Три ветки:
+Общий рендеринг-пайплайн. Берёт имя, data-структуру и `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default, BootstrapJSON, RenderArtifact}`. Три ветки:
 
 1. `--json` short-circuit: `MarshalIndent` data (structured pass-through).
-2. `RenderArtifact = true`: загрузить `<name>.yaml`, распарсить, отдать в `sections.RenderArtifact`.
+2. `RenderArtifact = true`: имя — это bare-имя артефакта (`"slo"`), значит загрузить `slo.yaml`, распарсить, отдать в `sections.RenderArtifact`. Имя нормализуется через `tmpl.ArtifactNameFor`: функция идемпотентна и по-прежнему принимает pre-v1.0 варианты написания (`slo.md.tmpl`, `slo.tmpl`).
 3. Иначе: legacy `text/template` execution. Ни один shipped-генератор не использует эту ветку с v0.20; оставлено для `--template FILE` на `license` и для external tooling.
 
 ### `internal/cliflags.Output`

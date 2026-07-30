@@ -73,7 +73,7 @@ func newSLOCmd() *cobra.Command {
 			def := fmt.Sprintf("slo-%s.md", ids.Slug(service))
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "slo.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "slo", data, opts)
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "", "service name (required)")
@@ -85,7 +85,7 @@ func newSLOCmd() *cobra.Command {
 }
 
 func loadSLOManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("slo.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("slo")
 	if err != nil {
 		return nil, fmt.Errorf("load slo.yaml: %w", err)
 	}

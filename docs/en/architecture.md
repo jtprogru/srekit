@@ -54,10 +54,10 @@ Generator commands pass `Options.RenderArtifact = true` and implement `ArtifactP
 
 ### `internal/render.Render()`
 
-The shared rendering pipeline. Takes the template name, the data struct, and `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default, BootstrapJSON, RenderArtifact}`. Three branches:
+The shared rendering pipeline. Takes a name, the data struct, and `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default, BootstrapJSON, RenderArtifact}`. Three branches:
 
 1. `--json` short-circuit: `MarshalIndent` the data (structured pass-through).
-2. `RenderArtifact = true`: load `<name>.yaml`, parse, hand off to `sections.RenderArtifact`.
+2. `RenderArtifact = true`: the name is the bare artifact name (`"slo"`), so load `slo.yaml`, parse, hand off to `sections.RenderArtifact`. `tmpl.ArtifactNameFor` normalizes the name; it is idempotent and still accepts the pre-v1.0 spellings (`slo.md.tmpl`, `slo.tmpl`).
 3. Otherwise: legacy `text/template` execution. No shipped generator uses this branch as of v0.20; it's kept for `--template FILE` on `license` and for external tooling.
 
 ### `internal/cliflags.Output`

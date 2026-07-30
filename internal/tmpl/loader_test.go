@@ -37,7 +37,7 @@ func TestLoader_FallbackToEmbed(t *testing.T) {
 	// path is no longer represented in embed).
 	dir := t.TempDir()
 	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	body, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
+	body, err := loader.LoadArtifactBytes("postmortem")
 	if err != nil {
 		t.Fatalf("expected embed fallback, got error: %v", err)
 	}

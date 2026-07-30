@@ -59,6 +59,12 @@ func TestEmbeddedNames_isAllArtifactYAML(t *testing.T) {
 func TestArtifactNameFor(t *testing.T) {
 	t.Parallel()
 	cases := []struct{ in, want string }{
+		// The bare name is what shipped generators pass.
+		{"postmortem", "postmortem.yaml"},
+		{"task", "task.yaml"},
+		// Idempotent: passing the filename back in must not double the suffix.
+		{"postmortem.yaml", "postmortem.yaml"},
+		// Legacy pre-v1.0 spellings still normalize to the v1 artifact.
 		{"postmortem.md.tmpl", "postmortem.yaml"},
 		{"license_mit.tmpl", "license_mit.yaml"},
 		{"task.md.tmpl", "task.yaml"},
@@ -73,7 +79,7 @@ func TestArtifactNameFor(t *testing.T) {
 func TestLoadArtifactBytes_FindsEmbeddedPostmortem(t *testing.T) {
 	t.Parallel()
 	loader := NewDefaultLoader()
-	body, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
+	body, err := loader.LoadArtifactBytes("postmortem")
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
@@ -88,7 +94,7 @@ func TestLoadArtifactBytes_NotFound(t *testing.T) {
 	// All embedded artifacts ship as .yaml as of v0.20.0; an artifact name
 	// that doesn't correspond to any shipped name must miss across all
 	// sources and surface fs.ErrNotExist.
-	_, err := loader.LoadArtifactBytes("does-not-exist.md.tmpl")
+	_, err := loader.LoadArtifactBytes("does-not-exist")
 	if !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("want fs.ErrNotExist, got %v", err)
 	}
@@ -102,7 +108,7 @@ func TestLoadArtifactBytes_DirOverridesEmbed(t *testing.T) {
 		t.Fatal(err)
 	}
 	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	got, err := loader.LoadArtifactBytes("postmortem.md.tmpl")
+	got, err := loader.LoadArtifactBytes("postmortem")
 	if err != nil {
 		t.Fatal(err)
 	}

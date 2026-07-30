@@ -83,7 +83,7 @@ func newTaskCmd() *cobra.Command {
 			// the per-section payload (same contract as postmortem).
 			opts := out.RenderOptionsStructured(cmd, def)
 			opts.RenderArtifact = true
-			return render.Render(cmd.OutOrStdout(), loader, "task.md.tmpl", data, opts)
+			return render.Render(cmd.OutOrStdout(), loader, "task", data, opts)
 		},
 	}
 	cmd.Flags().StringVarP(&title, "title", "T", "", "investigation title (required)")
@@ -96,7 +96,7 @@ func newTaskCmd() *cobra.Command {
 // list as a Manifest (suitable for sections.Merge). Warns about stale
 // pre-v0.14.0 task.md.tmpl files in user templates dir.
 func loadTaskManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.Manifest, error) {
-	artifactBytes, err := loader.LoadArtifactBytes("task.md.tmpl")
+	artifactBytes, err := loader.LoadArtifactBytes("task")
 	if err != nil {
 		return nil, fmt.Errorf("load task.yaml: %w", err)
 	}
