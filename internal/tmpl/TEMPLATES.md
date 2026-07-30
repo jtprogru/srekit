@@ -3,7 +3,7 @@
 Эта папка — твой кастомный набор шаблонов для `srekit`. Файлы здесь
 переопределяют встроенные. Если файл отсутствует — `srekit` берёт встроенную
 версию (прозрачный fallback). Можно подменять как все шаблоны, так и
-точечно — например, только `postmortem.md.tmpl`.
+точечно — например, только `postmortem.yaml`.
 
 ## Как подключить эту директорию к srekit
 
@@ -20,10 +20,13 @@ export SREKIT_TEMPLATES_DIR=~/.srekit/templates
 echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
 ```
 
-Точечная подмена одного шаблона на одну команду:
+Одноразовая подмена шаблона флагом `--template FILE` поддерживается только у
+`srekit license`. У генераторов такого флага нет: они читают `<name>.yaml` из
+этой директории, поэтому «подмена на один запуск» делается отдельным
+`--templates-dir`.
 
 ```bash
-srekit runbook --title "p99 spike" --template ./my-runbook.tmpl --stdout
+srekit license --template ./my-license.tmpl --stdout
 ```
 
 ## Версионирование через git
@@ -51,12 +54,12 @@ UX и работу в офлайне. Команда вызывается явн
 ## Проверить и сравнить
 
 ```bash
-srekit templates validate          # парсит + дry-run рендерит каждый .tmpl
+srekit templates validate          # парсит + dry-run рендерит каждый артефакт
 srekit templates diff              # diff против embedded версий
 srekit templates diff --name-only  # только список изменённых файлов
 ```
 
-`validate` ловит опечатки в `.Field` (`{{ .Servce }}` вместо `.Service`)
+`validate` ловит опечатки в полях (`{{ .Meta.Servce }}` вместо `.Meta.Service`)
 и синтаксические ошибки шаблона. Запускай после правок и после
 `srekit templates pull` — особенно полезно после обновления бинарника,
 потому что у новой версии могут быть новые/переименованные поля.
@@ -68,8 +71,11 @@ srekit templates diff --name-only  # только список изменённ�
 `srekit` использует Go-шаблоны
 ([`text/template`](https://pkg.go.dev/text/template)). Доступны:
 
-- **Стандартные конструкции**: `{{ .Field }}`, `{{ if .X }}…{{ end }}`,
-  `{{ range .Items }}…{{ end }}`, pipes `{{ .Field | func }}`.
+- **Стандартные конструкции**: `{{ .Meta.Field }}`, `{{ if .Meta.X }}…{{ end }}`,
+  pipes `{{ .Meta.Field | func }}`.
+
+Метаданные команды лежат под `.Meta` — в v1-артефакте контекст рендера это
+`{ Meta: <поля команды> }`. Список полей по каждому артефакту — ниже.
 - **YAML frontmatter** между `---` блоками — необязателен, но именно его
   парсят инструменты типа Obsidian / dataview.
 
@@ -77,9 +83,9 @@ srekit templates diff --name-only  # только список изменённ�
 
 | Функция | Описание | Пример |
 |---------|----------|--------|
-| `default` | Дефолт для пустой строки | `{{ .Owner \| default "<owner>" }}` |
-| `shortID` | Первые N символов строки (для коротких ID) | `{{ shortID .ID 8 }}` |
-| `slugify` | Превратить строку в slug | `{{ slugify .Title }}` |
+| `default` | Дефолт для пустой строки | `{{ .Meta.Owner \| default "<owner>" }}` |
+| `shortID` | Первые N символов строки (для коротких ID) | `{{ shortID .Meta.ID 8 }}` |
+| `slugify` | Превратить строку в slug | `{{ slugify .Meta.Title }}` |
 | `now` | Текущее время; формат опционален | `{{ now }}` или `{{ now "2006-01-02" }}` |
 | `upper` | В верхний регистр | `{{ "abc" \| upper }}` |
 | `lower` | В нижний регистр | `{{ "ABC" \| lower }}` |
@@ -90,106 +96,111 @@ srekit templates diff --name-only  # только список изменённ�
 
 ## Доступные плейсхолдеры по шаблонам
 
-### `task.md.tmpl` — investigation log
+### `task.yaml` — investigation log
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `.ID` | string | UUID |
-| `.Title` | string | Заголовок расследования |
-| `.CreationDate` | string | RFC3339 |
-| `.ModificationDate` | string | RFC3339, при инициализации = CreationDate |
+| `.Meta.ID` | string | UUID |
+| `.Meta.Title` | string | Заголовок расследования |
+| `.Meta.CreationDate` | string | RFC3339 |
+| `.Meta.ModificationDate` | string | RFC3339, при инициализации = CreationDate |
 
-### `postmortem.md.tmpl`
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `.ID` | string | UUID |
-| `.Title` | string | Заголовок |
-| `.Severity` | string | SEV-1, SEV-2, … |
-| `.Start` | string | Начало инцидента (может быть пустой) |
-| `.End` | string | Конец инцидента (может быть пустой) |
-| `.Owner` | string | Ответственный (может быть пустой) |
-| `.Now` | string | RFC3339, время создания доки |
-
-### `runbook.md.tmpl`
+### `postmortem.yaml`
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `.ID` | string | UUID |
-| `.Title` | string | Заголовок |
-| `.Service` | string | Имя сервиса (может быть пустым) |
-| `.Alert` | string | Имя алерта (может быть пустым) |
-| `.Now` | string | RFC3339 |
+| `.Meta.ID` | string | UUID |
+| `.Meta.Title` | string | Заголовок |
+| `.Meta.Severity` | string | SEV-1, SEV-2, … |
+| `.Meta.Start` | string | Начало инцидента (может быть пустой) |
+| `.Meta.End` | string | Конец инцидента (может быть пустой) |
+| `.Meta.Owner` | string | Ответственный (может быть пустой) |
+| `.Meta.Now` | string | RFC3339, время создания доки |
 
-### `rfc.md.tmpl`
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `.ID` | string | UUID |
-| `.Title` | string | Заголовок |
-| `.Status` | string | proposed / accepted / rejected / superseded / deprecated |
-| `.Now` | string | RFC3339 |
-| `.Author.Name` | string | Имя автора |
-| `.Author.Email` | string | E-mail автора |
-
-### `slo.md.tmpl`
+### `runbook.yaml`
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `.ID` | string | UUID |
-| `.Service` | string | Имя сервиса |
-| `.Target` | string | SLO-таргет, например `99.9%` |
-| `.Window` | string | Окно, например `30d` |
-| `.LatencyTarget` | string | Latency-таргет, например `300ms` |
-| `.Now` | string | RFC3339 |
+| `.Meta.ID` | string | UUID |
+| `.Meta.Title` | string | Заголовок |
+| `.Meta.Service` | string | Имя сервиса (может быть пустым) |
+| `.Meta.Alert` | string | Имя алерта (может быть пустым) |
+| `.Meta.Now` | string | RFC3339 |
 
-### `ebp.md.tmpl` — Error Budget Policy
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `.ID` | string | UUID |
-| `.Service` | string | Имя сервиса |
-| `.Now` | string | RFC3339 |
-
-### `capacity.md.tmpl`
+### `rfc.yaml`
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `.ID` | string | UUID |
-| `.Service` | string | Имя сервиса |
-| `.Horizon` | string | Горизонт планирования, например `1y` |
-| `.Now` | string | RFC3339 |
+| `.Meta.ID` | string | UUID |
+| `.Meta.Title` | string | Заголовок |
+| `.Meta.Status` | string | proposed / accepted / rejected / superseded / deprecated |
+| `.Meta.Now` | string | RFC3339 |
+| `.Meta.Author.Name` | string | Имя автора |
+| `.Meta.Author.Email` | string | E-mail автора |
 
-### `oncall.md.tmpl`
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `.ID` | string | UUID |
-| `.Team` | string | Имя команды |
-| `.Start` | string | Начало периода (YYYY-MM-DD) |
-| `.End` | string | Конец периода (YYYY-MM-DD) |
-| `.Now` | string | RFC3339 |
-| `.Author.Name` | string | Дежурный |
-| `.Author.Email` | string | E-mail дежурного |
-
-### `retro.md.tmpl`
+### `slo.yaml`
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `.ID` | string | UUID |
-| `.Team` | string | Имя команды |
-| `.Sprint` | string | Метка спринта/периода |
-| `.Now` | string | RFC3339 |
+| `.Meta.ID` | string | UUID |
+| `.Meta.Service` | string | Имя сервиса |
+| `.Meta.Target` | string | SLO-таргет, например `99.9%` |
+| `.Meta.Window` | string | Окно, например `30d` |
+| `.Meta.LatencyTarget` | string | Latency-таргет, например `300ms` |
+| `.Meta.Now` | string | RFC3339 |
 
-### `changelog.md.tmpl`
+### `ebp.yaml` — Error Budget Policy
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `.Today` | string | Дата (YYYY-MM-DD) |
-| `.Repo` | string | OWNER/REPO для compare-ссылок |
-| `.InitialVersion` | string | Версия первого релиза |
+| `.Meta.ID` | string | UUID |
+| `.Meta.Service` | string | Имя сервиса |
+| `.Meta.Now` | string | RFC3339 |
 
-### `license_*.tmpl`
+### `capacity.yaml`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `.Meta.ID` | string | UUID |
+| `.Meta.Service` | string | Имя сервиса |
+| `.Meta.Horizon` | string | Горизонт планирования, например `1y` |
+| `.Meta.Now` | string | RFC3339 |
+
+### `oncall.yaml`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `.Meta.ID` | string | UUID |
+| `.Meta.Team` | string | Имя команды |
+| `.Meta.Start` | string | Начало периода (YYYY-MM-DD) |
+| `.Meta.End` | string | Конец периода (YYYY-MM-DD) |
+| `.Meta.Now` | string | RFC3339 |
+| `.Meta.Author.Name` | string | Дежурный |
+| `.Meta.Author.Email` | string | E-mail дежурного |
+
+### `retro.yaml`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `.Meta.ID` | string | UUID |
+| `.Meta.Team` | string | Имя команды |
+| `.Meta.Sprint` | string | Метка спринта/периода |
+| `.Meta.Now` | string | RFC3339 |
+
+### `changelog.yaml`
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `.Meta.Today` | string | Дата (YYYY-MM-DD) |
+| `.Meta.Repo` | string | OWNER/REPO для compare-ссылок |
+| `.Meta.InitialVersion` | string | Версия первого релиза |
+
+### `srekit license --template FILE`
+
+Тексты лицензий вкомпилированы в бинарь и не лежат в этой директории. Своё
+тело подставляется одноразово флагом `--template FILE` — только у команды
+`license`. Это единственный шаблон, который не является v1-артефактом, поэтому
+поля здесь лежат в корне, без `.Meta`:
 
 | Поле | Тип | Описание |
 |------|-----|----------|
@@ -199,11 +210,14 @@ srekit templates diff --name-only  # только список изменённ�
 
 ## Что лучше НЕ ломать
 
-- **Имена файлов**: `srekit` ищет шаблоны строго по именам
-  (`postmortem.md.tmpl`, `runbook.md.tmpl`, и т.д.). Переименуешь —
-  override не сработает.
-- **Имена полей**: переименовывать `.Field` смысла нет — Go-шаблон упадёт
-  с ошибкой при рендере, если упомянуто несуществующее поле.
+- **Имена файлов**: `srekit` ищет артефакты строго по именам
+  (`postmortem.yaml`, `runbook.yaml`, и т.д.). Переименуешь — override
+  не сработает.
+- **Имена полей**: переименовывать `.Meta.Field` смысла нет — Go-шаблон
+  упадёт с ошибкой при рендере, если упомянуто несуществующее поле.
+- **`version: 1`** в начале файла: артефакт с другой версией не парсится.
+- **`id` секций**: по ним матчатся `--json` / `--from` и required-проверки.
+  Заголовок (`title`) меняй свободно, `id` — нет.
 
 ## Что можно безболезненно менять
 

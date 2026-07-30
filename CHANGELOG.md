@@ -16,6 +16,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 ### Changed
 
 - **Generators now identify an artifact by its bare name.** `render.Render` / `Loader.LoadArtifactBytes` are called with `"slo"` instead of the historical `"slo.md.tmpl"`, which had to be stripped back down to `slo.yaml` on every call and read like a bug to anyone new to the code. `ArtifactNameFor` is now idempotent (it also trims a trailing `.yaml`) and still accepts the pre-v1.0 spellings `<name>.md.tmpl` / `<name>.tmpl`, so external tooling and user directories written against those names keep resolving. No user-facing behavior change; the legacy filenames passed to `warnStaleLegacyFiles` are untouched, since those name files on disk rather than templates to load.
+- `TEMPLATES.md` (shipped to user template dirs by `srekit templates init`): the placeholder reference documented v0.13.x filenames (`postmortem.md.tmpl`) and root-level fields (`.Title`), while v1 artifacts are `postmortem.yaml` with everything under `.Meta` — following it produced templates that failed to render. Headings and every field path corrected, plus notes on `version: 1` and section `id` stability. It also advertised `--template FILE` on `srekit runbook`, which rejects the flag as unknown; the example now uses `license`, the only command that honors it.
 - `architecture.md` (both locales): the `internal/render.Render()` section now says the artifact branch takes a bare name and describes `ArtifactNameFor`'s normalization.
 
 ### Fixed
