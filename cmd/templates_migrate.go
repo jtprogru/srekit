@@ -151,4 +151,3 @@ func runTemplatesMigrate(cmd *cobra.Command, args []string, apply bool) error {
 	}
 	return nil
 }
-

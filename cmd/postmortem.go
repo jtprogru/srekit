@@ -174,7 +174,6 @@ func loadPostmortemManifest(cmd *cobra.Command, loader *tmpl.Loader) (*sections.
 	return &sections.Manifest{Version: a.Version, Sections: a.Sections}, nil
 }
 
-
 // emitPostmortemSchema marshals the manifest-derived JSON Schema to the
 // command's stdout. The schema is recomputed from the loaded manifest on
 // every invocation, so user customizations to postmortem.yaml flow

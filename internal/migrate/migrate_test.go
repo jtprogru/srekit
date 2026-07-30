@@ -215,14 +215,14 @@ func TestConvert_NoSectionsError(t *testing.T) {
 func TestSlugifyHeading(t *testing.T) {
 	t.Parallel()
 	cases := map[string]string{
-		"Context":                   "context",
-		"Action items":              "action_items",
-		"Контекст (Context)":        "context",
+		"Context":            "context",
+		"Action items":       "action_items",
+		"Контекст (Context)": "context",
 		"Краткое описание (Summary)": "summary",
-		"What went well":            "what_went_well",
-		"Where we got lucky":        "where_we_got_lucky",
-		"":                          "section",
-		"---":                       "section",
+		"What went well":     "what_went_well",
+		"Where we got lucky": "where_we_got_lucky",
+		"":                   "section",
+		"---":                "section",
 	}
 	for in, want := range cases {
 		if got := slugifyHeading(in); got != want {

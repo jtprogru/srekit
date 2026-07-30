@@ -311,12 +311,12 @@ func TestRenderArtifactPath_Postmortem(t *testing.T) {
 	}
 	got := out.String()
 	for _, want := range []string{
-		"---\n",                                   // frontmatter open
-		`id: "abc"`,                               // frontmatter eval
+		"---\n",     // frontmatter open
+		`id: "abc"`, // frontmatter eval
 		"# Постмортем (Postmortem) — Cache stampede", // H1 eval
-		"**Тяжесть (Severity):** SEV-1",           // meta_bullet eval
-		"## Краткое описание (Summary)",           // first section
-		"## Хронология (Timeline)",                // table section
+		"**Тяжесть (Severity):** SEV-1",              // meta_bullet eval
+		"## Краткое описание (Summary)",              // first section
+		"## Хронология (Timeline)",                   // table section
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in artifact-rendered output:\n%s", want, got)

@@ -15,6 +15,7 @@ import (
 // `Frontmatter` is a yaml.Node (not a Go map) so author-chosen key order
 // survives parse → render. The renderer walks the node to evaluate each
 // scalar through the shared template engine.
+//
 //nolint:tagliatelle // snake_case in YAML is author-facing; see Section docs
 type Artifact struct {
 	Version     int       `json:"version"               yaml:"version"`
