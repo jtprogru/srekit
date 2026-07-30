@@ -11,7 +11,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
--
+- `CLAUDE.md` at the repo root: build/test/lint commands, the render pipeline from flags to markdown, project invariants (dependency minimalism, no package-level mutable state, snake_case YAML vs camelCase JSON, XDG-with-legacy-precedence), and the checklist for adding a generator.
 
 ### Changed
 
