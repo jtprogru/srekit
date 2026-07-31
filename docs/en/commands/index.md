@@ -1,13 +1,12 @@
 # Commands overview
 
-srekit's surface is a flat tree of cobra subcommands. Every generator command produces a single artifact (a Markdown or LICENSE file) and shares the same output flag set; the management commands (`templates`, `config`) group their own subcommands.
+srekit's surface is a flat tree of cobra subcommands. Every generator command produces a single Markdown artifact and shares the same output flag set; the management commands (`templates`, `config`) group their own subcommands.
 
 ## Generators
 
 | Command | Produces | Required flags |
 |---|---|---|
 | [`srekit task`](task.md) | Investigation log (alias: `sretask`) | `--title` |
-| [`srekit license`](license.md) | `LICENSE` file (alias: `lic`) | — |
 | [`srekit postmortem`](postmortem.md) | Postmortem (Google SRE-style) | `--title` |
 | [`srekit rfc`](rfc.md) | RFC / ADR | `--title` |
 | [`srekit runbook`](runbook.md) | Operational runbook | `--title` |
@@ -15,8 +14,6 @@ srekit's surface is a flat tree of cobra subcommands. Every generator command pr
 | [`srekit oncall-report`](oncall-report.md) | Weekly on-call report | `--team` |
 | [`srekit slo`](slo.md) | SLO / SLI document | `--service` |
 | [`srekit ebp`](ebp.md) | Error budget policy | `--service` |
-| [`srekit capacity`](capacity.md) | Capacity plan | `--service` |
-| [`srekit retro`](retro.md) | Sprint retro (Start / Stop / Continue) | `--team` |
 
 ## Management
 
@@ -38,7 +35,9 @@ Every generator command accepts:
 | `--dry-run` | show what would be written, do not write |
 | `--json` | emit the template data payload as JSON (default sink: stdout) |
 
-`--template FILE` is only on `srekit license` (the one command whose render path doesn't go through the v1 artifact loader). Per-artifact customization for the other generators is via dropping a `<name>.yaml` into your `templates_dir` — see [Custom templates workflow](../guides/custom-templates.md).
+There is no `--template FILE` flag. It was removed in v0.30.0 with `srekit license`, the one command whose render path read it; per-artifact customization is via dropping a `<name>.yaml` into your `templates_dir` — see [Custom templates workflow](../guides/custom-templates.md).
+
+`capacity`, `retro` and `license` were removed in v0.30.0 — see [Removed commands](../migration/removed-commands.md).
 
 The persistent flag `--templates-dir DIR` (or env `SREKIT_TEMPLATES_DIR`, or `templates_dir:` in `~/.srekit.yaml`) installs a custom templates directory whose files override the embedded ones. Missing files fall back transparently.
 

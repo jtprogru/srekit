@@ -15,7 +15,7 @@ srekit/
 │   ├── ids/              # UUID v4 + slug
 │   ├── clock/            # var Now = time.Now (overridable in tests)
 │   ├── meta/             # Author.Resolve + DetectRepo (git remote parsing)
-│   ├── cliflags/         # shared --out / --stdout / --force / --dry-run / --json bundle (--template via BindTemplateFlag, license only)
+│   ├── cliflags/         # shared --out / --stdout / --force / --dry-run / --json bundle
 │   ├── tmpl/             # //go:embed templates/*.yaml + Funcs + Source/Loader + Samples + Validate + DocsMD
 │   │   └── templates/    # v1 single-file YAML artifacts, one per generator
 │   ├── sections/         # Artifact (v1 single-file) + Section/Manifest + Merge + RenderArtifact + JSONSchema
@@ -50,19 +50,20 @@ Each generator command builds a `*tmpl.Loader` via `configureTemplates` and stas
 
 The v1 artifact runtime. `Artifact` is the parsed `<name>.yaml`: frontmatter (`yaml.Node` for order preservation), title, meta_bullets, header_body, and a section list. `ParseArtifact` validates structural invariants; `Merge` overlays per-section overrides and template-evaluates section titles; `RenderArtifact` composes the markdown (frontmatter block → H1 → meta_bullets → header_body → `## section` blocks).
 
-Generator commands pass `Options.RenderArtifact = true` and implement `ArtifactPayload()` on their data struct to hand the merged section list + ctx back to `RenderArtifact`.
+Generator commands implement `ArtifactPayload()` on their data struct to hand the merged section list + ctx back to `RenderArtifact`.
 
 ### `internal/render.Render()`
 
-The shared rendering pipeline. Takes a name, the data struct, and `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default, BootstrapJSON, RenderArtifact}`. Three branches:
+The shared rendering pipeline. Takes a name, the data struct, and `render.Options{Out, Stdout, Force, DryRun, Default, JSON, Quiet}`. Two branches:
 
-1. `--json` short-circuit: `MarshalIndent` the data (structured pass-through).
-2. `RenderArtifact = true`: the name is the bare artifact name (`"slo"`), so load `slo.yaml`, parse, hand off to `sections.RenderArtifact`. `tmpl.ArtifactNameFor` normalizes the name; it is idempotent and still accepts the pre-v1.0 spellings (`slo.md.tmpl`, `slo.tmpl`).
-3. Otherwise: legacy `text/template` execution. No shipped generator uses this branch as of v0.20; it's kept for `--template FILE` on `license` and for external tooling.
+1. `--json` short-circuit: `MarshalIndent` the data, which the caller has already shaped as `{meta, sections}`.
+2. Otherwise the artifact path: the name is the bare artifact name (`"slo"`), so load `slo.yaml`, parse, hand off to `sections.RenderArtifact`. `tmpl.ArtifactNameFor` normalizes the name; it is idempotent and still accepts the pre-v1.0 spellings (`slo.md.tmpl`, `slo.tmpl`).
+
+v0.30.0 removed the third branch — Go-template execution — along with `--template FILE` and `license`, its last caller. The `BootstrapJSON` envelope that wrapped rendered markdown into a synthetic `{meta, sections}` payload went with it: no generator had set it since v0.20.0.
 
 ### `internal/cliflags.Output`
 
-Every generator command embeds an `Output` and calls `.Bind(cmd, "default-path-description")`. This wires the shared flags (`--out` / `--stdout` / `--force` / `--dry-run` / `--json`). The `--template FILE` flag is opt-in via `BindTemplateFlag(cmd)` — only `cmd/license.go` calls it, since every other generator goes through the artifact path and ignores `TemplatePath`. `RenderOptions(def)` turns the flag values into a `render.Options`; `RenderOptionsStructured(def)` clears `BootstrapJSON` for artifact-path commands.
+Every generator command embeds an `Output` and calls `.Bind(cmd, "default-path-description")`. This wires the shared flags (`--out` / `--stdout` / `--force` / `--dry-run` / `--json`). There is no `--template FILE` binding: every generator resolves its artifact by name, so the flag would be silently ignored. `RenderOptions(def)` turns the flag values into a `render.Options`.
 
 ### `internal/meta.Resolve` and `DetectRepo`
 

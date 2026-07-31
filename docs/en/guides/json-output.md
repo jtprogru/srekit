@@ -12,7 +12,7 @@ Every generator command supports `--json`. The flag emits a structured payload i
 
 | Mode | Used by | Sections |
 |---|---|---|
-| **Structured** | every generator (postmortem, task, retro, slo, ebp, capacity, rfc, runbook, oncall-report, changelog) | Multiple typed sections — one per slot in the artifact YAML — in declared order. |
+| **Structured** | every generator (postmortem, task, slo, ebp, rfc, runbook, oncall-report, changelog) | Multiple typed sections — one per slot in the artifact YAML — in declared order. |
 
 !!! warning "Migration from pre-v1 layouts"
     - **0.12.x → 0.13.0**: shape changed from the flat `{title, severity, …}` to `{meta, sections}`. Migration: `jq '.title'` → `jq '.meta.title'`.

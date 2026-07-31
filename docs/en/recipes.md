@@ -92,7 +92,7 @@ Or just diff:
 ```bash
 srekit templates diff --name-only
 # differs  runbook.yaml
-# differs  capacity.yaml
+# differs  slo.yaml
 ```
 
 Then `srekit templates upgrade` to 3-way-merge them in.
@@ -108,7 +108,7 @@ export SREKIT_AUTHOR="Mikhail Savin"
 export SREKIT_EMAIL="m.savin@work.example.com"
 ```
 
-`cd` into the work repo and srekit auto-picks up the work identity for license / RFC / on-call docs.
+`cd` into the work repo and srekit auto-picks up the work identity for RFC / on-call docs.
 
 ---
 

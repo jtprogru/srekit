@@ -14,7 +14,7 @@ srekit rfc --title TITLE [flags]
 |---|---|---|
 | `--title` | yes | RFC subject |
 | `--status` | no | One of `proposed`, `accepted`, `rejected`, `superseded`, `deprecated`. Default: `proposed`. |
-| `--author` | no | Override author (resolved like [`license`](license.md#author-resolution)) |
+| `--author` | no | Override author (see [author resolution](../guides/configuration.md#author-identity)) |
 | `--email` | no | Override email |
 
 Plus the [shared output flags](index.md#shared-output-flags). Default filename: `rfc-<slug-of-title>.md`.
@@ -53,4 +53,4 @@ srekit rfc --title "X" --status maybe --stdout
 
 ## See also
 
-- [Author resolution](license.md#author-resolution)
+- [Author resolution](../guides/configuration.md#author-identity)

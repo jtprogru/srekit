@@ -23,7 +23,7 @@ Per key, srekit walks the sources in this order and uses the first non-empty val
 If all four are empty for a required value, the command exits with a clear error:
 
 ```bash
-srekit license --stdout
+srekit rfc --title "Move to gRPC"
 # Error: author is not set: pass --author, set SREKIT_AUTHOR, or configure git user.name
 ```
 
@@ -31,7 +31,7 @@ srekit license --stdout
 
 ### Author identity
 
-Used by: `license`, `rfc`, `oncall-report` (others fall back to "anonymous" where appropriate).
+Used by: `rfc`, `oncall-report` (others fall back to "anonymous" where appropriate).
 
 | Key | yaml | env | git |
 |---|---|---|---|
@@ -75,7 +75,7 @@ Same machine, two GitHub identities (personal and work):
 # ~/.srekit.yaml has personal identity baked in.
 # At work:
 SREKIT_AUTHOR="Mikhail Savin" SREKIT_EMAIL="m.savin@work.example.com" \
-  srekit license --type apache2 --out LICENSE
+  srekit rfc --title "Move checkout to gRPC"
 ```
 
 Or scope a custom templates dir per project:

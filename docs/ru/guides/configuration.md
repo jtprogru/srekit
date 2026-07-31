@@ -23,7 +23,7 @@ srekit читает конфигурацию из четырёх источни�
 Если все четыре пустые для required-значения — команда падает с понятной ошибкой:
 
 ```bash
-srekit license --stdout
+srekit rfc --title "Move to gRPC"
 # Error: author is not set: pass --author, set SREKIT_AUTHOR, or configure git user.name
 ```
 
@@ -31,7 +31,7 @@ srekit license --stdout
 
 ### Identity автора
 
-Используется: `license`, `rfc`, `oncall-report` (остальные фолбэчатся на "anonymous" где уместно).
+Используется: `rfc`, `oncall-report` (остальные фолбэчатся на "anonymous" где уместно).
 
 | Ключ | yaml | env | git |
 |---|---|---|---|
@@ -75,7 +75,7 @@ email: jtprogru@gmail.com
 # ~/.srekit.yaml содержит личную identity.
 # На работе:
 SREKIT_AUTHOR="Mikhail Savin" SREKIT_EMAIL="m.savin@work.example.com" \
-  srekit license --type apache2 --out LICENSE
+  srekit rfc --title "Move checkout to gRPC"
 ```
 
 Или scope кастомных шаблонов на конкретный проект:
