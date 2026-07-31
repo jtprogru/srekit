@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`srekit` is a single-binary Go CLI that generates SRE text artifacts (investigation log, postmortem, runbook, RFC/ADR, on-call report, SLO, error budget policy, capacity plan, retro, changelog, LICENSE) from templates compiled into the binary via `//go:embed`. Extracted from the [gch](https://github.com/jtprogru/gch) monolith. Pre-1.0 (current line 0.29.x).
+`srekit` is a single-binary Go CLI that generates SRE text artifacts (investigation log, postmortem, runbook, RFC/ADR, on-call report, SLO, error budget policy, changelog) from templates compiled into the binary via `//go:embed`. Extracted from the [gch](https://github.com/jtprogru/gch) monolith. Pre-1.0 (0.30.x line). `capacity`, `retro` and `license` were removed in 0.30.0; `cmd/retired.go` keeps hidden stubs that explain the removal until 1.0.
 
 ## Commands
 
@@ -40,7 +40,7 @@ cmd/<name>.go                     flags → <name>Meta struct
   └─ loader.LoadArtifactBytes()   resolves <name>.yaml through Sources
   └─ sections.ParseArtifact()     → Artifact (structural validation)
   └─ sections.Merge()             defaults + --from overrides, template-evaluated
-  └─ out.RenderOptionsStructured(cmd, defaultPath) + opts.RenderArtifact = true
+  └─ out.RenderOptions(cmd, defaultPath)
   └─ render.Render()              → sections.RenderArtifact() → markdown → writeBody
 ```
 
@@ -48,8 +48,8 @@ Key pieces:
 
 - **`internal/tmpl`** — `Source` interface (`EmbedSource` for `//go:embed templates/*.yaml`, `DirSource{Dir}` for a user dir). `Loader{Sources}` walks them in order treating `fs.ErrNotExist` as fall-through, so a missing file in the user dir transparently falls back to embedded. Also the shared `template.FuncMap` (`default`, `shortID`, `slugify`, `upper`, `lower`, `trim`, `now`).
 - **`internal/sections`** — the v1 artifact runtime. `Artifact` = `version` / `frontmatter` (a `yaml.Node`, so author key order survives parse→render) / `title` / `meta_bullets` / `header_body` / `sections`. Section types are `text` / `list` / `table`. `Merge` overlays per-section overrides; `RenderArtifact` composes the markdown (frontmatter block → H1 → meta bullets → header body → `## section` blocks).
-- **`internal/render`** — three branches in `buildBody`: `--json` short-circuit (`MarshalIndent`), `RenderArtifact` (every shipped generator), and legacy `text/template` execution (kept only for `--template FILE` on `license` and external tooling). `writeBody` owns all `--out` / `--stdout` / `--force` / `--dry-run` / `--quiet` routing; `-` means stdout.
-- **`internal/cliflags`** — `Output.Bind(cmd, outDesc)` wires the shared flags. `--template` is deliberately *not* bound here (see invariants).
+- **`internal/render`** — `buildBody` has two branches: the `--json` short-circuit (`MarshalIndent` of an already-structured payload) and the v1 artifact path. 0.30.0 removed the legacy `text/template` branch with `--template FILE` and `license`, its last caller, and with it the `BootstrapJSON` envelope and `RenderOptionsStructured` — no generator had set the flag since 0.20.0. `writeBody` owns all `--out` / `--stdout` / `--force` / `--dry-run` / `--quiet` routing; `-` means stdout.
+- **`internal/cliflags`** — `Output.Bind(cmd, outDesc)` wires the shared flags. There is no `--template` binding anywhere (see invariants).
 - **`cmd/paths.go`** — XDG resolution for config and templates dir, with legacy-path precedence.
 - **`internal/config`** — hand-rolled YAML+env config (`SREKIT_*` prefix). Deliberately not viper.
 - **`internal/clock`** — `var Now = time.Now` indirection so tests can pin the wall clock (e.g. the Sunday on-call week-boundary test).
@@ -65,7 +65,7 @@ These are load-bearing; breaking one is a defect, not a style choice.
 
 - **Dependency minimalism.** Production deps are only `spf13/cobra` and `go.yaml.in/yaml/v3`. `viper` and `google/uuid` were removed precisely because they pulled `afero → net/http → crypto/tls` into the build graph. Neither `net/http` nor `crypto` may appear in the graph. Weigh any new dependency against binary size and say so explicitly.
 - **No package-level mutable state.** The template loader lives in `cmd.Context()` (set by `configureTemplates` in `PersistentPreRunE`, read via `loaderFrom`) specifically so parallel tests don't race on a global. `gochecknoglobals` is enabled.
-- **Uniform output contract.** Every generator supports `--out` / `--stdout` / `--force` / `--dry-run` / `--json` plus the persistent `--quiet`. A flag a command silently ignores must not exist — that is why `--template` is bound only by `license` via `BindTemplateFlag`.
+- **Uniform output contract.** Every generator supports `--out` / `--stdout` / `--force` / `--dry-run` / `--json` plus the persistent `--quiet`. A flag a command silently ignores must not exist — that is why `--template` no longer exists at all: `license` was the only command whose render path read it, and both went in 0.30.0.
 - **snake_case in YAML, camelCase in JSON.** Artifact YAML is hand-edited by SRE/devops authors (Ansible/K8s precedent); JSON output keys are camelCase across every command including `templates list --json`. Both are public contract; `tagliatelle` is suppressed with a comment where they meet.
 - **The JSON contract** `{meta, sections:[{id,title,type,body,required}]}` is public and stabilizes at 1.0. Section bodies from `--from` are inserted verbatim, never template-evaluated.
 - **An unknown section ID in input is always an error**, never a silent skip.

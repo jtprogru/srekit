@@ -1,6 +1,6 @@
 schema: spec-driven
 context: |
-  srekit — CLI-генератор текстовых артефактов SRE (investigation log, postmortem, runbook, RFC/ADR, on-call report, SLO, error budget policy, capacity plan, retro, changelog, LICENSE). Извлечён из монолита gch. Pre-1.0 (текущая линия 0.29.x).
+  srekit — CLI-генератор текстовых артефактов SRE (investigation log, postmortem, runbook, RFC/ADR, on-call report, SLO, error budget policy, changelog). Извлечён из монолита gch. Pre-1.0 (линия 0.30.x). Команды capacity, retro и license удалены в 0.30.0.
 
   Стек и границы:
   - Go 1.26, зависимости в проде — только spf13/cobra и go.yaml.in/yaml/v3. Добавление зависимости взвешивается против размера бинаря: viper и google/uuid были выпилены именно поэтому (тянули afero → net/http → crypto/tls + FIPS-140). Ни crypto, ни net/http в графе сборки быть не должно.
@@ -8,7 +8,7 @@ context: |
   - Раскладка: main.go → cmd/ (один файл на команду) → internal/{tmpl,sections, render,cliflags,config,meta,ids,clock,migrate}. internal/* не является публичным API.
 
   Ключевые инварианты:
-  - Единый output-контракт для всех генераторов: --out/--stdout/--force/--dry-run/--json плюс персистентный --quiet. Флаг, который команда молча игнорирует, считается дефектом (поэтому --template биндится только в license).
+  - Единый output-контракт для всех генераторов: --out/--stdout/--force/--dry-run/--json плюс персистентный --quiet. Флаг, который команда молча игнорирует, считается дефектом (поэтому --template удалён совсем вместе с license — единственной командой, которая его honor-ила).
   - Формат шаблона v1 — один <name>.yaml на артефакт: version/frontmatter/title/ meta_bullets/header_body/sections. Порядок ключей frontmatter и порядок секций сохраняются. Ключи YAML — snake_case (аудитория правит их руками), ключи JSON — camelCase.
   - JSON-контракт ({meta, sections:[{id,title,type,body,required}]}) публичный и стабилизируется на 1.0. Тела секций из --from вставляются verbatim, без вычисления шаблонов.
   - Неизвестный section ID во входных данных — всегда ошибка, никогда не молчаливый пропуск.

@@ -9,11 +9,11 @@
 [![security](https://github.com/jtprogru/srekit/actions/workflows/security.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/security.yaml)
 [![goreleaser](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml)
 [![Homebrew](https://img.shields.io/badge/Homebrew-jtprogru%2Ftap-FBB040?logo=homebrew&logoColor=white)](https://github.com/jtprogru/homebrew-tap)
-![Go LoC](https://img.shields.io/badge/go-7306%20LoC-blueviolet?logo=go)
+![Go LoC](https://img.shields.io/badge/go-6960%20LoC-blueviolet?logo=go)
 
 📚 **Documentation:** [jtprogru.github.io/srekit](https://jtprogru.github.io/srekit/) (EN + RU, full command reference, guides, recipes, architecture).
 
-Генератор текстовых артефактов SRE: investigation log'и, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, capacity plans, retro, changelog'и, лицензии.
+Генератор текстовых артефактов SRE: investigation log'и, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, changelog'и.
 
 Все markdown-шаблоны двуязычные: заголовки и метки в формате `Русский (English)`, тело — на русском. Технические идентификаторы (SLO/SLI/RFC/PromQL/UTC/SEV), ключи YAML frontmatter и PromQL-выражения остаются английскими. Шаблон `changelog` остаётся полностью английским, чтобы не ломать тулинг вокруг Keep a Changelog.
 
@@ -90,17 +90,6 @@ srekit task --title "Tail latency on api-gw" --path ./tasks
 
 Шаблон с секциями Context / Hypothesis / Evidence / Findings / Action items / References. Алиас `srekit sretask` оставлен для совместимости (исторически команда заменяла `gch sretask`).
 
-### `srekit license` — LICENSE-файл (по умолчанию WTFPL)
-
-```bash
-srekit license --stdout                          # WTFPL в stdout (как gch lic)
-srekit license --out LICENSE                     # записать в LICENSE
-srekit license --type mit --out LICENSE          # MIT
-srekit license --type apache2 --out LICENSE      # Apache 2.0
-```
-
-Author/email берётся в порядке: `--author/--email` → `SREKIT_AUTHOR/SREKIT_EMAIL` → `~/.srekit.yaml` → `git config user.name/user.email`.
-
 ### `srekit postmortem` — шаблон постмортема (Google SRE-style)
 
 ```bash
@@ -150,7 +139,7 @@ srekit oncall-report --team platform --start 2026-05-04 --end 2026-05-10
 srekit oncall-report --team platform --author "Alice" --email alice@example.com
 ```
 
-Если `--author/--email` не заданы, как и в `license` / `rfc`, берётся `SREKIT_*` env → config → `git config`.
+Если `--author/--email` не заданы, как и в `rfc`, берётся `SREKIT_*` env → config → `git config`.
 
 ### `srekit slo` — SLO/SLI документ
 
@@ -165,20 +154,6 @@ srekit ebp --service api-gw --out ebp-api-gw.md
 ```
 
 Политика, что команда делает при сгорании бюджета ошибок: triggered actions по уровням (Yellow / Orange / Red), исключения, эскалация.
-
-### `srekit capacity` — план ёмкости
-
-```bash
-srekit capacity --service api-gw --horizon 1y --out capacity-api-gw.md
-```
-
-Шаблон capacity planning: baseline, допущения роста, прогноз, триггеры скейла, headroom, зависимости, стоимость, риски.
-
-### `srekit retro` — шаблон ретро
-
-```bash
-srekit retro --team platform --sprint 2026-W19
-```
 
 ### `srekit templates init` — твои собственные шаблоны под git
 
@@ -205,7 +180,7 @@ echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
 
 Если файла нет в твоей директории, `srekit` тихо берёт встроенный — можно оверрайдить только то, что нужно.
 
-`--template FILE` (one-shot подмена шаблона на одну команду) поддерживается только `srekit license` — у остальных генераторов кастомизация делается через `<name>.yaml` в `templates_dir` (см. ниже про `templates init` / `upgrade`).
+Флага `--template FILE` (one-shot подмена шаблона) больше нет ни у одной команды — он ушёл в v0.30.0 вместе с `srekit license`, своим последним потребителем. Кастомизация делается через `<name>.yaml` в `templates_dir` (см. ниже про `templates init` / `upgrade`).
 
 ### `srekit templates pull` — синхронизация с remote
 
@@ -333,13 +308,13 @@ cargo install tokei           # через cargo
 
 ## Стабильность и версионирование
 
-`srekit` следует [SemVer](https://semver.org/lang/ru/). Текущая ветка — `0.x`, поэтому breaking changes допустимы между minor-версиями (и явно помечены в [CHANGELOG](CHANGELOG.md) как `Breaking — …`).
+`srekit` следует [SemVer](https://semver.org/lang/ru/). Текущая ветка — `0.x`, поэтому breaking changes допустимы между minor-версиями (и явно помечены в [CHANGELOG](CHANGELOG.md) как `Breaking — …`). Свежий пример: в v0.30.0 удалены команды `capacity`, `retro` и `license` — см. [гайд по удалённым командам](https://jtprogru.github.io/srekit/migration/removed-commands/). Deprecation-цикл ниже — это обещание, которое вступает в силу с v1.0; на `0.x` оно ещё не действует.
 
 С **v1.0** релиз станет stability stamp:
 
 - **Стабильный публичный контракт.** CLI-флаги, имена и порядок section ID в `--json`, схема `<name>.yaml` (`version` / `frontmatter` / `title` / `meta_bullets` / `header_body` / `sections`), словарь section `type` (`text` / `list` / `table`), ключи в `~/.srekit.yaml` и `SREKIT_*` env. Любое из этого ломается только в major-релизе с migration-инструкцией.
 - **Соблюдение обратной совместимости через 1.x.** Поддерживается чтение legacy `.tmpl` и `.sections.yaml` файлов в user-`templates_dir` (с stderr `WARN`); их удаление — кандидат на 2.0.
-- **Deprecation-цикл.** Когда мы что-то планируем убрать, оно сначала становится no-op или начинает писать `WARN` минимум один minor-релиз, потом удаляется в следующем major. Пример из недавнего: `--template FILE` на не-license командах с v0.20.0 был silent no-op, в v0.22.0 убран с CLI-surface.
+- **Deprecation-цикл.** Когда мы что-то планируем убрать, оно сначала становится no-op или начинает писать `WARN` минимум один minor-релиз, потом удаляется в следующем major. Пример из недавнего: `--template FILE` на не-license командах с v0.20.0 был silent no-op, в v0.22.0 убран с CLI-surface, а в v0.30.0 удалён совсем — вместе с `srekit license`, единственной командой, которая его honor-ила.
 
 Что **не** стабилизируется в 1.0 (может меняться в 1.x):
 
