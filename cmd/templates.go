@@ -677,6 +677,13 @@ func artifactFileNames(dir string) ([]string, error) {
 	return names, nil
 }
 
+// isLegacyArtifactName reports whether a filename uses one of the pre-v1.0
+// layouts (the `.tmpl` / `.sections.yaml` pair retired across the v0.14–v0.20
+// YAML-first migration). They still load through 1.x, with a warning.
+func isLegacyArtifactName(name string) bool {
+	return strings.HasSuffix(name, ".tmpl") || strings.HasSuffix(name, ".sections.yaml")
+}
+
 // validateArtifactBody parses one artifact with the parser its filename
 // selects: the legacy manifest parser, the v1 artifact parser, or a Go
 // template parse. parseOnly reports the third case landing on a name with no

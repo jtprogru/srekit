@@ -108,8 +108,8 @@ func TestCatalogIsExactlyTheSurvivingGenerators(t *testing.T) {
 	want := []string{
 		"task", "postmortem", "rfc", "runbook",
 		"changelog", "oncall-report", "slo", "ebp",
-		// management commands, not generators
-		"templates", "config",
+		// management and diagnostic commands, not generators
+		"templates", "config", "doctor",
 	}
 	for _, name := range want {
 		if !got[name] {

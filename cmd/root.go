@@ -80,6 +80,7 @@ built by: ` + BuiltBy + `
 		newEBPCmd(),
 		newTemplatesCmd(),
 		newConfigCmd(),
+		newDoctorCmd(),
 	)
 	root.AddCommand(retiredCmds()...)
 	return root
@@ -153,13 +154,21 @@ func configureTemplates(cmd *cobra.Command) error {
 	if err != nil {
 		return fmt.Errorf("--templates-dir: %w", err)
 	}
+	// doctor reports the fallback itself, as a finding carrying the source of
+	// the setting and a remedy — strictly more than this line says. Printing
+	// both would report one problem twice.
+	silent := cmd.Annotations[annotationSelfReportsPaths] == "true"
 	switch info, statErr := os.Stat(dir); {
 	case dir == "":
 		// no custom dir configured — embedded only
 	case statErr != nil:
-		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: templates dir %s: %v (falling back to embedded)\n", dir, statErr)
+		if !silent {
+			fmt.Fprintf(cmd.ErrOrStderr(), "srekit: templates dir %s: %v (falling back to embedded)\n", dir, statErr)
+		}
 	case !info.IsDir():
-		fmt.Fprintf(cmd.ErrOrStderr(), "srekit: %s is not a directory (falling back to embedded)\n", dir)
+		if !silent {
+			fmt.Fprintf(cmd.ErrOrStderr(), "srekit: %s is not a directory (falling back to embedded)\n", dir)
+		}
 	default:
 		loader.AddDirSource(dir)
 	}
