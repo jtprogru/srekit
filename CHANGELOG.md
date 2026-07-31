@@ -9,6 +9,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-07-31
+
 ### Added
 
 - **New command `srekit doctor`** — a read-only diagnostic of the environment. It surfaces what until now was only visible indirectly: which config file is actually read and whether a second one shadows it (the classic trap in the "XDG for fresh installs, legacy wins if present" rule), where the templates directory resolves and which source supplied it, whether the user's artifacts still parse, whether pre-v1.0 template files linger and how far the directory has drifted from the embedded set, whether an author identity resolves at all and from where, which `SREKIT_*` variables are in effect, and whether `git` is on `PATH`. Twelve checks across three categories (`config`, `templates`, `dependencies`), each with a stable identifier (`config.shadowed`, `templates.parse`, `dependencies.git`, …) — a public contract teams can gate CI on. An `error` finding exits `1`; a `warn` does not, so `doctor` can be adopted in CI without being blocked by advisory findings. `--quiet` prints only what needs attention, so silence means healthy. `--json` emits the same findings as a document with `camelCase` keys and the worst status as its overall status. The command writes nothing, repairs nothing, and makes no network request; it has no `--out` / `--stdout` / `--force` / `--dry-run`, since there is nothing to write. No new dependency. Docs: [docs/commands/doctor.md](https://jtprogru.github.io/srekit/commands/doctor/).
@@ -592,7 +594,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.29.3...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/jtprogru/srekit/compare/v0.29.3...v0.30.0
 [0.29.3]: https://github.com/jtprogru/srekit/compare/v0.29.2...v0.29.3
 [0.29.2]: https://github.com/jtprogru/srekit/compare/v0.29.1...v0.29.2
 [0.29.1]: https://github.com/jtprogru/srekit/compare/v0.29.0...v0.29.1
