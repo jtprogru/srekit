@@ -57,6 +57,7 @@ plugins:
             Generators: Генераторы
             Templates: Шаблоны
             Config: Конфиг
+            Doctor: Диагностика
             Completion: Автодополнение
             Guides: Руководства
             Custom templates workflow: Кастомные шаблоны
@@ -112,6 +113,7 @@ nav:
           - srekit ebp: commands/ebp.md
       - Templates: commands/templates.md
       - Config: commands/config.md
+      - Doctor: commands/doctor.md
       - Completion: commands/completion.md
   - Guides:
       - Custom templates workflow: guides/custom-templates.md

@@ -1,6 +1,6 @@
 # Обзор команд
 
-Поверхность srekit — плоское дерево cobra-подкоманд. Каждая команда-генератор производит один Markdown-артефакт и разделяет общий набор output-флагов; управляющие команды (`templates`, `config`) группируют свои подкоманды.
+Поверхность srekit — плоское дерево cobra-подкоманд. Каждая команда-генератор производит один Markdown-артефакт и разделяет общий набор output-флагов; управляющие команды (`templates`, `config`) группируют свои подкоманды, а `doctor` отчитывается об окружении, которое резолвят все остальные.
 
 ## Генераторы
 
@@ -21,6 +21,7 @@
 |---|---|
 | [`srekit templates`](templates.md) | Управление кастомной директорией шаблонов: `init`, `pull`, `list`, `validate`, `diff`, `upgrade` |
 | [`srekit config`](config.md) | Скаффолд `~/.srekit.yaml`: `init` |
+| [`srekit doctor`](doctor.md) | Диагностика окружения только на чтение: конфиг, шаблоны, identity, `git` |
 | [`srekit completion`](completion.md) | Shell автодополнение: `bash`, `zsh`, `fish`, `powershell` |
 
 ## Общие output-флаги {#shared-output-flags}

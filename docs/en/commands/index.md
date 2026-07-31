@@ -1,6 +1,6 @@
 # Commands overview
 
-srekit's surface is a flat tree of cobra subcommands. Every generator command produces a single Markdown artifact and shares the same output flag set; the management commands (`templates`, `config`) group their own subcommands.
+srekit's surface is a flat tree of cobra subcommands. Every generator command produces a single Markdown artifact and shares the same output flag set; the management commands (`templates`, `config`) group their own subcommands, and `doctor` reports on the environment all of them resolve.
 
 ## Generators
 
@@ -21,6 +21,7 @@ srekit's surface is a flat tree of cobra subcommands. Every generator command pr
 |---|---|
 | [`srekit templates`](templates.md) | Manage a custom templates directory: `init`, `pull`, `list`, `validate`, `diff`, `upgrade` |
 | [`srekit config`](config.md) | Scaffold `~/.srekit.yaml`: `init` |
+| [`srekit doctor`](doctor.md) | Diagnose the environment read-only: config, templates, identity, `git` |
 | [`srekit completion`](completion.md) | Shell autocomplete: `bash`, `zsh`, `fish`, `powershell` |
 
 ## Shared output flags {#shared-output-flags}
