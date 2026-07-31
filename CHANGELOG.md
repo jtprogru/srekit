@@ -592,7 +592,11 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.29.3...HEAD
+[0.29.3]: https://github.com/jtprogru/srekit/compare/v0.29.2...v0.29.3
+[0.29.2]: https://github.com/jtprogru/srekit/compare/v0.29.1...v0.29.2
+[0.29.1]: https://github.com/jtprogru/srekit/compare/v0.29.0...v0.29.1
+[0.29.0]: https://github.com/jtprogru/srekit/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/jtprogru/srekit/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/jtprogru/srekit/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/jtprogru/srekit/compare/v0.25.0...v0.26.0
@@ -613,6 +617,11 @@ This release introduces the manifest format on a single command as a prototype. 
 [0.12.1]: https://github.com/jtprogru/srekit/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/jtprogru/srekit/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/jtprogru/srekit/compare/v0.10.2...v0.11.0
+[0.10.2]: https://github.com/jtprogru/srekit/compare/v0.10.1...v0.10.2
+[0.10.1]: https://github.com/jtprogru/srekit/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/jtprogru/srekit/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/jtprogru/srekit/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/jtprogru/srekit/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jtprogru/srekit/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jtprogru/srekit/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jtprogru/srekit/compare/v0.4.0...v0.5.0
