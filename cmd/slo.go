@@ -71,8 +71,7 @@ func newSLOCmd() *cobra.Command {
 
 			data := sloData{Meta: meta, Sections: rendered}
 			def := fmt.Sprintf("slo-%s.md", ids.Slug(service))
-			opts := out.RenderOptionsStructured(cmd, def)
-			opts.RenderArtifact = true
+			opts := out.RenderOptions(cmd, def)
 			return render.Render(cmd.OutOrStdout(), loader, "slo", data, opts)
 		},
 	}

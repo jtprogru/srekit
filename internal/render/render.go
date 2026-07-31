@@ -1,45 +1,25 @@
 package render
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
-	"text/template"
 
 	"github.com/jtprogru/srekit/internal/sections"
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
 type Options struct {
-	Out          string
-	Stdout       bool
-	Force        bool
-	DryRun       bool
-	Default      string
-	TemplatePath string // optional: read template from this file path instead of the embedded/loader chain
-	JSON         bool   // emit the template data as JSON instead of rendering the template
-	Quiet        bool   // suppress informational messages (the "wrote <file>" line, dry-run notes)
-	// BootstrapJSON wraps `data` in a `{meta, sections: [{id:"body", …}]}`
-	// envelope when emitting --json, so legacy `text/template` commands
-	// produce the same shape as artifact-path commands. Every shipped
-	// generator is now on the artifact path (v0.20.0) and sets
-	// BootstrapJSON=false, but the wrapping is kept for external tooling
-	// that ships custom `.tmpl` commands via the public Render API.
-	BootstrapJSON bool
-	// RenderArtifact switches the render path from Go-template execution
-	// to the v1 YAML artifact format. When true, Render's `name` argument
-	// is the bare artifact name: the loader resolves <name>.yaml via
-	// LoadArtifactBytes, ParseArtifact builds an Artifact, and
-	// sections.RenderArtifact composes the markdown. `data` must
-	// implement ArtifactPayload (returning the pre-merged section list
-	// and the template ctx). Every shipped generator sets this to true.
-	RenderArtifact bool
+	Out     string
+	Stdout  bool
+	Force   bool
+	DryRun  bool
+	Default string
+	JSON    bool // emit the caller's structured payload as JSON instead of rendering markdown
+	Quiet   bool // suppress informational messages (the "wrote <file>" line, dry-run notes)
 }
 
 // ArtifactPayload is implemented by cmd-level data structs that join the
@@ -52,10 +32,11 @@ type ArtifactPayload interface {
 
 // Render builds the document for name and routes it per opts.
 //
-// When opts.RenderArtifact is set (every shipped generator), name is the
-// bare artifact name — "slo" resolves internal/tmpl/templates/slo.yaml
-// through the loader. On the legacy text/template branch it is a template
-// filename passed straight to loader.Parse.
+// name is the bare artifact name — "slo" resolves
+// internal/tmpl/templates/slo.yaml through the loader. The Go-template
+// execution branch this function used to have was removed in v0.30.0
+// along with `--template FILE` and the `license` command, its last
+// caller: the v1 artifact format is the only render path.
 func Render(stdout io.Writer, loader *tmpl.Loader, name string, data any, opts Options) error {
 	body, err := buildBody(loader, name, data, opts)
 	if err != nil {
@@ -64,18 +45,10 @@ func Render(stdout io.Writer, loader *tmpl.Loader, name string, data any, opts O
 	return writeBody(stdout, body, opts)
 }
 
-// WriteRaw applies the standard --out / --stdout / --force / --dry-run /
-// --quiet routing to an already-rendered body. Used by commands that
-// render their content inline (currently: license, whose template bodies
-// are Go constants rather than embedded files).
-func WriteRaw(stdout io.Writer, body []byte, opts Options) error {
-	return writeBody(stdout, body, opts)
-}
-
 func buildBody(loader *tmpl.Loader, name string, data any, opts Options) ([]byte, error) {
-	// Structured JSON path: the caller has already shaped data as
-	// {meta, sections}; marshal as-is without touching the template.
-	if opts.JSON && !opts.BootstrapJSON {
+	// JSON path: the caller has already shaped data as {meta, sections};
+	// marshal as-is without rendering markdown.
+	if opts.JSON {
 		b, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
 			return nil, fmt.Errorf("encode %q as JSON: %w", name, err)
@@ -83,61 +56,13 @@ func buildBody(loader *tmpl.Loader, name string, data any, opts Options) ([]byte
 		return append(b, '\n'), nil
 	}
 
-	var body []byte
-	if opts.RenderArtifact {
-		var err error
-		body, err = renderArtifactPath(loader, name, data)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		var t *template.Template
-		var err error
-		if opts.TemplatePath != "" {
-			t, err = tmpl.ParseFile(opts.TemplatePath)
-		} else {
-			t, err = loader.Parse(name)
-		}
-		if err != nil {
-			return nil, err
-		}
-		var buf bytes.Buffer
-		if err := t.Execute(&buf, data); err != nil {
-			return nil, fmt.Errorf("render %q: %w", name, err)
-		}
-		body = buf.Bytes()
-	}
-
-	// Bootstrap JSON path: render markdown first, then wrap the result in
-	// a {meta, sections:[{id:"body", ...}]} envelope so every generator
-	// command exposes a uniform JSON contract regardless of whether it has
-	// a sections manifest yet.
-	if opts.JSON && opts.BootstrapJSON {
-		envelope := map[string]any{
-			"meta": data,
-			"sections": []map[string]any{{
-				"id":       "body",
-				"title":    extractH1(body),
-				"type":     "text",
-				"required": true,
-				"body":     string(body),
-			}},
-		}
-		b, err := json.MarshalIndent(envelope, "", "  ")
-		if err != nil {
-			return nil, fmt.Errorf("encode %q as JSON: %w", name, err)
-		}
-		return append(b, '\n'), nil
-	}
-
-	return body, nil
+	return renderArtifactPath(loader, name, data)
 }
 
 // renderArtifactPath loads the v1 single-file YAML artifact for name,
 // parses it, extracts the pre-merged section list + ctx from data (which
 // must implement ArtifactPayload), and composes the markdown via
-// sections.RenderArtifact. This is the v0.14.0+ render path for commands
-// that have migrated to the YAML format.
+// sections.RenderArtifact.
 func renderArtifactPath(loader *tmpl.Loader, name string, data any) ([]byte, error) {
 	artifactBytes, err := loader.LoadArtifactBytes(name)
 	if err != nil {
@@ -149,24 +74,17 @@ func renderArtifactPath(loader *tmpl.Loader, name string, data any) ([]byte, err
 	}
 	payload, ok := data.(ArtifactPayload)
 	if !ok {
-		return nil, fmt.Errorf("RenderArtifact set but data type %T does not implement ArtifactPayload", data)
+		return nil, fmt.Errorf("data type %T does not implement ArtifactPayload", data)
 	}
 	rendered, ctx := payload.ArtifactPayload()
 	return sections.RenderArtifact(artifact, rendered, ctx)
 }
 
-var h1Pattern = regexp.MustCompile(`(?m)^#\s+(.+)$`)
-
-// extractH1 returns the text of the first level-1 heading in body, or "" if
-// the document has none. Used to populate the synthetic `body` section's
-// title in the bootstrap JSON envelope.
-func extractH1(body []byte) string {
-	m := h1Pattern.FindSubmatch(body)
-	if m == nil {
-		return ""
-	}
-	return strings.TrimSpace(string(m[1]))
-}
+// extractH1 and the bootstrap-JSON envelope it fed were removed in
+// v0.30.0. The envelope existed so a generator without a sections
+// manifest could still emit the uniform JSON contract; every generator
+// has had one since v0.20.0, so nothing had set BootstrapJSON for three
+// minor lines.
 
 func writeBody(stdout io.Writer, body []byte, opts Options) error {
 	target := opts.Out

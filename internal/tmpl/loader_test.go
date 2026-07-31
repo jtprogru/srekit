@@ -1,34 +1,12 @@
 package tmpl
 
 import (
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 )
 
-func TestLoader_DirOverridesEmbed(t *testing.T) {
-	// As of v0.20.0 there's no shared .tmpl name between embed and
-	// dir-by-default, so this test exercises the source-priority logic by
-	// putting a fixture .tmpl into the dir source and verifying it resolves.
-	dir := t.TempDir()
-	custom := []byte("CUSTOM: {{ .Title }}\n")
-	if err := os.WriteFile(filepath.Join(dir, "fixture.md.tmpl"), custom, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	loader := &Loader{Sources: []Source{DirSource{Dir: dir}, EmbedSource{}}}
-	tpl, err := loader.Parse("fixture.md.tmpl")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var buf strings.Builder
-	if err := tpl.Execute(&buf, struct{ Title string }{Title: "X"}); err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(buf.String(), "CUSTOM: X") {
-		t.Fatalf("expected dir template, got embedded: %s", buf.String())
-	}
-}
+// TestLoader_DirOverridesEmbed was removed in v0.30.0 with Loader.Parse.
+// Source priority is covered by TestLoadArtifactBytes_DirOverridesEmbed,
+// which walks the same chain.
 
 func TestLoader_FallbackToEmbed(t *testing.T) {
 	// Dir exists but doesn't contain the requested artifact — should fall
@@ -46,35 +24,13 @@ func TestLoader_FallbackToEmbed(t *testing.T) {
 	}
 }
 
-func TestLoader_NotFoundInAnySource(t *testing.T) {
-	loader := &Loader{Sources: []Source{EmbedSource{}}}
-	_, err := loader.Parse("does-not-exist.md.tmpl")
-	if err == nil {
-		t.Fatal("expected error for missing template")
-	}
-	if !strings.Contains(err.Error(), "not found") {
-		t.Fatalf("error should mention 'not found', got: %v", err)
-	}
-}
+// TestLoader_NotFoundInAnySource was removed in v0.30.0 with
+// Loader.Parse. The exhausted-sources case is covered by
+// TestLoadArtifactBytes_NotFound.
 
-func TestParseFile_AppliesFuncs(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "x.tmpl")
-	if err := os.WriteFile(path, []byte(`{{ "abc" | upper }}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	tpl, err := ParseFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var buf strings.Builder
-	if err := tpl.Execute(&buf, nil); err != nil {
-		t.Fatal(err)
-	}
-	if buf.String() != "ABC" {
-		t.Fatalf("expected 'ABC', got %q", buf.String())
-	}
-}
+// TestParseFile_AppliesFuncs was removed in v0.30.0 with ParseFile itself.
+// Funcs application is covered by TestValidateAppliesFuncMap and the rest
+// of the funcs_test suite.
 
 func TestAddDirSource_Prepends(t *testing.T) {
 	// Default order is [Embed]. After AddDirSource, it becomes [Dir, Embed].

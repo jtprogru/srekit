@@ -31,11 +31,12 @@ var FS embed.FS
 //go:embed TEMPLATES.md
 var DocsMD []byte
 
-// Funcs is the template function map shared by every parsed template.
-// It is exported so tests can inspect or extend it; production code parses
-// through Parse, which applies it automatically.
+// Funcs is the template function map shared by every parsed template:
+// section bodies and frontmatter evaluated by internal/sections, and the
+// `.tmpl` files `srekit templates validate` parses. It is exported so
+// tests can inspect or extend it.
 //
-//nolint:gochecknoglobals // intentional package-level registry shared by every Parse() call
+//nolint:gochecknoglobals // intentional package-level registry shared by every template parse
 var Funcs = template.FuncMap{
 	"default": func(def, val string) string {
 		if val == "" {
@@ -103,26 +104,11 @@ func NewDefaultLoader() *Loader {
 	return &Loader{Sources: []Source{EmbedSource{}}}
 }
 
-// Parse resolves name through Sources in order and returns a parsed
-// template with Funcs applied. fs.ErrNotExist on a source falls through
-// to the next; any other source error is returned as-is.
-func (l *Loader) Parse(name string) (*template.Template, error) {
-	for _, s := range l.Sources {
-		b, err := s.Read(name)
-		if errors.Is(err, fs.ErrNotExist) {
-			continue
-		}
-		if err != nil {
-			return nil, fmt.Errorf("template %q: %w", name, err)
-		}
-		t, err := template.New(name).Funcs(Funcs).Parse(string(b))
-		if err != nil {
-			return nil, fmt.Errorf("parse template %q: %w", name, err)
-		}
-		return t, nil
-	}
-	return nil, fmt.Errorf("template %q not found in any source", name)
-}
+// Loader.Parse was removed in v0.30.0. It returned a parsed
+// text/template, which only the render package's Go-template branch ever
+// wanted; that branch went with `--template FILE` and the `license`
+// command. Artifacts are resolved as raw bytes via LoadArtifactBytes and
+// parsed by internal/sections.
 
 // AddDirSource prepends a DirSource so user-dir templates take priority
 // over the embedded fallback.
@@ -158,8 +144,8 @@ func ArtifactNameFor(name string) string {
 
 // LoadArtifactBytes resolves the v1 single-file artifact named by name
 // (the bare artifact name, e.g. "postmortem") and returns its raw YAML
-// bytes. Walks Sources in the same order as Parse, so a user-dir artifact
-// shadows the embedded one. Returns fs.ErrNotExist when no source has it.
+// bytes. Walks Sources in order, so a user-dir artifact shadows the
+// embedded one. Returns fs.ErrNotExist when no source has it.
 //
 // The name is normalized through ArtifactNameFor, so legacy spellings like
 // "postmortem.md.tmpl" resolve to the same artifact.
@@ -203,17 +189,6 @@ func EmbeddedNames() ([]string, error) {
 	return out, nil
 }
 
-// ParseFile reads a template from an arbitrary file path and parses it
-// with Funcs applied. Used to implement the per-command --template flag.
-func ParseFile(path string) (*template.Template, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("read template %s: %w", path, err)
-	}
-	name := filepath.Base(path)
-	t, err := template.New(name).Funcs(Funcs).Parse(string(b))
-	if err != nil {
-		return nil, fmt.Errorf("parse template %s: %w", path, err)
-	}
-	return t, nil
-}
+// ParseFile was removed in v0.30.0 together with `--template FILE`, the
+// only feature that read a template from an arbitrary path. Artifacts are
+// resolved by name through the Loader's source chain.

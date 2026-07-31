@@ -90,8 +90,7 @@ func newRFCCmd() *cobra.Command {
 
 			data := rfcData{Meta: m, Sections: rendered}
 			def := fmt.Sprintf("rfc-%s.md", ids.Slug(title))
-			opts := out.RenderOptionsStructured(cmd, def)
-			opts.RenderArtifact = true
+			opts := out.RenderOptions(cmd, def)
 			return render.Render(cmd.OutOrStdout(), loader, "rfc", data, opts)
 		},
 	}

@@ -1,8 +1,7 @@
 package tmpl
 
 import (
-	"os"
-	"path/filepath"
+	"errors"
 	"testing"
 	"time"
 
@@ -84,18 +83,18 @@ func TestNowFuncRespectsClock(t *testing.T) {
 	}
 }
 
-func TestParseAppliesFuncMap(t *testing.T) {
-	// Loader.Parse must wire the FuncMap so templates can call shortID /
-	// default / slugify / now. As of v0.20.0 the embed FS contains no .tmpl
-	// (every generator is on the v1 YAML artifact path), so this test
-	// writes a fixture template into a DirSource and verifies it parses.
-	dir := t.TempDir()
+func TestValidateAppliesFuncMap(t *testing.T) {
+	// Every template parse must wire the FuncMap so bodies can call
+	// shortID / default / slugify / now. Validate is the production entry
+	// point for `.tmpl` files (`srekit templates validate`); a body using
+	// the helpers must parse, and an unknown helper must not.
 	body := []byte(`{{ "abc-1234" | shortID 4 }} / {{ "" | default "fallback" }}`)
-	if err := os.WriteFile(filepath.Join(dir, "fixture.tmpl"), body, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	loader := &Loader{Sources: []Source{DirSource{Dir: dir}}}
-	if _, err := loader.Parse("fixture.tmpl"); err != nil {
+	if err := Validate("fixture.tmpl", body); err != nil && !errors.Is(err, ErrUnknownTemplate) {
 		t.Fatalf("fixture should parse with FuncMap: %v", err)
+	}
+
+	bogus := []byte(`{{ "x" | nosuchfunc }}`)
+	if err := Validate("bogus.tmpl", bogus); err == nil || errors.Is(err, ErrUnknownTemplate) {
+		t.Fatalf("an unknown helper must fail to parse, got: %v", err)
 	}
 }

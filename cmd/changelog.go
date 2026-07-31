@@ -63,8 +63,7 @@ func newChangelogCmd() *cobra.Command {
 			}
 
 			data := changelogData{Meta: m, Sections: rendered}
-			opts := out.RenderOptionsStructured(cmd, "CHANGELOG.md")
-			opts.RenderArtifact = true
+			opts := out.RenderOptions(cmd, "CHANGELOG.md")
 			return render.Render(cmd.OutOrStdout(), loader, "changelog", data, opts)
 		},
 	}

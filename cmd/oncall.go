@@ -97,8 +97,7 @@ func newOncallCmd() *cobra.Command {
 
 			data := oncallData{Meta: m, Sections: rendered}
 			def := fmt.Sprintf("oncall-%s-%s.md", ids.Slug(team), ids.Slug(start))
-			opts := out.RenderOptionsStructured(cmd, def)
-			opts.RenderArtifact = true
+			opts := out.RenderOptions(cmd, def)
 			return render.Render(cmd.OutOrStdout(), loader, "oncall", data, opts)
 		},
 	}
