@@ -12,7 +12,7 @@
 
 | Режим | Команды | Секции |
 |---|---|---|
-| **Structured** | все генераторы (postmortem, task, retro, slo, ebp, capacity, rfc, runbook, oncall-report, changelog) | Несколько типизированных секций — одна на слот в YAML-артефакте — в декларированном порядке. |
+| **Structured** | все генераторы (postmortem, task, slo, ebp, rfc, runbook, oncall-report, changelog) | Несколько типизированных секций — одна на слот в YAML-артефакте — в декларированном порядке. |
 
 !!! warning "Миграция с pre-v1 раскладок"
     - **0.12.x → 0.13.0**: форма изменилась с плоской `{title, severity, …}` на `{meta, sections}`. Миграция: `jq '.title'` → `jq '.meta.title'`.

@@ -76,7 +76,7 @@ Before pushing edits, make sure templates still render:
 
 ```bash
 srekit templates validate
-# OK    capacity.yaml
+# OK    slo.yaml
 # OK    changelog.yaml
 # ...
 ```

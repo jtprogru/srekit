@@ -19,16 +19,40 @@ The CLI SHALL provide exactly these generator commands, each producing one Markd
 | `oncall-report` | On-call shift report | `--team` |
 | `slo` | SLO definition | `--service` |
 | `ebp` | Error budget policy | `--service` |
-| `capacity` | Capacity plan | `--service` |
-| `retro` | Sprint / period retrospective | `--team` |
 | `changelog` | Keep-a-Changelog scaffold | none (repo auto-detected) |
-| `license` | LICENSE file | none (defaults to WTFPL) |
+
+Every command in the catalog SHALL produce an artifact an on-call engineer or a reliability team owns. A document that belongs to a different discipline — sprint ceremonies, capacity spreadsheets, software licensing — SHALL NOT be added to it.
 
 Removing a command from this catalog SHALL be treated as a breaking change.
 
 #### Scenario: Catalog is discoverable
 - **WHEN** a user runs `srekit --help`
 - **THEN** every command in the catalog SHALL be listed with a one-line description
+
+### Requirement: Retired command names fail with an explanation
+
+A command name that has been removed from the catalog SHALL NOT fall through to the generic unknown-command error. Invoking `capacity`, `retro`, `license`, or the `lic` alias SHALL exit non-zero with a message naming the release that removed the command and pointing at the migration note, and SHALL write no file.
+
+Retired names SHALL NOT appear in `--help`, SHALL NOT be part of the catalog, and SHALL NOT accept or validate any flags — a retired command fails before looking at its arguments.
+
+This is a courtesy with an expiry date: the retired names SHALL be dropped entirely at 1.0, at which point they become ordinary unknown commands.
+
+#### Scenario: Retired command names the remedy
+- **WHEN** a user runs `srekit capacity --service payments`
+- **THEN** the command SHALL exit non-zero with a message naming the release that removed `capacity` and where to read about the replacement
+- **AND** no file SHALL be created
+
+#### Scenario: Retired alias behaves like the command
+- **WHEN** a user runs `srekit lic --type mit`
+- **THEN** the command SHALL exit non-zero with the same explanation given for `license`
+
+#### Scenario: Retired names are not advertised
+- **WHEN** a user runs `srekit --help`
+- **THEN** `capacity`, `retro`, `license`, and `lic` SHALL NOT be listed
+
+#### Scenario: Flags are not consulted
+- **WHEN** a user runs `srekit retro` with no `--team`
+- **THEN** the error SHALL be the removal message, not `--team is required`
 
 ### Requirement: Mandatory inputs are enforced before any side effect
 
@@ -39,8 +63,12 @@ When a generator's mandatory input is absent, the command SHALL exit non-zero wi
 - **THEN** the command SHALL fail with `--title is required` and create no file
 
 #### Scenario: Missing team
-- **WHEN** a user runs `srekit retro` with no `--team`
+- **WHEN** a user runs `srekit oncall-report` with no `--team`
 - **THEN** the command SHALL fail with `--team is required` and create no file
+
+#### Scenario: Missing service
+- **WHEN** a user runs `srekit ebp` with no `--service`
+- **THEN** the command SHALL fail with `--service is required` and create no file
 
 ### Requirement: Deterministic default output filenames
 
@@ -55,10 +83,9 @@ When neither `--out` nor `--stdout` is given, each generator SHALL derive its ou
 | `oncall-report` | `oncall-<slug(team)>-<slug(start)>.md` |
 | `slo` | `slo-<slug(service)>.md` |
 | `ebp` | `ebp-<slug(service)>.md` |
-| `capacity` | `capacity-<slug(service)>.md` |
-| `retro` | `retro-<slug(team)>-<slug(sprint)>.md` |
 | `changelog` | `CHANGELOG.md` |
-| `license` | standard output |
+
+Every generator SHALL default to a file. No generator SHALL default to standard output.
 
 #### Scenario: Title becomes a slugged filename
 - **WHEN** a user runs `srekit rfc --title "Move Checkout to gRPC"`
@@ -69,9 +96,9 @@ When neither `--out` nor `--stdout` is given, each generator SHALL derive its ou
 - **WHEN** a user runs `srekit postmortem --title "Cache stampede"`
 - **THEN** the document SHALL be written to `postmortem-2026-07-30-cache-stampede.md`
 
-#### Scenario: License defaults to stdout, not a file
-- **WHEN** a user runs `srekit license --type mit` with no `--out`
-- **THEN** the license text SHALL be printed to standard output and no `LICENSE` file SHALL be created
+#### Scenario: Every generator writes a file by default
+- **WHEN** any generator in the catalog is run with its mandatory input and no output flags
+- **THEN** it SHALL write a file rather than printing to standard output
 
 ### Requirement: Generators supply sensible defaults for optional inputs
 
@@ -80,11 +107,7 @@ Optional inputs SHALL have documented defaults so a generator is useful with onl
 - `postmortem --severity` defaults to `SEV-3`
 - `rfc --status` defaults to `proposed`, accepting `proposed | accepted | rejected | superseded | deprecated`
 - `slo --target` defaults to `99.9%`, `--window` to `30d`, `--latency` to `300ms`
-- `capacity --horizon` defaults to `1y`
 - `changelog --version` defaults to `0.1.0`
-- `retro --sprint` defaults to today's date
-- `license --type` defaults to `wtfpl`, accepting `wtfpl | mit | apache2`
-- `license --year` defaults to the current year
 - `task --path` defaults to the working directory
 
 #### Scenario: Minimal SLO invocation is complete
@@ -112,14 +135,6 @@ When `oncall-report` is given neither `--start` nor `--end`, the reporting perio
 - **GIVEN** the working directory is not a git repository with a recognized GitHub remote
 - **WHEN** a user runs `srekit changelog`
 - **THEN** the command SHALL fail with an error mentioning `pass --repo OWNER/REPO`
-
-### Requirement: Unrecognized license types are rejected
-
-`license --type` SHALL accept only the supported identifiers and SHALL fail with an error listing them otherwise. It SHALL NOT fall back to a default license, because silently shipping the wrong license is worse than failing.
-
-#### Scenario: Unknown license type
-- **WHEN** a user runs `srekit license --type gpl3`
-- **THEN** the command SHALL fail with an error naming `wtfpl, mit, apache2` and write nothing
 
 ### Requirement: Rendered documents are bilingual by default
 

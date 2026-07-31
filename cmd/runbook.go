@@ -69,8 +69,7 @@ func newRunbookCmd() *cobra.Command {
 
 			data := runbookData{Meta: meta, Sections: rendered}
 			def := fmt.Sprintf("runbook-%s.md", ids.Slug(title))
-			opts := out.RenderOptionsStructured(cmd, def)
-			opts.RenderArtifact = true
+			opts := out.RenderOptions(cmd, def)
 			return render.Render(cmd.OutOrStdout(), loader, "runbook", data, opts)
 		},
 	}

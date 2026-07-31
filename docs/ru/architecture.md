@@ -15,7 +15,7 @@ srekit/
 │   ├── ids/              # UUID v4 + slug
 │   ├── clock/            # var Now = time.Now (overridable в тестах)
 │   ├── meta/             # Author.Resolve + DetectRepo (парсинг git remote)
-│   ├── cliflags/         # общий бандл --out / --stdout / --force / --dry-run / --json (--template через BindTemplateFlag, только license)
+│   ├── cliflags/         # общий бандл --out / --stdout / --force / --dry-run / --json
 │   ├── tmpl/             # //go:embed templates/*.yaml + Funcs + Source/Loader + Samples + Validate + DocsMD
 │   │   └── templates/    # v1 single-file YAML артефакты, по одному на генератор
 │   ├── sections/         # Artifact (v1 single-file) + Section/Manifest + Merge + RenderArtifact + JSONSchema
@@ -50,19 +50,20 @@ type Source interface {
 
 Runtime v1 артефакта. `Artifact` — это распаршенный `<name>.yaml`: frontmatter (`yaml.Node` для сохранения порядка), title, meta_bullets, header_body, список секций. `ParseArtifact` валидирует структурные инварианты; `Merge` накладывает per-section override'ы и template-evaluate'ит section titles; `RenderArtifact` собирает markdown (frontmatter блок → H1 → meta_bullets → header_body → `## section` блоки).
 
-Генераторы передают `Options.RenderArtifact = true` и реализуют `ArtifactPayload()` на data-структуре, чтобы отдать merged section list + ctx обратно в `RenderArtifact`.
+Генераторы реализуют `ArtifactPayload()` на data-структуре, чтобы отдать merged section list + ctx обратно в `RenderArtifact`.
 
 ### `internal/render.Render()`
 
-Общий рендеринг-пайплайн. Берёт имя, data-структуру и `render.Options{Out, Stdout, Force, DryRun, TemplatePath, JSON, Default, BootstrapJSON, RenderArtifact}`. Три ветки:
+Общий рендеринг-пайплайн. Берёт имя, data-структуру и `render.Options{Out, Stdout, Force, DryRun, Default, JSON, Quiet}`. Две ветки:
 
-1. `--json` short-circuit: `MarshalIndent` data (structured pass-through).
-2. `RenderArtifact = true`: имя — это bare-имя артефакта (`"slo"`), значит загрузить `slo.yaml`, распарсить, отдать в `sections.RenderArtifact`. Имя нормализуется через `tmpl.ArtifactNameFor`: функция идемпотентна и по-прежнему принимает pre-v1.0 варианты написания (`slo.md.tmpl`, `slo.tmpl`).
-3. Иначе: legacy `text/template` execution. Ни один shipped-генератор не использует эту ветку с v0.20; оставлено для `--template FILE` на `license` и для external tooling.
+1. `--json` short-circuit: `MarshalIndent` data, которую вызывающий уже сформировал как `{meta, sections}`.
+2. Иначе artifact path: имя — это bare-имя артефакта (`"slo"`), значит загрузить `slo.yaml`, распарсить, отдать в `sections.RenderArtifact`. Имя нормализуется через `tmpl.ArtifactNameFor`: функция идемпотентна и по-прежнему принимает pre-v1.0 варианты написания (`slo.md.tmpl`, `slo.tmpl`).
+
+В v0.30.0 удалена третья ветка — Go-template execution — вместе с `--template FILE` и `license`, её последним потребителем. Туда же ушёл конверт `BootstrapJSON`, заворачивавший отрендеренный markdown в синтетический `{meta, sections}`: ни один генератор не выставлял его с v0.20.0.
 
 ### `internal/cliflags.Output`
 
-Каждый генератор-cmd содержит `Output` и зовёт `.Bind(cmd, "default-path-description")`. Это шипит общие флаги (`--out` / `--stdout` / `--force` / `--dry-run` / `--json`). Флаг `--template FILE` — opt-in через `BindTemplateFlag(cmd)`; зовёт только `cmd/license.go`, потому что все остальные генераторы идут через artifact path и игнорируют `TemplatePath`. `RenderOptions(def)` превращает значения флагов в `render.Options`; `RenderOptionsStructured(def)` чистит `BootstrapJSON` для artifact-path команд.
+Каждый генератор-cmd содержит `Output` и зовёт `.Bind(cmd, "default-path-description")`. Это шипит общие флаги (`--out` / `--stdout` / `--force` / `--dry-run` / `--json`). Биндинга `--template FILE` нет: каждый генератор резолвит свой артефакт по имени, так что флаг молча игнорировался бы. `RenderOptions(def)` превращает значения флагов в `render.Options`.
 
 ### `internal/meta.Resolve` и `DetectRepo`
 

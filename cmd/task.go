@@ -81,8 +81,7 @@ func newTaskCmd() *cobra.Command {
 			def := filepath.Join(path, fmt.Sprintf("investigation-%s.md", ids.Slug(title)))
 			// Structured render: bypass bootstrap envelope so --json emits
 			// the per-section payload (same contract as postmortem).
-			opts := out.RenderOptionsStructured(cmd, def)
-			opts.RenderArtifact = true
+			opts := out.RenderOptions(cmd, def)
 			return render.Render(cmd.OutOrStdout(), loader, "task", data, opts)
 		},
 	}

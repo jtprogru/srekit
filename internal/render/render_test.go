@@ -12,33 +12,54 @@ import (
 	"github.com/jtprogru/srekit/internal/tmpl"
 )
 
-// As of v0.20.0 no .tmpl artifact ships in embed (every generator is on
-// the v1 YAML artifact path). Render tests that need a working legacy
-// .tmpl template build their own loader from a DirSource pointing at a
-// per-test fixture, decoupling the test suite from embed contents.
+// The output-routing tests below exercise writeBody (--out / --stdout /
+// --force / --dry-run / permissions), not artifact composition, so they
+// use the smallest possible v1 artifact rather than a shipped one. The
+// loader is built from a per-test fixture dir, decoupling the suite from
+// embed contents.
 
-const fixtureTmplBody = "# Fixture: {{ .Title }}\n\n{{ .Body }}\n"
+const fixtureArtifact = `version: 1
+title: "Fixture: {{ .Meta.Title }}"
+sections:
+  - id: body
+    title: Body
+    type: text
+    body: "{{ .Meta.Body }}"
+`
 
-// newFixtureLoader returns a Loader that resolves `fixture.md.tmpl` from a
-// temp dir. Use the canonical fixtureTmplBody body so tests can rely on a
-// known field shape (`{Title, Body string}`).
+// newFixtureLoader returns a Loader that resolves the `fixture` artifact
+// from a temp dir, falling back to embed for anything else.
 func newFixtureLoader(t *testing.T) *tmpl.Loader {
 	t.Helper()
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "fixture.md.tmpl"), []byte(fixtureTmplBody), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "fixture.yaml"), []byte(fixtureArtifact), 0o644); err != nil {
 		t.Fatalf("write fixture: %v", err)
 	}
 	return &tmpl.Loader{Sources: []tmpl.Source{tmpl.DirSource{Dir: dir}, tmpl.EmbedSource{}}}
 }
 
-type fixtureData struct {
+// fixturePayload is the data the fixture artifact expects. Its fields are
+// exported so the bootstrap-JSON envelope, which marshals the data value
+// itself as `meta`, sees them.
+type fixturePayload struct {
 	Title string
 	Body  string
 }
 
+func (f fixturePayload) ArtifactPayload() ([]sections.RenderedSection, any) {
+	return []sections.RenderedSection{
+			{ID: "body", Title: "Body", Type: "text", Body: f.Body, Required: true},
+		},
+		struct{ Meta fixturePayload }{Meta: f}
+}
+
+func newFixtureData(title, body string) fixturePayload {
+	return fixturePayload{Title: title, Body: body}
+}
+
 func TestRenderStdout(t *testing.T) {
 	var out bytes.Buffer
-	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Hello", Body: "world"}, Options{Stdout: true})
+	err := Render(&out, newFixtureLoader(t), "fixture", newFixtureData("Hello", "world"), Options{Stdout: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +73,7 @@ func TestRenderToFile(t *testing.T) {
 	target := filepath.Join(dir, "sub", "out.md")
 	var out bytes.Buffer
 
-	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Foo", Body: "x"}, Options{Out: target})
+	err := Render(&out, newFixtureLoader(t), "fixture", newFixtureData("Foo", "x"), Options{Out: target})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +93,7 @@ func TestRenderRefusesOverwrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "x", Body: "y"}, Options{Out: target})
+	err := Render(&out, newFixtureLoader(t), "fixture", newFixtureData("x", "y"), Options{Out: target})
 	if err == nil {
 		t.Fatal("expected error on existing file without --force")
 	}
@@ -83,7 +104,7 @@ func TestRenderForceOverwrite(t *testing.T) {
 	target := filepath.Join(dir, "out.md")
 	_ = os.WriteFile(target, []byte("old"), 0o644)
 	var out bytes.Buffer
-	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Force", Body: "y"}, Options{Out: target, Force: true})
+	err := Render(&out, newFixtureLoader(t), "fixture", newFixtureData("Force", "y"), Options{Out: target, Force: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +121,7 @@ func TestRenderFilePermissions(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
 	var out bytes.Buffer
-	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Perms", Body: "y"}, Options{Out: target})
+	err := Render(&out, newFixtureLoader(t), "fixture", newFixtureData("Perms", "y"), Options{Out: target})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,25 +134,9 @@ func TestRenderFilePermissions(t *testing.T) {
 	}
 }
 
-// TestRenderTemplatePathOverride verifies that opts.TemplatePath bypasses
-// the embedded/loader chain entirely and reads the named file directly.
-func TestRenderTemplatePathOverride(t *testing.T) {
-	dir := t.TempDir()
-	tmplFile := filepath.Join(dir, "custom.tmpl")
-	if err := os.WriteFile(tmplFile, []byte("CUSTOM-OVERRIDE: {{ .Title }}\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	var out bytes.Buffer
-	// Pass a non-existent name; TemplatePath should bypass loader.
-	err := Render(&out, tmpl.NewDefaultLoader(), "anything.md.tmpl", struct{ Title string }{Title: "Hi"},
-		Options{Stdout: true, TemplatePath: tmplFile})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(out.String(), "CUSTOM-OVERRIDE: Hi") {
-		t.Fatalf("template override not applied: %s", out.String())
-	}
-}
+// TestRenderTemplatePathOverride was removed in v0.30.0 along with
+// opts.TemplatePath: no render path reads a template from an arbitrary
+// file any more.
 
 // TestRenderJSONStdout verifies --json short-circuits the template and emits
 // MarshalIndent'd JSON to stdout when --out/--stdout are unset.
@@ -142,7 +147,7 @@ func TestRenderJSONStdout(t *testing.T) {
 		Title string
 	}
 	in := payload{ID: "abc", Title: "Hello"}
-	err := Render(&out, tmpl.NewDefaultLoader(), "fixture.md.tmpl", in, Options{JSON: true, Default: "ignored.md"})
+	err := Render(&out, tmpl.NewDefaultLoader(), "fixture", in, Options{JSON: true, Default: "ignored.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +168,7 @@ func TestRenderJSONToFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.json")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "fixture.md.tmpl",
+	err := Render(&out, tmpl.NewDefaultLoader(), "fixture",
 		struct{ Title string }{Title: "Foo"},
 		Options{Out: target, JSON: true},
 	)
@@ -190,7 +195,7 @@ func TestRenderJSONIgnoresDefaultPath(t *testing.T) {
 	dir := t.TempDir()
 	defaultPath := filepath.Join(dir, "should-not-be-written.md")
 	var out bytes.Buffer
-	err := Render(&out, tmpl.NewDefaultLoader(), "fixture.md.tmpl",
+	err := Render(&out, tmpl.NewDefaultLoader(), "fixture",
 		struct{ Title string }{Title: "X"},
 		Options{JSON: true, Default: defaultPath},
 	)
@@ -205,64 +210,19 @@ func TestRenderJSONIgnoresDefaultPath(t *testing.T) {
 	}
 }
 
-// TestRenderBootstrapJSONEnvelope verifies the bootstrap wrapping path:
-// when both JSON and BootstrapJSON are set, the rendered markdown is
-// wrapped as {meta: data, sections: [{id:"body", title:H1, ...}]}.
-//
-// As of v0.20.0 no shipped generator uses the bootstrap envelope (all are
-// on the artifact path), but the code path is preserved for compatibility
-// with external tooling and future generators. The test runs through a
-// fixture loader to stay independent of embed contents.
-func TestRenderBootstrapJSONEnvelope(t *testing.T) {
-	var out bytes.Buffer
-	in := fixtureData{Title: "Hello", Body: "world"}
-	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", in,
-		Options{JSON: true, BootstrapJSON: true, Default: "ignored.md"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	var got map[string]any
-	if err := json.Unmarshal(out.Bytes(), &got); err != nil {
-		t.Fatalf("invalid JSON: %v\n%s", err, out.String())
-	}
-	meta, ok := got["meta"].(map[string]any)
-	if !ok {
-		t.Fatalf("missing meta object: %v", got)
-	}
-	if meta["Title"] != "Hello" {
-		t.Errorf("meta.Title = %v, want Hello", meta["Title"])
-	}
-	secs, ok := got["sections"].([]any)
-	if !ok || len(secs) != 1 {
-		t.Fatalf("expected one section, got %v", got["sections"])
-	}
-	body := secs[0].(map[string]any)
-	if body["id"] != "body" {
-		t.Errorf("section id = %v, want 'body'", body["id"])
-	}
-	if body["type"] != "text" {
-		t.Errorf("section type = %v, want 'text'", body["type"])
-	}
-	if body["required"] != true {
-		t.Errorf("section required = %v, want true", body["required"])
-	}
-	if !strings.Contains(body["body"].(string), "# Fixture: Hello") {
-		t.Errorf("section body should contain rendered H1, got: %v", body["body"])
-	}
-	if !strings.Contains(body["title"].(string), "Fixture: Hello") {
-		t.Errorf("section title should be H1 text, got: %v", body["title"])
-	}
-}
+// TestRenderBootstrapJSONEnvelope was removed in v0.30.0 with the
+// envelope it covered: nothing had set BootstrapJSON since v0.20.0, when
+// the last generator moved to the artifact path.
 
 func TestRenderStructuredJSONPassThrough(t *testing.T) {
-	// When BootstrapJSON is false, data is marshaled directly with no envelope.
+	// --json marshals the caller's payload directly, with no wrapping.
 	var out bytes.Buffer
 	in := map[string]any{
 		"meta":     map[string]any{"title": "X"},
 		"sections": []any{map[string]any{"id": "summary", "body": "hi"}},
 	}
-	err := Render(&out, tmpl.NewDefaultLoader(), "fixture.md.tmpl", in,
-		Options{JSON: true, BootstrapJSON: false})
+	err := Render(&out, tmpl.NewDefaultLoader(), "fixture", in,
+		Options{JSON: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -285,10 +245,10 @@ func TestRenderStructuredJSONPassThrough(t *testing.T) {
 	}
 }
 
-// TestRenderArtifactPath_Postmortem verifies the v0.14.0 artifact render
-// path: when Options.RenderArtifact is set, the loader resolves the
-// embedded postmortem.yaml, parses it, and composes the markdown via
-// sections.RenderArtifact using the data's ArtifactPayload() method.
+// TestRenderArtifactPath_Postmortem verifies the artifact render path:
+// the loader resolves the embedded postmortem.yaml, parses it, and
+// composes the markdown via sections.RenderArtifact using the data's
+// ArtifactPayload() method.
 func TestRenderArtifactPath_Postmortem(t *testing.T) {
 	type meta struct {
 		ID, Title, Severity, Owner, Start, End, Now string
@@ -306,7 +266,7 @@ func TestRenderArtifactPath_Postmortem(t *testing.T) {
 
 	var out bytes.Buffer
 	if err := Render(&out, tmpl.NewDefaultLoader(), "postmortem.md.tmpl", data,
-		Options{Stdout: true, RenderArtifact: true}); err != nil {
+		Options{Stdout: true}); err != nil {
 		t.Fatalf("render: %v", err)
 	}
 	got := out.String()
@@ -328,7 +288,7 @@ func TestRenderArtifactPath_DataMissingInterface(t *testing.T) {
 	var out bytes.Buffer
 	err := Render(&out, tmpl.NewDefaultLoader(), "postmortem.md.tmpl",
 		struct{ Foo string }{Foo: "bar"},
-		Options{Stdout: true, RenderArtifact: true})
+		Options{Stdout: true})
 	if err == nil {
 		t.Fatal("expected error when data type lacks ArtifactPayload")
 	}
@@ -362,31 +322,14 @@ func (a *artifactDataStub) ArtifactPayload() ([]sections.RenderedSection, any) {
 	return a.sections, struct{ Meta any }{Meta: a.meta}
 }
 
-func TestExtractH1(t *testing.T) {
-	cases := []struct {
-		in, want string
-	}{
-		{"# Hello", "Hello"},
-		{"# Hello\nrest", "Hello"},
-		{"prefix\n# Title here\nmore", "Title here"},
-		{"## H2 only", ""},
-		{"no headings", ""},
-		{"", ""},
-		{"#   trimmed   ", "trimmed"},
-	}
-	for _, tc := range cases {
-		got := extractH1([]byte(tc.in))
-		if got != tc.want {
-			t.Errorf("extractH1(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
-}
+// TestExtractH1 was removed in v0.30.0 with extractH1, whose only caller
+// was the bootstrap-JSON envelope.
 
 func TestRenderDryRunNoFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "out.md")
 	var out bytes.Buffer
-	err := Render(&out, newFixtureLoader(t), "fixture.md.tmpl", fixtureData{Title: "Dry", Body: "x"}, Options{Out: target, DryRun: true})
+	err := Render(&out, newFixtureLoader(t), "fixture", newFixtureData("Dry", "x"), Options{Out: target, DryRun: true})
 	if err != nil {
 		t.Fatal(err)
 	}

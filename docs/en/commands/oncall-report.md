@@ -60,4 +60,3 @@ If you ran the report on Sunday 2026-05-10, you'd get `2026-05-04 → 2026-05-10
 ## See also
 
 - [`srekit ebp`](ebp.md) — error budget policy that informs on-call load.
-- [`srekit retro`](retro.md) — sprint-level retro covering on-call signals.

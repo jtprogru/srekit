@@ -14,7 +14,7 @@ srekit rfc --title TITLE [flags]
 |---|---|---|
 | `--title` | да | Тема RFC |
 | `--status` | нет | `proposed`, `accepted`, `rejected`, `superseded`, `deprecated`. Default: `proposed`. |
-| `--author` | нет | Переопределить автора (резолв как у [`license`](license.md#author-resolution)) |
+| `--author` | нет | Переопределить автора (см. [резолв автора](../guides/configuration.md#identity)) |
 | `--email` | нет | Переопределить email |
 
 Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `rfc-<slug-of-title>.md`.
@@ -53,4 +53,4 @@ srekit rfc --title "X" --status maybe --stdout
 
 ## См. также
 
-- [Резолв автора](license.md#author-resolution)
+- [Резолв автора](../guides/configuration.md#identity)

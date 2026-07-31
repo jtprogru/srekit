@@ -35,7 +35,7 @@ srekit --version
 
 ## 2. Разовая настройка
 
-Генераторы, которые пишут автора (`license`, `rfc`, `oncall-report`), резолвят личность в таком порядке:
+Генераторы, которые пишут автора (`rfc`, `oncall-report`), резолвят личность в таком порядке:
 
 1. флаги `--author` / `--email`
 2. env-переменные `SREKIT_AUTHOR` / `SREKIT_EMAIL`
@@ -85,7 +85,7 @@ srekit postmortem --title "API outage" --severity SEV-1 \
 | `--dry-run` | показать что бы записал, не писать |
 | `--json` | отдать данные шаблона как JSON вместо рендеринга |
 
-`--template FILE` поддерживается только командой `srekit license` (единственная, чей render-путь не идёт через v1 artifact loader). Для остальных генераторов кастомизация per-artifact — положить `<name>.yaml` в `templates_dir`, см. [Custom templates workflow](guides/custom-templates.md).
+Флага `--template FILE` больше нет: он удалён в v0.30.0 вместе с `srekit license`, единственной командой, чей render-путь его читал. Кастомизация per-artifact — положить `<name>.yaml` в `templates_dir`, см. [Custom templates workflow](guides/custom-templates.md).
 
 Если не передал ни `--out`, ни `--stdout`, у каждой команды есть разумный default-путь (например `Tasker - <title>.md` для `srekit task`, `oncall-<team>-<start>.md` для отчёта дежурного).
 

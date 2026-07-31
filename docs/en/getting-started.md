@@ -35,7 +35,7 @@ srekit --version
 
 ## 2. One-time configuration
 
-Generators that record an author (`license`, `rfc`, `oncall-report`) resolve the identity in this order:
+Generators that record an author (`rfc`, `oncall-report`) resolve the identity in this order:
 
 1. `--author` / `--email` flags
 2. `SREKIT_AUTHOR` / `SREKIT_EMAIL` env vars
@@ -85,7 +85,7 @@ Every generator command supports the same output flags:
 | `--dry-run` | show what would be written, do not write |
 | `--json` | emit the template data payload as JSON instead of rendering |
 
-`--template FILE` is supported only by `srekit license` (the one command whose render path doesn't go through the v1 artifact loader). For the other generators, per-artifact customization is done by dropping a `<name>.yaml` into your `templates_dir` — see [Custom templates workflow](guides/custom-templates.md).
+There is no `--template FILE` flag: it was removed in v0.30.0 along with `srekit license`, the one command whose render path read it. Per-artifact customization is done by dropping a `<name>.yaml` into your `templates_dir` — see [Custom templates workflow](guides/custom-templates.md).
 
 If you pass neither `--out` nor `--stdout`, each command has a sensible default filename (e.g. `Tasker - <title>.md` for `srekit task`, `oncall-<team>-<start>.md` for the on-call report).
 

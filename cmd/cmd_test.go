@@ -58,41 +58,6 @@ func withConfig(t *testing.T, kv map[string]string) {
 	t.Cleanup(config.Reset)
 }
 
-func TestLicenseWTFPLDefault(t *testing.T) {
-	withConfig(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
-
-	out, err := runCLI(t, "license", "--stdout", "--year", "2026")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(out, "DO WHAT THE FUCK YOU WANT") {
-		t.Fatalf("WTFPL body missing: %s", out)
-	}
-	if !strings.Contains(out, "2026 Test Person <t@example.com>") {
-		t.Fatalf("author/year not interpolated: %s", out)
-	}
-}
-
-func TestLicenseMIT(t *testing.T) {
-	withConfig(t, map[string]string{"author": "Test Person", "email": "t@example.com"})
-
-	out, err := runCLI(t, "license", "--type", "mit", "--stdout", "--year", "2026")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(out, "MIT License") {
-		t.Fatalf("MIT body missing: %s", out)
-	}
-}
-
-func TestLicenseUnknownType(t *testing.T) {
-	withConfig(t, map[string]string{"author": "x", "email": "x@x"})
-	_, err := runCLI(t, "license", "--type", "gpl", "--stdout")
-	if err == nil {
-		t.Fatal("expected error for unknown license type")
-	}
-}
-
 func TestPostmortem(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "postmortem", "--title", "API outage", "--severity", "SEV-1", "--stdout")
@@ -162,17 +127,6 @@ func TestSLO(t *testing.T) {
 	}
 }
 
-func TestRetro(t *testing.T) {
-	t.Parallel()
-	out, err := runCLI(t, "retro", "--team", "platform", "--sprint", "2026-W19", "--stdout")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(out, "Ретро (Retro) — platform / 2026-W19") {
-		t.Fatalf("retro body wrong: %s", out)
-	}
-}
-
 // TestOncallSundayWeekBoundary pins the wall clock to Sunday 2026-05-10 and
 // verifies the week is computed as Mon 2026-05-04 → Sun 2026-05-10. Regression
 // for the bug where Sunday's Weekday()==0 caused the formula to roll to the
@@ -218,17 +172,6 @@ func TestErrorBudgetPolicy(t *testing.T) {
 	}
 	if !strings.Contains(out, "Политика бюджета ошибок (Error budget policy) — api-gw") {
 		t.Fatalf("ebp body wrong: %s", out)
-	}
-}
-
-func TestCapacityPlan(t *testing.T) {
-	t.Parallel()
-	out, err := runCLI(t, "capacity", "--service", "api-gw", "--horizon", "6m", "--stdout")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(out, "План ёмкости (Capacity plan) — api-gw") || !strings.Contains(out, "6m") {
-		t.Fatalf("capacity body wrong: %s", out)
 	}
 }
 
@@ -280,13 +223,11 @@ func TestTemplatesDirPartialFallback(t *testing.T) {
 	}
 }
 
-// TestPerCommandTemplateOverride was deleted in v0.20.0. The `--template
-// FILE` flag is now a no-op for every command: each generator goes
-// through the artifact render path, which resolves `<name>.yaml` before
-// any TemplatePath check. The flag is kept for backwards compatibility
-// on the CLI surface, but per-artifact customization in v1.x is via a
-// `<name>.yaml` in `templates_dir`. Render package still tests
-// TemplatePath in isolation (TestRenderTemplatePathOverride).
+// TestPerCommandTemplateOverride was deleted in v0.20.0, when `--template
+// FILE` became a no-op for every generator. The flag itself was removed
+// along with the `license` command: per-artifact customization is via a
+// `<name>.yaml` in `templates_dir`, and no render path reads a template
+// file any more. TestNoCommandOffersTemplateFlag pins that.
 
 // TestTemplatesInitScaffolds verifies that 'srekit templates init <dir> --no-git'
 // copies every embedded template and writes TEMPLATES.md.
@@ -306,8 +247,8 @@ func TestTemplatesInitScaffolds(t *testing.T) {
 	for _, name := range []string{
 		"task.yaml",
 		"runbook.yaml", "rfc.yaml", "slo.yaml",
-		"ebp.yaml", "capacity.yaml",
-		"oncall.yaml", "retro.yaml", "changelog.yaml",
+		"ebp.yaml",
+		"oncall.yaml", "changelog.yaml",
 		"postmortem.yaml",
 		"TEMPLATES.md",
 	} {
@@ -464,7 +405,7 @@ func TestTemplatesValidateAllPass(t *testing.T) {
 	}
 	// Spot-check a couple of artifacts appear in the per-file output.
 	// As of v0.20.0 every artifact ships as v1 YAML (`.tmpl` retired across
-	// the 0.14–0.20 sequence). License families are inlined in the binary.
+	// the 0.14–0.20 sequence).
 	for _, name := range []string{"postmortem.yaml", "task.yaml", "changelog.yaml"} {
 		if !strings.Contains(out, "OK    "+name) {
 			t.Errorf("expected OK line for %s, got: %s", name, out)

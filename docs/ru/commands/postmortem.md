@@ -177,5 +177,4 @@ sections:
 
 ## См. также
 
-- [`srekit retro`](retro.md) — sprint-level ретроспектива.
 - [JSON output guide](../guides/json-output.md) — кросс-командный контракт `{meta, sections}`.

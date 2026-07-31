@@ -61,8 +61,7 @@ func newEBPCmd() *cobra.Command {
 
 			data := ebpData{Meta: meta, Sections: rendered}
 			def := fmt.Sprintf("ebp-%s.md", ids.Slug(service))
-			opts := out.RenderOptionsStructured(cmd, def)
-			opts.RenderArtifact = true
+			opts := out.RenderOptions(cmd, def)
 			return render.Render(cmd.OutOrStdout(), loader, "ebp", data, opts)
 		},
 	}

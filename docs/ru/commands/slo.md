@@ -41,7 +41,7 @@ srekit slo --service api-gw --target 99.95% --window 90d --latency 250ms \
 - SLI / SLO определения (success ratio, latency percentile)
 - PromQL-пример — предрендерен со значениями service / window / latency
 - Бюджет ошибок (Error budget)
-- Связанные документы (Related docs) — ссылки на runbook, EBP, capacity
+- Связанные документы (Related docs) — ссылки на runbook и EBP
 
 ## Структура данных для шаблона
 

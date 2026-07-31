@@ -1,5 +1,5 @@
 site_name: srekit
-site_description: SRE text artifact generator — investigations, postmortems, RFCs, runbooks, SLOs, error budget policies, capacity plans, on-call reports, retros, changelogs, licenses.
+site_description: SRE text artifact generator — investigations, postmortems, RFCs, runbooks, SLOs, error budget policies, on-call reports, changelogs.
 site_url: https://jtprogru.github.io/srekit/
 repo_url: https://github.com/jtprogru/srekit
 repo_name: jtprogru/srekit
@@ -57,11 +57,16 @@ plugins:
             Generators: Генераторы
             Templates: Шаблоны
             Config: Конфиг
+            Doctor: Диагностика
             Completion: Автодополнение
             Guides: Руководства
             Custom templates workflow: Кастомные шаблоны
             JSON output for pipelines: JSON-вывод для пайплайнов
             Configuration & precedence: Конфигурация
+            Migration: Миграция
+            Upgrade guide: Гайд по обновлению
+            Removed commands: Удалённые команды
+            History: История
             Recipes: Рецепты
             Architecture: Архитектура
             Contributing: Контрибьютинг
@@ -99,7 +104,6 @@ nav:
       - Overview: commands/index.md
       - Generators:
           - srekit task: commands/task.md
-          - srekit license: commands/license.md
           - srekit postmortem: commands/postmortem.md
           - srekit rfc: commands/rfc.md
           - srekit runbook: commands/runbook.md
@@ -107,10 +111,9 @@ nav:
           - srekit oncall-report: commands/oncall-report.md
           - srekit slo: commands/slo.md
           - srekit ebp: commands/ebp.md
-          - srekit capacity: commands/capacity.md
-          - srekit retro: commands/retro.md
       - Templates: commands/templates.md
       - Config: commands/config.md
+      - Doctor: commands/doctor.md
       - Completion: commands/completion.md
   - Guides:
       - Custom templates workflow: guides/custom-templates.md
@@ -118,6 +121,7 @@ nav:
       - Configuration & precedence: guides/configuration.md
   - Migration:
       - Upgrade guide: migration/v1.md
+      - Removed commands: migration/removed-commands.md
       - History: migration/v1-history.md
   - Recipes: recipes.md
   - Architecture: architecture.md

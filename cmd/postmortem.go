@@ -139,8 +139,7 @@ func newPostmortemCmd() *cobra.Command {
 
 			data := postmortemData{Meta: meta, Sections: rendered}
 			def := fmt.Sprintf("postmortem-%s-%s.md", now.Format("2006-01-02"), ids.Slug(meta.Title))
-			opts := out.RenderOptionsStructured(cmd, def)
-			opts.RenderArtifact = true
+			opts := out.RenderOptions(cmd, def)
 			return render.Render(cmd.OutOrStdout(), loader, "postmortem", data, opts)
 		},
 	}

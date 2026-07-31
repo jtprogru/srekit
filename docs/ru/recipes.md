@@ -92,7 +92,7 @@ srekit templates list --json |
 ```bash
 srekit templates diff --name-only
 # differs  runbook.yaml
-# differs  capacity.yaml
+# differs  slo.yaml
 ```
 
 Дальше `srekit templates upgrade` смержит их через 3-way.
@@ -108,7 +108,7 @@ export SREKIT_AUTHOR="Mikhail Savin"
 export SREKIT_EMAIL="m.savin@work.example.com"
 ```
 
-`cd` в work-репо — srekit автоматом подхватит рабочую identity для license / RFC / on-call документов.
+`cd` в work-репо — srekit автоматом подхватит рабочую identity для RFC / on-call документов.
 
 ---
 

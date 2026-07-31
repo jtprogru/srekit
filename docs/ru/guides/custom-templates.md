@@ -76,7 +76,7 @@ git commit -am "runbook: add 'communications' section"
 
 ```bash
 srekit templates validate
-# OK    capacity.yaml
+# OK    slo.yaml
 # OK    changelog.yaml
 # ...
 ```

@@ -20,14 +20,9 @@ export SREKIT_TEMPLATES_DIR=~/.srekit/templates
 echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
 ```
 
-Одноразовая подмена шаблона флагом `--template FILE` поддерживается только у
-`srekit license`. У генераторов такого флага нет: они читают `<name>.yaml` из
-этой директории, поэтому «подмена на один запуск» делается отдельным
-`--templates-dir`.
-
-```bash
-srekit license --template ./my-license.tmpl --stdout
-```
+Флага `--template FILE` нет ни у одной команды: генераторы читают
+`<name>.yaml` из этой директории, поэтому «подмена на один запуск» делается
+отдельным `--templates-dir`.
 
 ## Версионирование через git
 
@@ -157,15 +152,6 @@ srekit templates diff --name-only  # только список изменённ�
 | `.Meta.Service` | string | Имя сервиса |
 | `.Meta.Now` | string | RFC3339 |
 
-### `capacity.yaml`
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `.Meta.ID` | string | UUID |
-| `.Meta.Service` | string | Имя сервиса |
-| `.Meta.Horizon` | string | Горизонт планирования, например `1y` |
-| `.Meta.Now` | string | RFC3339 |
-
 ### `oncall.yaml`
 
 | Поле | Тип | Описание |
@@ -178,15 +164,6 @@ srekit templates diff --name-only  # только список изменённ�
 | `.Meta.Author.Name` | string | Дежурный |
 | `.Meta.Author.Email` | string | E-mail дежурного |
 
-### `retro.yaml`
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `.Meta.ID` | string | UUID |
-| `.Meta.Team` | string | Имя команды |
-| `.Meta.Sprint` | string | Метка спринта/периода |
-| `.Meta.Now` | string | RFC3339 |
-
 ### `changelog.yaml`
 
 | Поле | Тип | Описание |
@@ -194,19 +171,6 @@ srekit templates diff --name-only  # только список изменённ�
 | `.Meta.Today` | string | Дата (YYYY-MM-DD) |
 | `.Meta.Repo` | string | OWNER/REPO для compare-ссылок |
 | `.Meta.InitialVersion` | string | Версия первого релиза |
-
-### `srekit license --template FILE`
-
-Тексты лицензий вкомпилированы в бинарь и не лежат в этой директории. Своё
-тело подставляется одноразово флагом `--template FILE` — только у команды
-`license`. Это единственный шаблон, который не является v1-артефактом, поэтому
-поля здесь лежат в корне, без `.Meta`:
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `.Year` | int | Год |
-| `.Author.Name` | string | Имя автора |
-| `.Author.Email` | string | E-mail автора |
 
 ## Что лучше НЕ ломать
 

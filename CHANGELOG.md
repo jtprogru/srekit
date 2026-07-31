@@ -11,14 +11,23 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ### Added
 
+- **New command `srekit doctor`** — a read-only diagnostic of the environment. It surfaces what until now was only visible indirectly: which config file is actually read and whether a second one shadows it (the classic trap in the "XDG for fresh installs, legacy wins if present" rule), where the templates directory resolves and which source supplied it, whether the user's artifacts still parse, whether pre-v1.0 template files linger and how far the directory has drifted from the embedded set, whether an author identity resolves at all and from where, which `SREKIT_*` variables are in effect, and whether `git` is on `PATH`. Twelve checks across three categories (`config`, `templates`, `dependencies`), each with a stable identifier (`config.shadowed`, `templates.parse`, `dependencies.git`, …) — a public contract teams can gate CI on. An `error` finding exits `1`; a `warn` does not, so `doctor` can be adopted in CI without being blocked by advisory findings. `--quiet` prints only what needs attention, so silence means healthy. `--json` emits the same findings as a document with `camelCase` keys and the worst status as its overall status. The command writes nothing, repairs nothing, and makes no network request; it has no `--out` / `--stdout` / `--force` / `--dry-run`, since there is nothing to write. No new dependency. Docs: [docs/commands/doctor.md](https://jtprogru.github.io/srekit/commands/doctor/).
 - `CLAUDE.md` at the repo root: build/test/lint commands, the render pipeline from flags to markdown, project invariants (dependency minimalism, no package-level mutable state, snake_case YAML vs camelCase JSON, XDG-with-legacy-precedence), and the checklist for adding a generator.
 
 ### Changed
 
 - **Generators now identify an artifact by its bare name.** `render.Render` / `Loader.LoadArtifactBytes` are called with `"slo"` instead of the historical `"slo.md.tmpl"`, which had to be stripped back down to `slo.yaml` on every call and read like a bug to anyone new to the code. `ArtifactNameFor` is now idempotent (it also trims a trailing `.yaml`) and still accepts the pre-v1.0 spellings `<name>.md.tmpl` / `<name>.tmpl`, so external tooling and user directories written against those names keep resolving. No user-facing behavior change; the legacy filenames passed to `warnStaleLegacyFiles` are untouched, since those name files on disk rather than templates to load.
-- `TEMPLATES.md` (shipped to user template dirs by `srekit templates init`): the placeholder reference documented v0.13.x filenames (`postmortem.md.tmpl`) and root-level fields (`.Title`), while v1 artifacts are `postmortem.yaml` with everything under `.Meta` — following it produced templates that failed to render. Headings and every field path corrected, plus notes on `version: 1` and section `id` stability. It also advertised `--template FILE` on `srekit runbook`, which rejects the flag as unknown; the example now uses `license`, the only command that honors it.
+- `TEMPLATES.md` (shipped to user template dirs by `srekit templates init`): the placeholder reference documented v0.13.x filenames (`postmortem.md.tmpl`) and root-level fields (`.Title`), while v1 artifacts are `postmortem.yaml` with everything under `.Meta` — following it produced templates that failed to render. Headings and every field path corrected, plus notes on `version: 1` and section `id` stability. It also advertised `--template FILE` on `srekit runbook`, which rejects the flag as unknown; that whole section is gone, since `--template` was removed in this same release (see Removed).
 - `architecture.md` (both locales): the `internal/render.Render()` section now says the artifact branch takes a bare name and describes `ArtifactNameFor`'s normalization.
 - `contributing.md` (both locales): replaced the stale "`tmpl.Default` race" and "`tmpl.Default` is package-level mutable state" caveats with a "Global state in tests" section. The global loader was removed back in 0.10.2 (per-command-tree loader via `cmd.Context()` / `loaderFrom`), so the documented `resetTmplDefault(t)` + no-`t.Parallel()` workaround no longer exists and the advice pointed against the current architecture. The remaining global — the `config.Global()` singleton and its `withConfig(t, kv)` test helper — is now documented in its place.
+
+### Removed
+
+- **Breaking — three generators removed: `capacity`, `retro` and `license` (along with the `lic` alias).** The last release that ships them is 0.29.3. `srekit` generates the artifacts an on-call engineer or a reliability team owns: a sprint retro is an agile ceremony, capacity planning is spreadsheet work, and a LICENSE is a one-off repository setup step inherited from the `lic` command in the gch monolith. The names do not vanish silently: hidden stubs in `cmd/retired.go` exit non-zero with an explanation naming the removal release and the migration note, and they do not parse arguments (`srekit retro` without `--team` reports the removal, not the missing flag). The stubs go away at 1.0. What to do instead: keep an already-generated document as a static template, pin 0.29.3, pull the template body out with `git show v0.29.3:internal/tmpl/templates/capacity.yaml`, or use your host's license picker for LICENSE. Full guide in [docs/migration/removed-commands.md](https://jtprogru.github.io/srekit/migration/removed-commands/).
+- **Breaking — the `--template FILE` flag is gone entirely.** `license` was the only command whose render path read it; once that command went, the flag would have been silently ignored, which this project treats as a defect. Every command now answers `Error: unknown flag: --template`. Per-artifact customization is a `<name>.yaml` in `templates_dir`.
+- The embedded artifacts `capacity.yaml` and `retro.yaml` are no longer compiled in. User template directories are untouched: a leftover file reclassifies from `customized` to `user-only` in `templates list`, and its snapshot is collected by the next `templates upgrade`.
+- Internal (not public contract): the flag took with it the legacy `text/template` branch in `render.buildBody` — its last consumer — plus `render.WriteRaw`, `render.Options.TemplatePath`, the always-true `render.Options.RenderArtifact`, `cliflags.Output.BindTemplateFlag` and `tmpl.ParseFile`. The v1 artifact format is now the only render path.
+- Internal: the code that leaned on the removed branch went next. `render.Options.BootstrapJSON` and the envelope that wrapped rendered markdown into a synthetic `{meta, sections:[{id:"body"}]}`, together with `render.extractH1`: the envelope existed for a generator without a sections manifest, and there has been none since v0.20.0. `cliflags.Output.RenderOptionsStructured` collapses into `RenderOptions` — all it did was clear `BootstrapJSON`. `tmpl.Loader.Parse` returned a parsed `text/template`, which only the removed branch wanted; artifacts are loaded as bytes through `LoadArtifactBytes` and parsed in `internal/sections`. The public JSON contract `{meta, sections:[{id,title,type,body,required}]}` is unchanged — the generators still build it themselves.
 
 ### Fixed
 
@@ -583,7 +592,11 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.29.3...HEAD
+[0.29.3]: https://github.com/jtprogru/srekit/compare/v0.29.2...v0.29.3
+[0.29.2]: https://github.com/jtprogru/srekit/compare/v0.29.1...v0.29.2
+[0.29.1]: https://github.com/jtprogru/srekit/compare/v0.29.0...v0.29.1
+[0.29.0]: https://github.com/jtprogru/srekit/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/jtprogru/srekit/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/jtprogru/srekit/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/jtprogru/srekit/compare/v0.25.0...v0.26.0
@@ -604,6 +617,11 @@ This release introduces the manifest format on a single command as a prototype. 
 [0.12.1]: https://github.com/jtprogru/srekit/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/jtprogru/srekit/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/jtprogru/srekit/compare/v0.10.2...v0.11.0
+[0.10.2]: https://github.com/jtprogru/srekit/compare/v0.10.1...v0.10.2
+[0.10.1]: https://github.com/jtprogru/srekit/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/jtprogru/srekit/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/jtprogru/srekit/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/jtprogru/srekit/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jtprogru/srekit/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jtprogru/srekit/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jtprogru/srekit/compare/v0.4.0...v0.5.0
