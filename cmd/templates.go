@@ -622,18 +622,10 @@ func runTemplatesValidate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	entries, err := os.ReadDir(dir)
+	names, err := artifactFileNames(dir)
 	if err != nil {
-		return fmt.Errorf("read %s: %w", dir, err)
+		return err
 	}
-	var names []string
-	for _, e := range entries {
-		if e.IsDir() || !tmpl.IsTemplateArtifact(e.Name()) {
-			continue
-		}
-		names = append(names, e.Name())
-	}
-	sort.Strings(names)
 	if len(names) == 0 {
 		fmt.Fprintf(cmd.OutOrStdout(), "no template artifacts in %s\n", dir)
 		return nil
@@ -643,44 +635,69 @@ func runTemplatesValidate(cmd *cobra.Command, args []string) error {
 	errOut := cmd.ErrOrStderr()
 	var failed int
 	for _, name := range names {
-		body, err := os.ReadFile(filepath.Join(dir, name))
-		if err != nil {
-			fmt.Fprintf(errOut, "FAIL  %s: read: %v\n", name, err)
+		body, readErr := os.ReadFile(filepath.Join(dir, name))
+		if readErr != nil {
+			fmt.Fprintf(errOut, "FAIL  %s: read: %v\n", name, readErr)
 			failed++
 			continue
 		}
-		if strings.HasSuffix(name, ".sections.yaml") {
-			if _, err := sections.ParseManifest(body); err != nil {
-				fmt.Fprintf(errOut, "FAIL  %s: %v\n", name, err)
-				failed++
-				continue
-			}
-			fmt.Fprintf(out, "OK    %s\n", name)
-			continue
-		}
-		if strings.HasSuffix(name, ".yaml") {
-			if _, err := sections.ParseArtifact(body); err != nil {
-				fmt.Fprintf(errOut, "FAIL  %s: %v\n", name, err)
-				failed++
-				continue
-			}
-			fmt.Fprintf(out, "OK    %s\n", name)
-			continue
-		}
-		switch err := tmpl.Validate(name, body); {
-		case err == nil:
-			fmt.Fprintf(out, "OK    %s\n", name)
-		case errors.Is(err, tmpl.ErrUnknownTemplate):
-			fmt.Fprintf(out, "OK    %s (parse-only — not a built-in template name)\n", name)
-		default:
+		switch parseOnly, err := validateArtifactBody(name, body); {
+		case err != nil:
 			fmt.Fprintf(errOut, "FAIL  %s: %v\n", name, err)
 			failed++
+		case parseOnly:
+			fmt.Fprintf(out, "OK    %s (parse-only — not a built-in template name)\n", name)
+		default:
+			fmt.Fprintf(out, "OK    %s\n", name)
 		}
 	}
 	if failed > 0 {
 		return fmt.Errorf("%d of %d template(s) failed validation", failed, len(names))
 	}
 	return nil
+}
+
+// artifactFileNames lists the template artifacts in dir, sorted, skipping
+// subdirectories and anything that isn't a recognized artifact. Shared by
+// `templates validate`, `templates diff` and `doctor` so all three agree on
+// what counts as a template file.
+func artifactFileNames(dir string) ([]string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", dir, err)
+	}
+	var names []string
+	for _, e := range entries {
+		if e.IsDir() || !tmpl.IsTemplateArtifact(e.Name()) {
+			continue
+		}
+		names = append(names, e.Name())
+	}
+	sort.Strings(names)
+	return names, nil
+}
+
+// validateArtifactBody parses one artifact with the parser its filename
+// selects: the legacy manifest parser, the v1 artifact parser, or a Go
+// template parse. parseOnly reports the third case landing on a name with no
+// canonical sample data, where syntax is all that can be checked.
+//
+// `templates validate` and `doctor`'s templates.parse check share this so a
+// file can never pass one and fail the other.
+func validateArtifactBody(name string, body []byte) (bool, error) {
+	switch {
+	case strings.HasSuffix(name, ".sections.yaml"):
+		_, err := sections.ParseManifest(body)
+		return false, err
+	case strings.HasSuffix(name, ".yaml"):
+		_, err := sections.ParseArtifact(body)
+		return false, err
+	}
+	err := tmpl.Validate(name, body)
+	if errors.Is(err, tmpl.ErrUnknownTemplate) {
+		return true, nil
+	}
+	return false, err
 }
 
 // noColorEnv reports whether the NO_COLOR convention (https://no-color.org)
@@ -727,18 +744,10 @@ func runTemplatesDiff(cmd *cobra.Command, args []string, nameOnly, noColor bool)
 	if err != nil {
 		return err
 	}
-	entries, err := os.ReadDir(dir)
+	names, err := artifactFileNames(dir)
 	if err != nil {
-		return fmt.Errorf("read %s: %w", dir, err)
+		return err
 	}
-	var names []string
-	for _, e := range entries {
-		if e.IsDir() || !tmpl.IsTemplateArtifact(e.Name()) {
-			continue
-		}
-		names = append(names, e.Name())
-	}
-	sort.Strings(names)
 	if len(names) == 0 {
 		fmt.Fprintf(cmd.OutOrStdout(), "no template artifacts in %s\n", dir)
 		return nil
