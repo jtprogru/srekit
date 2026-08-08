@@ -48,7 +48,7 @@ Each generator command builds a `*tmpl.Loader` via `configureTemplates` and stas
 
 ### `internal/sections`
 
-The v1 artifact runtime. `Artifact` is the parsed `<name>.yaml`: frontmatter (`yaml.Node` for order preservation), title, meta_bullets, header_body, and a section list. `ParseArtifact` validates structural invariants; `Merge` overlays per-section overrides and template-evaluates section titles; `RenderArtifact` composes the markdown (frontmatter block → H1 → meta_bullets → header_body → `## section` blocks).
+The v1 artifact runtime. `Artifact` is the parsed `<name>.yaml`: frontmatter (`yaml.Node` for order preservation), title, meta_bullets, header_body, a section list, and footer_body. `ParseArtifact` validates structural invariants; `Merge` overlays per-section overrides and template-evaluates section titles; `RenderArtifact` composes the markdown (frontmatter block → H1 → meta_bullets → header_body → `## section` blocks → footer_body), opening every block through a single helper that guarantees exactly one blank line between adjacent blocks.
 
 Generator commands implement `ArtifactPayload()` on their data struct to hand the merged section list + ctx back to `RenderArtifact`.
 

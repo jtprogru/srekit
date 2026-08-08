@@ -171,7 +171,7 @@ sections:
       - ["{{ .Meta.End }}",   "Инцидент разрешён"]
 ```
 
-Каждое строковое поле (значения frontmatter, `title`, `meta_bullets` items, `header_body` и default-наполнение секций) проходит через тот же Go-template FuncMap, так что `{{ .Meta.X }}`, `{{ now "2006-01-02" }}`, `{{ default "x" .Y }}` и т.д. работают везде.
+Каждое строковое поле (значения frontmatter, `title`, `meta_bullets` items, `header_body`, default-наполнение секций и `footer_body`) проходит через тот же Go-template FuncMap, так что `{{ .Meta.X }}`, `{{ now "2006-01-02" }}`, `{{ default "x" .Y }}` и т.д. работают везде.
 
 Порядок ключей во frontmatter сохраняется как в YAML-источнике (без alphabetical sorting на выходе), чтобы diff'ы оставались стабильными.
 

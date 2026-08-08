@@ -48,7 +48,7 @@ type Source interface {
 
 ### `internal/sections`
 
-Runtime v1 артефакта. `Artifact` — это распаршенный `<name>.yaml`: frontmatter (`yaml.Node` для сохранения порядка), title, meta_bullets, header_body, список секций. `ParseArtifact` валидирует структурные инварианты; `Merge` накладывает per-section override'ы и template-evaluate'ит section titles; `RenderArtifact` собирает markdown (frontmatter блок → H1 → meta_bullets → header_body → `## section` блоки).
+Runtime v1 артефакта. `Artifact` — это распаршенный `<name>.yaml`: frontmatter (`yaml.Node` для сохранения порядка), title, meta_bullets, header_body, список секций, footer_body. `ParseArtifact` валидирует структурные инварианты; `Merge` накладывает per-section override'ы и template-evaluate'ит section titles; `RenderArtifact` собирает markdown (frontmatter блок → H1 → meta_bullets → header_body → `## section` блоки → footer_body), открывая каждый блок через единый хелпер, который гарантирует ровно одну пустую строку между соседними блоками.
 
 Генераторы реализуют `ArtifactPayload()` на data-структуре, чтобы отдать merged section list + ctx обратно в `RenderArtifact`.
 

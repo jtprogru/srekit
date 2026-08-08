@@ -63,6 +63,22 @@ srekit postmortem -T "API outage" --from pm.edited.json
 
 `--from` читает секции как **map**, ключ — ID (`{"summary": "…"}`), а не как list. JSON-вывод использует list, чтобы сохранять порядок манифеста; `--from` использует map, потому что порядок на входе неважен.
 
+### Round-trip changelog'а
+
+`changelog` тоже принимает `--from`, с той же формой payload'а:
+
+```bash
+srekit changelog --repo acme/api --json > cl.json
+jq '.sections.unreleased = "### Added\n\n- Structured input for changelog.\n"' cl.json > cl.edited.json
+srekit changelog --from cl.edited.json
+```
+
+`meta` в payload'е задаёт `repo`, `initialVersion` и `today`; флаг выигрывает у файла, файл — у git remote. В отличие от `postmortem`, у `changelog` нет `--schema` и `--validate`: его артефакт не объявляет обязательных секций, поэтому валидация payload'а не может завершиться неудачей.
+
+### Чего нет в `sections`
+
+`footer_body` артефакта — хвостовой материал уровня документа, например блок link reference definitions в changelog — **не** секция. У него нет `id`, он не появляется в массиве `sections` и его нельзя подменить через `--from`. Он рендерится из артефакта на каждом вызове — именно поэтому замена тела секции не может уронить compare-ссылки changelog'а.
+
 ### Спроецировать в свою структуру
 
 ```bash
@@ -121,7 +137,7 @@ srekit oncall-report --team platform --json --out oncall.json
 
 ## Когда использовать `--json`
 
-- **Агентские флоу**: прочитать секцию, изменить, записать обратно. Postmortem — первая команда, оптимизированная под это; `--from` round-trip работает из коробки.
+- **Агентские флоу**: прочитать секцию, изменить, записать обратно. Postmortem и changelog это поддерживают; `--from` round-trip работает из коробки.
 - Скрипты / автоматизация: вместо `grep`'а по Markdown — `--json | jq`.
 - Drift-чеки: сохраняешь JSON-вывод предыдущей генерации, diff'ишь с новым — ловишь изменения полей шаблона.
 - Cross-tool интеграция: значения сразу в Linear, Jira или внутренние CLI.

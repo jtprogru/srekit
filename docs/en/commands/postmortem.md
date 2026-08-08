@@ -169,9 +169,12 @@ sections:
     rows:
       - ["{{ .Meta.Start }}", "Incident started"]
       - ["{{ .Meta.End }}",   "Incident resolved"]
+
+footer_body: |                     # optional trailing document-level material
+  [ref]: https://example.internal/runbooks
 ```
 
-Every string field (frontmatter values, `title`, `meta_bullets` items, `header_body`, and section default content) is evaluated through the shared Go-template FuncMap, so `{{ .Meta.X }}`, `{{ now "2006-01-02" }}`, `{{ default "x" .Y }}`, etc. work everywhere.
+Every string field (frontmatter values, `title`, `meta_bullets` items, `header_body`, section default content, and `footer_body`) is evaluated through the shared Go-template FuncMap, so `{{ .Meta.X }}`, `{{ now "2006-01-02" }}`, `{{ default "x" .Y }}`, etc. work everywhere.
 
 Frontmatter key order is preserved verbatim from the YAML source (no alphabetical sorting on output) so diffs stay stable.
 

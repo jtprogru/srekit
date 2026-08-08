@@ -68,7 +68,7 @@ $EDITOR runbook.yaml      # правишь v1-артефакт: добавляе
 git commit -am "runbook: add 'communications' section"
 ```
 
-Всё что ты меняешь — твоё. Embedded fallback срабатывает только для файлов, которых у тебя нет (например, новый шаблон, добавленный в будущем бинаре, которого у тебя в dir ещё нет). Схема v1-артефакта (frontmatter / title / meta_bullets / header_body / sections) описана в [postmortem reference](../commands/postmortem.md).
+Всё что ты меняешь — твоё. Embedded fallback срабатывает только для файлов, которых у тебя нет (например, новый шаблон, добавленный в будущем бинаре, которого у тебя в dir ещё нет). Схема v1-артефакта (frontmatter / title / meta_bullets / header_body / sections / footer_body) описана в [postmortem reference](../commands/postmortem.md). Блоки разделяются ровно одной пустой строкой, а `footer_body` — хвостовой материал уровня документа (канонический пример — блок link reference definitions в changelog): у него нет id и нет места в массиве `sections`.
 
 ### 4. Провалидировать
 
