@@ -36,6 +36,8 @@
 | `--dry-run` | показать что бы записал, не писать |
 | `--json` | отдать данные шаблона как JSON (default sink: stdout) |
 
+Команда, которая правит уже принадлежащий тебе документ, генератором не является и несёт более узкий набор: `--dry-run`, `--stdout` и `--json` в обычных значениях, но ни `--out`, ни `--force`. Её точка назначения — тот файл, на который её навели: вторая не имеет смысла, а guard от перезаписи защищал бы от собственной цели команды. Сегодня такая команда одна — [`srekit changelog release`](changelog.md#release).
+
 Флага `--template FILE` нет. Он удалён в v0.30.0 вместе с `srekit license`, единственной командой, чей render-путь его читал; кастомизация per-artifact — положить `<name>.yaml` в `templates_dir`, см. [Custom templates workflow](../guides/custom-templates.md).
 
 Команды `capacity`, `retro` и `license` удалены в v0.30.0 — см. [Удалённые команды](../migration/removed-commands.md).
