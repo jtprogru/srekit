@@ -3,6 +3,8 @@ package sections
 import (
 	"strings"
 	"testing"
+
+	yaml "go.yaml.in/yaml/v3"
 )
 
 func TestRenderArtifact_FullDocument(t *testing.T) {
@@ -128,6 +130,167 @@ func frontmatterScalar(a *Artifact, key string) string {
 		}
 	}
 	return ""
+}
+
+// renderOne is the boilerplate every composition test repeats: merge the
+// artifact's own sections with no overrides, then render against ctx.
+func renderOne(t *testing.T, a *Artifact, ctx any) string {
+	t.Helper()
+	rendered, err := Merge(&Manifest{Version: 1, Sections: a.Sections}, nil, ctx)
+	if err != nil {
+		t.Fatalf("merge: %v", err)
+	}
+	body, err := RenderArtifact(a, rendered, ctx)
+	if err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	return string(body)
+}
+
+func TestRenderArtifact_FooterBody(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:    1,
+		Title:      "Changelog",
+		Sections:   []Section{{ID: "x", Title: "[Unreleased]", Type: TypeText, DefaultBody: "entry"}},
+		FooterBody: "[Unreleased]: https://example.test/compare/v1.0.0...HEAD\n",
+	}
+	got := renderOne(t, a, nil)
+	want := "# Changelog\n\n## [Unreleased]\n\nentry\n\n[Unreleased]: https://example.test/compare/v1.0.0...HEAD\n"
+	if got != want {
+		t.Errorf("footer composition:\ngot  %q\nwant %q", got, want)
+	}
+}
+
+func TestRenderArtifact_FooterBodyAbsentIsUnchanged(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:  1,
+		Title:    "T",
+		Sections: []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+	}
+	got := renderOne(t, a, nil)
+	want := "# T\n\n## X\n\nb\n"
+	if got != want {
+		t.Errorf("artifact without a footer must render as it did before the key existed:\ngot  %q\nwant %q", got, want)
+	}
+}
+
+func TestRenderArtifact_FooterBodyEvaluated(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:    1,
+		Sections:   []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+		FooterBody: "[link]: https://example.test/{{ .Meta.Repo }}",
+	}
+	type meta struct{ Repo string }
+	got := renderOne(t, a, struct{ Meta meta }{Meta: meta{Repo: "acme/api"}})
+	if !strings.Contains(got, "[link]: https://example.test/acme/api") {
+		t.Errorf("footer_body not expanded:\n%s", got)
+	}
+}
+
+func TestRenderArtifact_FooterBodyWhitespaceOnly(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:    1,
+		Sections:   []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+		FooterBody: "   \n\n  ",
+	}
+	got := renderOne(t, a, nil)
+	if got != "## X\n\nb\n" {
+		t.Errorf("whitespace-only footer should produce no trailing stanza: %q", got)
+	}
+}
+
+// TestRenderArtifact_BlockSeparation pins the invariant that every pair of
+// adjacent blocks is separated by exactly one blank line, across the
+// combinations of present and absent elements. The title+header_body case
+// is the one that used to emit two.
+func TestRenderArtifact_BlockSeparation(t *testing.T) {
+	t.Parallel()
+	fm := mappingNode(t, "id: abc\n")
+	section := []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}}
+
+	cases := []struct {
+		name string
+		a    *Artifact
+		want string
+	}{
+		{
+			name: "title and header body",
+			a:    &Artifact{Version: 1, Title: "T", HeaderBody: "intro", Sections: section},
+			want: "# T\n\nintro\n\n## X\n\nb\n",
+		},
+		{
+			name: "frontmatter and header body without a title",
+			a:    &Artifact{Version: 1, Frontmatter: fm, HeaderBody: "intro", Sections: section},
+			want: "---\nid: abc\n---\n\nintro\n\n## X\n\nb\n",
+		},
+		{
+			name: "meta bullets and header body",
+			a:    &Artifact{Version: 1, MetaBullets: []string{"a", "c"}, HeaderBody: "intro", Sections: section},
+			want: "- a\n- c\n\nintro\n\n## X\n\nb\n",
+		},
+		{
+			name: "sections and footer",
+			a:    &Artifact{Version: 1, Sections: section, FooterBody: "[l]: u"},
+			want: "## X\n\nb\n\n[l]: u\n",
+		},
+		{
+			name: "every element present",
+			a: &Artifact{
+				Version: 1, Frontmatter: fm, Title: "T", MetaBullets: []string{"a"},
+				HeaderBody: "intro", Sections: section, FooterBody: "[l]: u",
+			},
+			want: "---\nid: abc\n---\n\n# T\n\n- a\n\nintro\n\n## X\n\nb\n\n[l]: u\n",
+		},
+		{
+			name: "sections only",
+			a:    &Artifact{Version: 1, Sections: section},
+			want: "## X\n\nb\n",
+		},
+		{
+			name: "title only",
+			a:    &Artifact{Version: 1, Title: "T", Sections: section},
+			want: "# T\n\n## X\n\nb\n",
+		},
+		{
+			name: "two sections",
+			a: &Artifact{Version: 1, Sections: []Section{
+				{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"},
+				{ID: "y", Title: "Y", Type: TypeText, DefaultBody: "c"},
+			}},
+			want: "## X\n\nb\n\n## Y\n\nc\n",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := renderOne(t, tc.a, nil)
+			if got != tc.want {
+				t.Errorf("composition:\ngot  %q\nwant %q", got, tc.want)
+			}
+			if strings.Contains(got, "\n\n\n") {
+				t.Errorf("two consecutive blank lines: %q", got)
+			}
+			if !strings.HasSuffix(got, "\n") || strings.HasSuffix(got, "\n\n") {
+				t.Errorf("document must end with exactly one newline: %q", got)
+			}
+		})
+	}
+}
+
+// mappingNode parses a YAML fragment into the mapping node shape the
+// Artifact's Frontmatter field expects.
+func mappingNode(t *testing.T, src string) yaml.Node {
+	t.Helper()
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(src), &doc); err != nil {
+		t.Fatalf("parse frontmatter fixture: %v", err)
+	}
+	return *doc.Content[0]
 }
 
 func TestRenderArtifact_HeaderBodyEvaluated(t *testing.T) {

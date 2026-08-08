@@ -32,24 +32,51 @@ func newChangelogCmd() *cobra.Command {
 	var (
 		repoFlag string
 		version  string
+		from     string
 		out      cliflags.Output
 	)
 	cmd := &cobra.Command{
 		Use:   "changelog",
 		Short: "Generate a CHANGELOG.md scaffold (Keep a Changelog format)",
+		Example: `  # Write CHANGELOG.md, repository slug from the git remote
+  srekit changelog
+
+  # Inspect the structured JSON shape
+  srekit changelog --repo acme/api --json | jq '.sections[].id'
+
+  # Round-trip: fill the unreleased section and re-render Markdown
+  srekit changelog --repo acme/api --json > cl.json
+  # ...edit cl.json...
+  srekit changelog --from cl.json`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			repo := repoFlag
+			// The payload is read before slug resolution: meta.repo in the
+			// file is one of the three ways a slug can arrive, so detection
+			// must not fail before the file has been consulted.
+			input, err := sections.ReadPayload(cmd.InOrStdin(), from)
+			if err != nil {
+				return err
+			}
+
+			repo := sections.PickNonEmpty(repoFlag, input.Meta["repo"])
 			if repo == "" {
-				r, err := meta.DetectRepo()
-				if err != nil {
-					return fmt.Errorf("could not detect repo from git remote: %w (pass --repo OWNER/REPO)", err)
+				r, detectErr := meta.DetectRepo()
+				if detectErr != nil {
+					return fmt.Errorf("could not detect repo from git remote: %w (pass --repo OWNER/REPO)", detectErr)
 				}
 				repo = r.Slug()
 			}
+
+			// The version flag carries a default, so "user asked for this"
+			// has to be read off Changed rather than off the value.
+			initialVersion := version
+			if !cmd.Flags().Changed("version") {
+				initialVersion = sections.PickNonEmpty(input.Meta["initialVersion"], version)
+			}
+
 			m := changelogMeta{
-				Today:          clock.Now().Format("2006-01-02"),
+				Today:          sections.PickNonEmpty(input.Meta["today"], clock.Now().Format("2006-01-02")),
 				Repo:           repo,
-				InitialVersion: version,
+				InitialVersion: initialVersion,
 			}
 
 			loader := loaderFrom(cmd)
@@ -57,7 +84,7 @@ func newChangelogCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rendered, err := sections.Merge(manifest, nil, struct{ Meta changelogMeta }{Meta: m})
+			rendered, err := sections.Merge(manifest, input.Sections, struct{ Meta changelogMeta }{Meta: m})
 			if err != nil {
 				return err
 			}
@@ -69,6 +96,7 @@ func newChangelogCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&repoFlag, "repo", "", "OWNER/REPO for compare links (default: detect from git remote)")
 	cmd.Flags().StringVar(&version, "version", "0.1.0", "initial version label")
+	cmd.Flags().StringVar(&from, "from", "", "read sections from JSON file (- for stdin)")
 	out.Bind(cmd, "write to file (default: CHANGELOG.md)")
 	return cmd
 }

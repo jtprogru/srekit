@@ -9,6 +9,16 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [Unreleased]
 
+### Added
+
+- **`footer_body` in the v1 artifact format** — the mirror of `header_body` at the other end of the document: freeform Markdown rendered after the last section, for trailing document-level material that belongs to no section. Purely additive: an artifact that omits the key renders byte-for-byte as before, so existing files in a templates directory need no amendment. It has no `id` and no type, so it never appears in the `sections` array and cannot be targeted through `--from` — content someone will want to edit belongs in a section, not the footer.
+- **`srekit changelog --from FILE`** — the `--json` → edit → `--from` round-trip now works for `changelog` as it does for `postmortem`, with `-` reading standard input. Section bodies are inserted verbatim, omitted sections fall back to the artifact defaults, and an unknown section id is an error naming the offender. The payload's `meta` supplies `repo`, `initialVersion` and `today`; precedence is flag, then file, then derived (git remote for `repo`, the clock for `today`), so a payload carrying `meta.repo` renders correctly outside a git repository. `--schema` and `--validate` deliberately stay `postmortem`-only: the changelog artifact declares no required sections, so payload validation could only ever pass and a schema of two string fields says less than `--json` itself.
+
+### Changed
+
+- **The generated changelog's link reference block is now a document footer.** `[Unreleased]: …` and `[<version>]: …` used to live at the tail of the `initial_release` section's body, because the artifact format had nowhere else to put them. They now render from `footer_body`, which means they survive a `--from` payload that replaces that section and are addressable as a block in their own right. The rendered document is unchanged apart from the block's position relative to the section body.
+- **Exactly one blank line between document blocks.** Every artifact declaring a `header_body` rendered a stray extra blank line between the H1 and that body, because the title block ended a paragraph and the header body opened another separator. Block separation is now owned by a single composer helper rather than re-derived at each write site, so no combination of present and absent elements can produce two consecutive blank lines. Regenerating an existing document will therefore show a one-line whitespace diff.
+
 ## [0.30.0] - 2026-07-31
 
 ### Added

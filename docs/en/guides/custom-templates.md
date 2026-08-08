@@ -68,7 +68,7 @@ $EDITOR runbook.yaml      # edit the v1 artifact: add a section, tweak meta_bull
 git commit -am "runbook: add 'communications' section"
 ```
 
-Anything you change is yours. Embedded fallback only kicks in for files you haven't created (e.g. a new template added in a future binary that isn't in your dir yet). The v1 artifact schema (frontmatter / title / meta_bullets / header_body / sections) is documented in the [postmortem reference](../commands/postmortem.md).
+Anything you change is yours. Embedded fallback only kicks in for files you haven't created (e.g. a new template added in a future binary that isn't in your dir yet). The v1 artifact schema (frontmatter / title / meta_bullets / header_body / sections / footer_body) is documented in the [postmortem reference](../commands/postmortem.md). Blocks are separated by exactly one blank line, and `footer_body` is trailing document-level material — the changelog's link reference definitions are the canonical use — with no id and no place in the `sections` array.
 
 ### 4. Validate
 

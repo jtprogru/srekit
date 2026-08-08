@@ -63,6 +63,22 @@ srekit postmortem -T "API outage" --from pm.edited.json
 
 Note that `--from` reads sections from a **map** keyed by ID (`{"summary": "…"}`), not a list. The JSON output uses a list to preserve manifest order; `--from` uses a map because order is irrelevant on the input side.
 
+### Round-trip a changelog
+
+`changelog` accepts `--from` too, with the same payload shape:
+
+```bash
+srekit changelog --repo acme/api --json > cl.json
+jq '.sections.unreleased = "### Added\n\n- Structured input for changelog.\n"' cl.json > cl.edited.json
+srekit changelog --from cl.edited.json
+```
+
+`meta` in the payload supplies `repo`, `initialVersion` and `today`; flags win over the file, and the file wins over the git remote. Unlike `postmortem`, `changelog` has no `--schema` and no `--validate` — its artifact declares no required sections, so payload validation could only ever pass.
+
+### What is not in `sections`
+
+An artifact's `footer_body` — trailing document-level material such as the changelog's link reference definitions — is **not** a section. It has no `id`, never appears in the `sections` array, and cannot be targeted through `--from`. It is rendered from the artifact on every invocation, which is exactly why replacing a section body cannot drop the changelog's compare links.
+
 ### Project to your own shape
 
 ```bash
@@ -121,7 +137,7 @@ Every generator is on the v1 artifact path: `meta` mirrors the per-command flag 
 
 ## When to use `--json`
 
-- **Agent workflows**: read a section, modify it, write it back. Postmortem is the first command optimized for this — `--from` round-trip works out of the box.
+- **Agent workflows**: read a section, modify it, write it back. Postmortem and changelog support this — `--from` round-trip works out of the box.
 - Scripting / automation: any time you'd otherwise `grep` Markdown to pluck a field, use `--json | jq` instead.
 - Drift checks: stash the JSON output of a previous generation and diff against a new one to detect template/field changes.
 - Cross-tool integration: feed values directly into Linear, Jira, or internal CLIs.

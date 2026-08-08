@@ -28,14 +28,23 @@ import (
 //
 //	...
 //
+//	<footer_body rendered, if non-empty>
+//
 // `rendered` is the section list already produced by sections.Merge
 // (overrides applied, defaults expanded). `ctx` is the data root every
 // template string is evaluated against — typically `struct{Meta T}{...}`.
 //
 // Empty fields are skipped — no leading `---\n---` block when frontmatter
-// is empty, no bare `# ` when title is empty, no trailing block when
-// header_body is whitespace. Frontmatter key order is preserved from the
-// source YAML.
+// is empty, no bare `# ` when title is empty, no blank stanza when
+// header_body or footer_body is whitespace. Frontmatter key order is
+// preserved from the source YAML.
+//
+// Every block is opened through startBlock, which owns the separation
+// invariant: exactly one blank line between adjacent blocks, in every
+// combination of present and absent elements. Blocks therefore write only
+// their own content and never their surrounding separators — the previous
+// arrangement, where each block padded itself, is what produced a double
+// blank line wherever a trailing and a leading separator met.
 func RenderArtifact(a *Artifact, rendered []RenderedSection, ctx any) ([]byte, error) {
 	if a == nil {
 		return nil, errors.New("artifact is nil")
@@ -58,9 +67,10 @@ func RenderArtifact(a *Artifact, rendered []RenderedSection, ctx any) ([]byte, e
 		if err := enc.Close(); err != nil {
 			return nil, fmt.Errorf("close frontmatter encoder: %w", err)
 		}
+		startBlock(&b)
 		b.WriteString("---\n")
 		b.Write(fmBuf.Bytes())
-		b.WriteString("---\n\n")
+		b.WriteString("---\n")
 	}
 
 	// 2. H1 title.
@@ -69,13 +79,15 @@ func RenderArtifact(a *Artifact, rendered []RenderedSection, ctx any) ([]byte, e
 		if err != nil {
 			return nil, fmt.Errorf("title: %w", err)
 		}
+		startBlock(&b)
 		b.WriteString("# ")
 		b.WriteString(title)
-		b.WriteString("\n\n")
+		b.WriteString("\n")
 	}
 
 	// 3. Meta bullets.
 	if len(a.MetaBullets) > 0 {
+		startBlock(&b)
 		for _, mb := range a.MetaBullets {
 			line, err := renderTemplate(mb, ctx)
 			if err != nil {
@@ -93,24 +105,59 @@ func RenderArtifact(a *Artifact, rendered []RenderedSection, ctx any) ([]byte, e
 		if err != nil {
 			return nil, fmt.Errorf("header_body: %w", err)
 		}
-		b.WriteString("\n")
+		startBlock(&b)
 		b.WriteString(strings.TrimRight(body, "\n"))
 		b.WriteString("\n")
 	}
 
 	// 5. Sections. Section titles were already template-evaluated in
 	// sections.Merge so the JSON contract and the rendered markdown agree.
+	// The heading and its body are two blocks, so the same invariant puts
+	// the blank line between them.
 	for _, s := range rendered {
-		b.WriteString("\n## ")
+		startBlock(&b)
+		b.WriteString("## ")
 		b.WriteString(s.Title)
-		b.WriteString("\n\n")
+		b.WriteString("\n")
+		startBlock(&b)
 		b.WriteString(strings.TrimRight(s.Body, "\n"))
+		b.WriteString("\n")
+	}
+
+	// 6. Footer body (trailing document-level material, e.g. link
+	// reference definitions).
+	if strings.TrimSpace(a.FooterBody) != "" {
+		footer, err := renderTemplate(a.FooterBody, ctx)
+		if err != nil {
+			return nil, fmt.Errorf("footer_body: %w", err)
+		}
+		startBlock(&b)
+		b.WriteString(strings.TrimRight(footer, "\n"))
 		b.WriteString("\n")
 	}
 
 	// Single trailing newline.
 	out := strings.TrimRight(b.String(), "\n") + "\n"
 	return []byte(out), nil
+}
+
+// startBlock prepares the buffer to receive a new block by ensuring it
+// ends in exactly one blank line. It is a no-op on an empty buffer, so
+// the first block present — whichever it turns out to be — never gets a
+// leading separator.
+//
+// Normalizing here rather than padding at each write site is what makes
+// "exactly one blank line between blocks" hold for every combination of
+// present and absent elements, instead of being a property each call site
+// has to re-derive from what it guesses came before it.
+func startBlock(b *bytes.Buffer) {
+	if b.Len() == 0 {
+		return
+	}
+	trimmed := strings.TrimRight(b.String(), "\n")
+	b.Reset()
+	b.WriteString(trimmed)
+	b.WriteString("\n\n")
 }
 
 // evalMappingValues walks a YAML mapping node and runs each scalar value
