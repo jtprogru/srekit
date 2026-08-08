@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -45,14 +43,11 @@ func (d postmortemData) ArtifactPayload() ([]sections.RenderedSection, any) {
 	return d.Sections, struct{ Meta postmortemMeta }{Meta: d.Meta}
 }
 
-// postmortemInput is the schema accepted by --from FILE. Both fields are
-// optional; CLI flags take precedence over `meta` on conflict (so an agent
-// can pin a title with --title even when the file disagrees). Unknown
-// section IDs in `sections` are rejected by sections.Merge as typo-guard.
-type postmortemInput struct {
-	Meta     map[string]string `json:"meta"`
-	Sections map[string]string `json:"sections"`
-}
+// The payload accepted by --from FILE is sections.Payload: both fields
+// are optional, CLI flags take precedence over `meta` on conflict (so an
+// agent can pin a title with --title even when the file disagrees), and
+// unknown section IDs in `sections` are rejected by sections.Merge as a
+// typo guard.
 
 // postmortemMetaFields enumerates the meta-object property names exposed
 // via `--schema`. It mirrors postmortemMeta's json tags; kept as a slice
@@ -108,26 +103,26 @@ func newPostmortemCmd() *cobra.Command {
 				return runPostmortemValidate(cmd, manifest, validate)
 			}
 
-			input, err := readPostmortemInput(cmd, from)
+			input, err := sections.ReadPayload(cmd.InOrStdin(), from)
 			if err != nil {
 				return err
 			}
 
 			// CLI flags override anything the input file might have set.
-			mergedTitle := pickNonEmpty(title, input.Meta["title"])
+			mergedTitle := sections.PickNonEmpty(title, input.Meta["title"])
 			if mergedTitle == "" {
 				return errors.New("--title is required")
 			}
 
 			now := clock.Now()
 			meta := postmortemMeta{
-				ID:       pickNonEmpty(input.Meta["id"], ids.UUID()),
+				ID:       sections.PickNonEmpty(input.Meta["id"], ids.UUID()),
 				Title:    mergedTitle,
-				Severity: pickNonEmpty(severity, input.Meta["severity"]),
-				Start:    pickNonEmpty(start, input.Meta["start"]),
-				End:      pickNonEmpty(end, input.Meta["end"]),
-				Owner:    pickNonEmpty(owner, input.Meta["owner"]),
-				Now:      pickNonEmpty(input.Meta["now"], now.Format(time.RFC3339)),
+				Severity: sections.PickNonEmpty(severity, input.Meta["severity"]),
+				Start:    sections.PickNonEmpty(start, input.Meta["start"]),
+				End:      sections.PickNonEmpty(end, input.Meta["end"]),
+				Owner:    sections.PickNonEmpty(owner, input.Meta["owner"]),
+				Now:      sections.PickNonEmpty(input.Meta["now"], now.Format(time.RFC3339)),
 			}
 
 			rendered, err := sections.Merge(manifest, input.Sections, struct {
@@ -192,7 +187,7 @@ func emitPostmortemSchema(cmd *cobra.Command, manifest *sections.Manifest) error
 // Exits non-zero if any required section is missing or empty, mirroring
 // `templates validate`'s OK/FAIL style.
 func runPostmortemValidate(cmd *cobra.Command, manifest *sections.Manifest, file string) error {
-	input, err := readPostmortemInput(cmd, file)
+	input, err := sections.ReadPayload(cmd.InOrStdin(), file)
 	if err != nil {
 		return err
 	}
@@ -222,39 +217,7 @@ func runPostmortemValidate(cmd *cobra.Command, manifest *sections.Manifest, file
 	return nil
 }
 
-// readPostmortemInput loads structured input from --from FILE. Empty `from`
-// returns a zero-value input (legacy mode: all sections rendered from
-// manifest defaults). `-` reads stdin.
-func readPostmortemInput(cmd *cobra.Command, from string) (postmortemInput, error) {
-	var input postmortemInput
-	if from == "" {
-		return input, nil
-	}
-	var raw []byte
-	var err error
-	if from == "-" {
-		raw, err = io.ReadAll(cmd.InOrStdin())
-	} else {
-		raw, err = os.ReadFile(from)
-	}
-	if err != nil {
-		return input, fmt.Errorf("read --from %s: %w", from, err)
-	}
-	if len(raw) == 0 {
-		return input, nil
-	}
-	if err := json.Unmarshal(raw, &input); err != nil {
-		return input, fmt.Errorf("parse --from %s: %w", from, err)
-	}
-	return input, nil
-}
-
-// pickNonEmpty returns the first non-empty string from values.
-func pickNonEmpty(values ...string) string {
-	for _, v := range values {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
-}
+// Reading a --from payload and resolving flag-over-file precedence live
+// in internal/sections (ReadPayload, PickNonEmpty): both are shaped by
+// the artifact contract rather than by this command, and changelog reads
+// the same payload shape.
