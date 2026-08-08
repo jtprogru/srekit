@@ -9,7 +9,7 @@
 [![security](https://github.com/jtprogru/srekit/actions/workflows/security.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/security.yaml)
 [![goreleaser](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml)
 [![Homebrew](https://img.shields.io/badge/Homebrew-jtprogru%2Ftap-FBB040?logo=homebrew&logoColor=white)](https://github.com/jtprogru/homebrew-tap)
-![Go LoC](https://img.shields.io/badge/go-8492%20LoC-blueviolet?logo=go)
+![Go LoC](https://img.shields.io/badge/go-8426%20LoC-blueviolet?logo=go)
 
 📚 **Documentation:** [jtprogru.github.io/srekit](https://jtprogru.github.io/srekit/) (EN + RU, full command reference, guides, recipes, architecture).
 
