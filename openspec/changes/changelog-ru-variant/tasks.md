@@ -1,6 +1,6 @@
 ## 1. Prerequisites
 
-- [ ] 1.1 Confirm `changelog-footer-and-structured-input` is implemented — the Russian variant carries the same document-level footer
+- [x] 1.1 Confirm `changelog-footer-and-structured-input` is implemented — the Russian variant carries the same document-level footer
 - [ ] 1.2 Confirm `changelog-release-and-lint` is implemented and its scanner takes the change-type vocabulary as a parameter rather than a constant
 
 ## 2. Language-aware artifact resolution
