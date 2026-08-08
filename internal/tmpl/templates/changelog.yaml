@@ -44,5 +44,10 @@ sections:
 
       - Initial release.
 
-      [Unreleased]: https://github.com/{{ .Meta.Repo }}/compare/v{{ .Meta.InitialVersion }}...HEAD
-      [{{ .Meta.InitialVersion }}]: https://github.com/{{ .Meta.Repo }}/releases/tag/v{{ .Meta.InitialVersion }}
+# Link reference definitions are a document-level footer, not prose
+# belonging to the last version section: Keep a Changelog treats them as
+# the tail of the document, and keeping them here means a section body
+# supplied through --from can never drop them.
+footer_body: |
+  [Unreleased]: https://github.com/{{ .Meta.Repo }}/compare/v{{ .Meta.InitialVersion }}...HEAD
+  [{{ .Meta.InitialVersion }}]: https://github.com/{{ .Meta.Repo }}/releases/tag/v{{ .Meta.InitialVersion }}
