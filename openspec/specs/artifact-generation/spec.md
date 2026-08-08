@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines the catalog of SRE text artifacts `srekit` generates, and the contract each generator obeys: which inputs are mandatory, what the default output filename looks like, and what the resulting Markdown document contains. This is the capability users actually reach for — everything else in the tool exists to serve it.
-
 ## Requirements
-
 ### Requirement: Artifact catalog
 
 The CLI SHALL provide exactly these generator commands, each producing one Markdown document:
@@ -23,11 +21,18 @@ The CLI SHALL provide exactly these generator commands, each producing one Markd
 
 Every command in the catalog SHALL produce an artifact an on-call engineer or a reliability team owns. A document that belongs to a different discipline — sprint ceremonies, capacity spreadsheets, software licensing — SHALL NOT be added to it.
 
+A catalog command MAY carry subcommands that maintain the artifact it generates, without those subcommands being catalog entries of their own. The bare invocation SHALL remain the generator, so a user who learned `srekit <name>` keeps the behaviour they learned.
+
 Removing a command from this catalog SHALL be treated as a breaking change.
 
 #### Scenario: Catalog is discoverable
 - **WHEN** a user runs `srekit --help`
 - **THEN** every command in the catalog SHALL be listed with a one-line description
+
+#### Scenario: A maintenance subcommand is not a catalog entry
+- **WHEN** a catalog command carries maintenance subcommands
+- **THEN** `srekit --help` SHALL list only the parent command
+- **AND** the bare parent invocation SHALL still generate its artifact
 
 ### Requirement: Retired command names fail with an explanation
 
@@ -159,3 +164,4 @@ Generators SHALL stamp each document with a generated UUIDv4 (or a short form de
 #### Scenario: Identifier can be pinned
 - **WHEN** a user supplies `meta.id` via `--from`
 - **THEN** that value SHALL be used instead of a freshly generated UUID, so a document can be re-rendered with a stable identity
+

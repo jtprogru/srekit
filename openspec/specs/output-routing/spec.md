@@ -3,12 +3,12 @@
 ## Purpose
 
 Defines the single, uniform way every `srekit` generator decides *where* its rendered output goes and *whether* it is allowed to write there. One flag bundle, one precedence order, one overwrite guard — so a user who learns the flags on `srekit slo` already knows them on `srekit postmortem`.
-
 ## Requirements
-
 ### Requirement: Uniform output flag bundle
 
 Every generator command SHALL expose the same output flags: `--out`, `--stdout`, `--force`, `--dry-run`, and `--json`. The root command SHALL expose a persistent `--quiet` / `-q` flag inherited by all subcommands.
+
+A command that edits a document the user already owns is not a generator, and SHALL NOT expose `--out` or `--force`. Its destination is the file it was given, so a second destination has no meaning, and an overwrite guard would guard against the command's own purpose. Such a command SHALL still expose `--dry-run`, `--stdout` and `--json` with their usual meanings — show the result, do not write it.
 
 No command SHALL expose `--template FILE`. Every generator resolves its artifact by name through the template source chain, so a template-file flag would be silently ignored wherever it appeared — and a flag that is silently ignored is a defect, not a convenience. A team that wants different output SHALL customize the artifact in a templates directory, which every generator honours.
 
@@ -16,6 +16,11 @@ No command SHALL expose `--template FILE`. Every generator resolves its artifact
 - **WHEN** a user runs `srekit <generator> --help` for any generator
 - **THEN** `--out`, `--stdout`, `--force`, `--dry-run`, `--json` SHALL all be listed
 - **AND** `--out`'s help text SHALL name that command's own default output path
+
+#### Scenario: An editing command offers a narrower bundle
+- **WHEN** a user runs `--help` for a command that rewrites an existing document
+- **THEN** `--dry-run`, `--stdout` and `--json` SHALL be listed
+- **AND** `--out` and `--force` SHALL NOT be listed
 
 #### Scenario: No command offers --template
 - **WHEN** a user runs `--help` for any command
@@ -51,7 +56,9 @@ The output sink SHALL be resolved in this order:
 
 ### Requirement: Existing files are never silently overwritten
 
-When the resolved target is a file that already exists and `--force` was not given, the command SHALL fail with a non-zero exit status and an error naming the path and the `--force` remedy. It SHALL NOT modify the existing file.
+When a generator's resolved target is a file that already exists and `--force` was not given, the command SHALL fail with a non-zero exit status and an error naming the path and the `--force` remedy. It SHALL NOT modify the existing file.
+
+This guard applies to generators, which create documents. It SHALL NOT apply to a command whose stated purpose is to rewrite a document it was pointed at; such a command writes back to its source by design, and guards instead on the preconditions of the edit itself.
 
 #### Scenario: Second run without --force is refused
 - **GIVEN** `slo-api.md` already exists
@@ -63,6 +70,11 @@ When the resolved target is a file that already exists and `--force` was not giv
 - **GIVEN** `slo-api.md` already exists
 - **WHEN** a user runs `srekit slo --service api --force`
 - **THEN** the file SHALL be replaced with the newly rendered document
+
+#### Scenario: An editing command writes back without --force
+- **GIVEN** a `CHANGELOG.md` that already exists
+- **WHEN** a user runs a command whose purpose is to rewrite it
+- **THEN** the file SHALL be updated in place without requiring `--force`
 
 ### Requirement: Dry-run writes nothing
 
@@ -115,3 +127,4 @@ An invalid invocation (unknown flag, wrong argument count) SHALL print the comma
 #### Scenario: Unknown flag prints usage
 - **WHEN** a user runs `srekit slo --service api --nonexistent`
 - **THEN** the usage block SHALL be printed alongside the error
+
