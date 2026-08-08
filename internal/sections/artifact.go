@@ -9,12 +9,19 @@ import (
 
 // Artifact is the v1 single-file on-disk format for a generator: header
 // (frontmatter, H1 title, meta bullets, optional freeform header_body)
-// + the existing typed-sections list. Replaces v0.13.x's split
-// `<name>.md.tmpl` + `<name>.sections.yaml` pair with one `<name>.yaml`.
+// + the existing typed-sections list + an optional freeform footer_body.
+// Replaces v0.13.x's split `<name>.md.tmpl` + `<name>.sections.yaml` pair
+// with one `<name>.yaml`.
 //
 // `Frontmatter` is a yaml.Node (not a Go map) so author-chosen key order
 // survives parse → render. The renderer walks the node to evaluate each
 // scalar through the shared template engine.
+//
+// `FooterBody` is the mirror of `HeaderBody` at the other end of the
+// document: trailing document-level material that belongs to no section,
+// such as the changelog's link reference definitions. It is deliberately
+// not a section — it has no id, no type and no place in the JSON
+// `sections` array, so it cannot be targeted through `--from`.
 //
 //nolint:tagliatelle // snake_case in YAML is author-facing; see Section docs
 type Artifact struct {
@@ -24,6 +31,7 @@ type Artifact struct {
 	MetaBullets []string  `json:"metaBullets,omitempty" yaml:"meta_bullets,omitempty"`
 	HeaderBody  string    `json:"headerBody,omitempty"  yaml:"header_body,omitempty"`
 	Sections    []Section `json:"sections"              yaml:"sections"`
+	FooterBody  string    `json:"footerBody,omitempty"  yaml:"footer_body,omitempty"`
 }
 
 // ParseArtifact decodes data and runs structural validation: version=1,

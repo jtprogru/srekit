@@ -28,14 +28,16 @@ import (
 //
 //	...
 //
+//	<footer_body rendered, if non-empty>
+//
 // `rendered` is the section list already produced by sections.Merge
 // (overrides applied, defaults expanded). `ctx` is the data root every
 // template string is evaluated against — typically `struct{Meta T}{...}`.
 //
 // Empty fields are skipped — no leading `---\n---` block when frontmatter
 // is empty, no bare `# ` when title is empty, no blank stanza when
-// header_body is whitespace. Frontmatter key order is preserved from the
-// source YAML.
+// header_body or footer_body is whitespace. Frontmatter key order is
+// preserved from the source YAML.
 //
 // Every block is opened through startBlock, which owns the separation
 // invariant: exactly one blank line between adjacent blocks, in every
@@ -119,6 +121,18 @@ func RenderArtifact(a *Artifact, rendered []RenderedSection, ctx any) ([]byte, e
 		b.WriteString("\n")
 		startBlock(&b)
 		b.WriteString(strings.TrimRight(s.Body, "\n"))
+		b.WriteString("\n")
+	}
+
+	// 6. Footer body (trailing document-level material, e.g. link
+	// reference definitions).
+	if strings.TrimSpace(a.FooterBody) != "" {
+		footer, err := renderTemplate(a.FooterBody, ctx)
+		if err != nil {
+			return nil, fmt.Errorf("footer_body: %w", err)
+		}
+		startBlock(&b)
+		b.WriteString(strings.TrimRight(footer, "\n"))
 		b.WriteString("\n")
 	}
 

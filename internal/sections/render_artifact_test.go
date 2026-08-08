@@ -147,6 +147,62 @@ func renderOne(t *testing.T, a *Artifact, ctx any) string {
 	return string(body)
 }
 
+func TestRenderArtifact_FooterBody(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:    1,
+		Title:      "Changelog",
+		Sections:   []Section{{ID: "x", Title: "[Unreleased]", Type: TypeText, DefaultBody: "entry"}},
+		FooterBody: "[Unreleased]: https://example.test/compare/v1.0.0...HEAD\n",
+	}
+	got := renderOne(t, a, nil)
+	want := "# Changelog\n\n## [Unreleased]\n\nentry\n\n[Unreleased]: https://example.test/compare/v1.0.0...HEAD\n"
+	if got != want {
+		t.Errorf("footer composition:\ngot  %q\nwant %q", got, want)
+	}
+}
+
+func TestRenderArtifact_FooterBodyAbsentIsUnchanged(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:  1,
+		Title:    "T",
+		Sections: []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+	}
+	got := renderOne(t, a, nil)
+	want := "# T\n\n## X\n\nb\n"
+	if got != want {
+		t.Errorf("artifact without a footer must render as it did before the key existed:\ngot  %q\nwant %q", got, want)
+	}
+}
+
+func TestRenderArtifact_FooterBodyEvaluated(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:    1,
+		Sections:   []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+		FooterBody: "[link]: https://example.test/{{ .Meta.Repo }}",
+	}
+	type meta struct{ Repo string }
+	got := renderOne(t, a, struct{ Meta meta }{Meta: meta{Repo: "acme/api"}})
+	if !strings.Contains(got, "[link]: https://example.test/acme/api") {
+		t.Errorf("footer_body not expanded:\n%s", got)
+	}
+}
+
+func TestRenderArtifact_FooterBodyWhitespaceOnly(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:    1,
+		Sections:   []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+		FooterBody: "   \n\n  ",
+	}
+	got := renderOne(t, a, nil)
+	if got != "## X\n\nb\n" {
+		t.Errorf("whitespace-only footer should produce no trailing stanza: %q", got)
+	}
+}
+
 // TestRenderArtifact_BlockSeparation pins the invariant that every pair of
 // adjacent blocks is separated by exactly one blank line, across the
 // combinations of present and absent elements. The title+header_body case
@@ -177,12 +233,17 @@ func TestRenderArtifact_BlockSeparation(t *testing.T) {
 			want: "- a\n- c\n\nintro\n\n## X\n\nb\n",
 		},
 		{
+			name: "sections and footer",
+			a:    &Artifact{Version: 1, Sections: section, FooterBody: "[l]: u"},
+			want: "## X\n\nb\n\n[l]: u\n",
+		},
+		{
 			name: "every element present",
 			a: &Artifact{
 				Version: 1, Frontmatter: fm, Title: "T", MetaBullets: []string{"a"},
-				HeaderBody: "intro", Sections: section,
+				HeaderBody: "intro", Sections: section, FooterBody: "[l]: u",
 			},
-			want: "---\nid: abc\n---\n\n# T\n\n- a\n\nintro\n\n## X\n\nb\n",
+			want: "---\nid: abc\n---\n\n# T\n\n- a\n\nintro\n\n## X\n\nb\n\n[l]: u\n",
 		},
 		{
 			name: "sections only",

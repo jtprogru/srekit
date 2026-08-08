@@ -52,6 +52,36 @@ func TestParseArtifact_Happy(t *testing.T) {
 	}
 }
 
+func TestParseArtifact_FooterBody(t *testing.T) {
+	t.Parallel()
+	const src = `
+version: 1
+sections:
+  - id: x
+    title: X
+    type: text
+footer_body: |
+  [Unreleased]: https://example.test/compare/v1.0.0...HEAD
+`
+	a, err := ParseArtifact([]byte(src))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if !strings.Contains(a.FooterBody, "[Unreleased]:") {
+		t.Errorf("footer_body=%q", a.FooterBody)
+	}
+
+	// An artifact that never declares the key parses with an empty footer
+	// rather than failing — the key is additive.
+	a2, err := ParseArtifact([]byte(validArtifact))
+	if err != nil {
+		t.Fatalf("parse without footer: %v", err)
+	}
+	if a2.FooterBody != "" {
+		t.Errorf("absent footer_body should be empty, got %q", a2.FooterBody)
+	}
+}
+
 func TestParseArtifact_PreservesFrontmatterKeyOrder(t *testing.T) {
 	t.Parallel()
 	a, err := ParseArtifact([]byte(validArtifact))
