@@ -25,6 +25,20 @@ func runCLI(t *testing.T, args ...string) (string, error) {
 	return out.String(), err
 }
 
+// runCLIStdin is runCLI with a canned standard input, for the `--from -`
+// path. Kept separate so the common helper stays a one-liner.
+func runCLIStdin(t *testing.T, stdin string, args ...string) (string, error) {
+	t.Helper()
+	var out bytes.Buffer
+	cmd := NewRootCmd()
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+	cmd.SetIn(strings.NewReader(stdin))
+	cmd.SetArgs(args)
+	err := cmd.Execute()
+	return out.String(), err
+}
+
 func TestTaskStdout(t *testing.T) {
 	t.Parallel()
 	out, err := runCLI(t, "task", "--title", "Tail latency", "--stdout")
@@ -1213,6 +1227,150 @@ func TestChangelogJSONStructured(t *testing.T) {
 	}
 	if !sawUnreleased || !sawInitial {
 		t.Errorf("missing expected section ids in %v", secs)
+	}
+}
+
+// TestChangelogRoundTrip captures the JSON envelope, replaces the
+// unreleased body, and feeds it back — the round-trip postmortem
+// documents, now that changelog accepts --from too.
+func TestChangelogRoundTrip(t *testing.T) {
+	t.Parallel()
+	raw, err := runCLI(t, "changelog", "--repo", "acme/api", "--stdout", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var captured struct {
+		Meta     map[string]string `json:"meta"`
+		Sections []struct {
+			ID   string `json:"id"`
+			Body string `json:"body"`
+		} `json:"sections"`
+	}
+	if err := json.Unmarshal([]byte(raw), &captured); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, raw)
+	}
+
+	// Feed the captured envelope back with one section edited — the
+	// round-trip, not a hand-written payload that happens to work.
+	edited := map[string]string{}
+	for _, s := range captured.Sections {
+		edited[s.ID] = s.Body
+	}
+	edited["unreleased"] = "### Added\n\n- Real entry.\n"
+	// Drop one section entirely so the fallback-to-defaults half of the
+	// contract is exercised alongside the replacement half.
+	delete(edited, "initial_release")
+	in := map[string]any{"meta": captured.Meta, "sections": edited}
+	file := filepath.Join(t.TempDir(), "cl.json")
+	b, err := json.Marshal(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, b, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := runCLI(t, "changelog", "--from", file, "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "## [Unreleased]\n\n### Added\n\n- Real entry.") {
+		t.Errorf("supplied body did not land under [Unreleased]:\n%s", out)
+	}
+	// Omitted sections still come from the artifact defaults.
+	if !strings.Contains(out, "- Initial release.") {
+		t.Errorf("omitted section lost its default:\n%s", out)
+	}
+}
+
+// TestChangelogFromUnknownSectionID locks in the typo guard: an id the
+// artifact does not declare is an error, never a silent skip.
+func TestChangelogFromUnknownSectionID(t *testing.T) {
+	t.Parallel()
+	file := filepath.Join(t.TempDir(), "cl.json")
+	body := `{"sections":{"unreleased_notes":"x"}}`
+	if err := os.WriteFile(file, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := runCLI(t, "changelog", "--repo", "acme/api", "--from", file, "--stdout")
+	if err == nil {
+		t.Fatal("expected an error for an unknown section id")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "unreleased_notes") || !strings.Contains(msg, "initial_release") {
+		t.Errorf("error should name the offender and list known ids, got: %v", err)
+	}
+}
+
+// TestChangelogFromStdinSuppliesRepo covers two things at once: `-` reads
+// the payload from standard input, and meta.repo in that payload is a
+// valid source for the slug when there is no flag and no git remote.
+func TestChangelogFromStdinSuppliesRepo(t *testing.T) {
+	withConfig(t, nil)
+	t.Chdir(t.TempDir()) // not a git repository: remote detection must fail
+
+	payload := `{"meta":{"repo":"acme/api"},"sections":{"unreleased":"### Fixed\n\n- From stdin.\n"}}`
+	out, err := runCLIStdin(t, payload, "changelog", "--from", "-", "--stdout")
+	if err != nil {
+		t.Fatalf("payload slug should satisfy repo resolution: %v", err)
+	}
+	if !strings.Contains(out, "github.com/acme/api/compare/v0.1.0...HEAD") {
+		t.Errorf("slug from the payload not used:\n%s", out)
+	}
+	if !strings.Contains(out, "- From stdin.") {
+		t.Errorf("stdin payload body not rendered:\n%s", out)
+	}
+}
+
+// TestChangelogFlagSetIsNarrow pins the decision that changelog accepts
+// structured input but offers neither payload schema nor payload
+// validation: its artifact declares no required sections, so --validate
+// could not fail and --schema would describe nothing.
+func TestChangelogFlagSetIsNarrow(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "changelog", "--help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "--from") {
+		t.Errorf("--from should be offered:\n%s", out)
+	}
+	for _, flag := range []string{"--schema", "--validate"} {
+		if strings.Contains(out, flag) {
+			t.Errorf("%s should not be offered on changelog:\n%s", flag, out)
+		}
+	}
+}
+
+// TestChangelogLinkBlockIsAFooter verifies the link definitions survive a
+// payload that replaces the section they used to live inside.
+func TestChangelogLinkBlockIsAFooter(t *testing.T) {
+	t.Parallel()
+	file := filepath.Join(t.TempDir(), "cl.json")
+	body := `{"sections":{"initial_release":"### Added\n\n- Rewritten by hand.\n"}}`
+	if err := os.WriteFile(file, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCLI(t, "changelog", "--repo", "acme/api", "--from", file, "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "- Rewritten by hand.") {
+		t.Fatalf("supplied body missing:\n%s", out)
+	}
+	for _, want := range []string{
+		"[Unreleased]: https://github.com/acme/api/compare/v0.1.0...HEAD",
+		"[0.1.0]: https://github.com/acme/api/releases/tag/v0.1.0",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("link definition %q lost when the section body was replaced:\n%s", want, out)
+		}
+	}
+	// The block is the tail of the document, after the last section.
+	lastSection := strings.LastIndex(out, "## [0.1.0]")
+	links := strings.Index(out, "[Unreleased]: https://")
+	if lastSection == -1 || links == -1 || links < lastSection {
+		t.Errorf("link block should follow the last version section (section@%d links@%d)", lastSection, links)
 	}
 }
 
