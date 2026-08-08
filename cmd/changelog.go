@@ -38,6 +38,11 @@ func newChangelogCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "changelog",
 		Short: "Generate a CHANGELOG.md scaffold (Keep a Changelog format)",
+		Long: `Generate a CHANGELOG.md scaffold in Keep a Changelog format.
+
+The bare invocation generates. The release and validate subcommands maintain
+a changelog that already exists — they are not catalog entries of their own,
+so ` + "`srekit changelog`" + ` keeps the behaviour it always had.`,
 		Example: `  # Write CHANGELOG.md, repository slug from the git remote
   srekit changelog
 
@@ -47,7 +52,18 @@ func newChangelogCmd() *cobra.Command {
   # Round-trip: fill the unreleased section and re-render Markdown
   srekit changelog --repo acme/api --json > cl.json
   # ...edit cl.json...
-  srekit changelog --from cl.json`,
+  srekit changelog --from cl.json
+
+  # Cut a release: move [Unreleased] under a dated heading
+  srekit changelog release --version 1.2.0
+
+  # Check an existing changelog against the format
+  srekit changelog validate`,
+		// The generator takes no positional arguments; NoArgs on the parent
+		// turns a mistyped subcommand into an error instead of a silently
+		// ignored word. Cobra resolves a real subcommand before consulting
+		// this, so `changelog release` is unaffected.
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			// The payload is read before slug resolution: meta.repo in the
 			// file is one of the three ways a slug can arrive, so detection
@@ -98,6 +114,7 @@ func newChangelogCmd() *cobra.Command {
 	cmd.Flags().StringVar(&version, "version", "0.1.0", "initial version label")
 	cmd.Flags().StringVar(&from, "from", "", "read sections from JSON file (- for stdin)")
 	out.Bind(cmd, "write to file (default: CHANGELOG.md)")
+	cmd.AddCommand(newChangelogReleaseCmd(), newChangelogValidateCmd())
 	return cmd
 }
 
