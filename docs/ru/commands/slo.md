@@ -36,16 +36,18 @@ srekit slo --service api-gw --target 99.95% --window 90d --latency 250ms \
 
 ## Структура секций
 
-- Front matter: `title`, `service`, `target`, `window`, `id`
-- Сервис (Service)
-- SLI / SLO определения (success ratio, latency percentile)
-- PromQL-пример — предрендерен со значениями service / window / latency
+- Front matter: `id`, `creation_date`, `modification_date`, `type: slo`, `service`, `tags`
+- Определение SLI (SLI definition) — success ratio и latency percentile, PromQL предрендерен со значениями service / window / latency
+- Цель SLO (SLO target)
 - Бюджет ошибок (Error budget)
-- Связанные документы (Related docs) — ссылки на runbook и EBP
+- Последствия истощения бюджета (Consequences of budget exhaustion) — точка передачи в [`srekit ebp`](ebp.md)
+- Зависимости (Dependencies)
+- Регулярность пересмотра (Review cadence)
+- Ссылки (References)
 
 ## Структура данных для шаблона
 
-`slo` шипится как v1 YAML-артефакт (`internal/tmpl/templates/slo.yaml`) — frontmatter, H1, meta_bullets, секции про SLI/SLO определение, error budget и related-docs. Template-выражения обращаются к `.Meta.<Field>` для `ID`, `Service`, `Target`, `Window`, `LatencyTarget`, `Now`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
+`slo` шипится как v1 YAML-артефакт (`internal/tmpl/templates/slo.yaml`) — frontmatter, H1, meta_bullets, секции `sli_definition`, `slo_target`, `error_budget`, `consequences_of_budget_exhaustion`, `dependencies`, `review_cadence`, `references`. Template-выражения обращаются к `.Meta.<Field>` для `ID`, `Service`, `Target`, `Window`, `LatencyTarget`, `Now`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 

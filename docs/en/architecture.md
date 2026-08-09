@@ -8,17 +8,21 @@ A tour of the code for contributors and curious users.
 srekit/
 ├── main.go               # cobra.Execute() entry point
 ├── cmd/                  # one .go per command + shared root
-│   ├── root.go           # cobra root + viper init + persistent --templates-dir / --config
-│   ├── <command>.go      # one per generator + the templates / config groups
+│   ├── root.go           # cobra root + persistent --templates-dir / --config / --quiet
+│   ├── paths.go          # XDG resolution for config + templates dir, legacy paths win if present
+│   ├── doctor*.go        # read-only environment report
+│   ├── <command>.go      # one per generator + the templates / config / changelog groups
 │   └── cmd_test.go       # smoke tests through cobra (SetArgs + captured stdout)
 ├── internal/
 │   ├── ids/              # UUID v4 + slug
 │   ├── clock/            # var Now = time.Now (overridable in tests)
 │   ├── meta/             # Author.Resolve + DetectRepo (git remote parsing)
+│   ├── config/           # hand-rolled YAML + SREKIT_* env config (deliberately not viper)
 │   ├── cliflags/         # shared --out / --stdout / --force / --dry-run / --json bundle
-│   ├── tmpl/             # //go:embed templates/*.yaml + Funcs + Source/Loader + Samples + Validate + DocsMD
+│   ├── tmpl/             # //go:embed templates/*.yaml + Funcs + Source/Loader + Samples + DocsMD
 │   │   └── templates/    # v1 single-file YAML artifacts, one per generator
 │   ├── sections/         # Artifact (v1 single-file) + Section/Manifest + Merge + RenderArtifact + JSONSchema
+│   ├── changelog/        # `changelog release` / `validate` — offset-based rewriter for a doc the user wrote
 │   ├── migrate/          # `srekit templates migrate` — heuristic .tmpl → .yaml converter
 │   └── render/           # Render() — buildBody/writeBody + JSON short-circuit + artifact branch
 ├── docs/                 # this site (MkDocs Material with i18n)
@@ -65,9 +69,17 @@ v0.30.0 removed the third branch — Go-template execution — along with `--tem
 
 Every generator command embeds an `Output` and calls `.Bind(cmd, "default-path-description")`. This wires the shared flags (`--out` / `--stdout` / `--force` / `--dry-run` / `--json`). There is no `--template FILE` binding: every generator resolves its artifact by name, so the flag would be silently ignored. `RenderOptions(def)` turns the flag values into a `render.Options`.
 
+### `internal/config`
+
+A hand-rolled YAML + `SREKIT_*` environment reader, deliberately not viper. viper was dropped because it pulls `afero → net/http → crypto/tls` into the build graph, and neither `net/http` nor `crypto` may appear there — see the dependency-minimalism invariant. `config.Global()` is the one remaining piece of package-level mutable state; tests seed it through the non-parallel `withConfig(t, kv)` helper.
+
+### `internal/changelog`
+
+The only package that reads a document the *user* wrote, behind `changelog release` / `changelog validate`. A line-oriented region scanner, not a Markdown parser: `Scan` records byte offsets (preamble, `[Unreleased]`, one region per version heading, the trailing link block) and `Release` splices at those offsets, copying everything else through untouched. Reserializing a parsed model would normalize every blank line and bullet marker in a five-year-old changelog and make the release commit unreviewable, so byte-identical preservation outside the edited regions is a property of the design rather than a test that happens to pass. Link conventions come from the document's own `[Unreleased]` definition; git is consulted only when there is no link block at all. The change-type vocabulary is a parameter (`English` / `Russian`) detected from the document, never from `--lang`.
+
 ### `internal/meta.Resolve` and `DetectRepo`
 
-`Resolve` walks flag → viper → git config for `author` and `email`. `DetectRepo` regex-parses `git config remote.origin.url` against GitHub SSH and HTTPS patterns.
+`Resolve` walks flag → `SREKIT_*` env → config file → `git config` for `author` and `email`. `DetectRepo` regex-parses `git config remote.origin.url` against GitHub SSH and HTTPS patterns.
 
 ### `internal/clock.Now`
 
@@ -88,11 +100,17 @@ The 3-way merge in `templates upgrade` uses a per-template snapshot of "the embe
 
 The release flow:
 
-1. Bump `CHANGELOG.md` — move `[Unreleased]` content into `[X.Y.Z]`.
+1. Cut `CHANGELOG.md` — `srekit changelog release --version X.Y.Z`, or move `[Unreleased]` into `[X.Y.Z]` by hand.
 2. Commit `release: X.Y.Z` on `main`.
 3. `git tag -a vX.Y.Z -m vX.Y.Z` and `git push origin vX.Y.Z`.
-4. goreleaser builds 8 artifacts + checksums + GPG sig.
+4. goreleaser builds 6 archives (3 OS × 2 arch) + checksums + GPG sig.
 5. Homebrew cask in `jtprogru/homebrew-tap/Casks/srekit.rb` is rewritten.
+
+Step 5 is the only one that authenticates with `HOMEBREW_TAP_GITHUB_TOKEN` rather than the workflow's built-in `GITHUB_TOKEN`, so an expired PAT fails *after* the GitHub release is already published — the release looks fine and the tap silently stays on the previous version. Check the token before tagging:
+
+```bash
+GH_TOKEN=<tap-pat> gh api repos/jtprogru/homebrew-tap --jq .default_branch
+```
 
 ## Testing strategy
 
@@ -100,10 +118,11 @@ The release flow:
 |---|---|---|
 | Unit | `ids.UUID`/`Slug`, `meta.Resolve`/`DetectRepo`, `tmpl.Funcs`/`Loader`, `sections.*`, `cliflags`, `render` (file/stdout/dry-run/JSON/artifact) | `internal/*/*_test.go` |
 | Integration | Smoke through `cobra.Command.SetArgs` + captured stdout for every command, including templates pull/validate/diff/upgrade/list/migrate and config init | `cmd/cmd_test.go` |
-| Race | `go test -race ./...` on CI | `.github/workflows/tests.yaml` |
-| Lint | `golangci-lint v2.12` with ~50 linters | `.golangci.yaml`, `.github/workflows/lint.yaml` |
+| Race | `make test-race` on CI | `.github/workflows/tests.yaml` |
+| Lint | `golangci-lint v2.12.2` with ~50 linters, via `make lint` | `.golangci.yaml`, `.github/workflows/lint.yaml` |
+| Vulnerabilities | `make govulncheck` | `.github/workflows/security.yaml` |
 
-Render/tmpl unit tests build their loader via a `newFixtureLoader(t)` helper that writes a per-test `.tmpl` fixture into a temp dir — they don't depend on what's currently in embed, which kept the test suite stable across the v0.14–v0.20 migration churn.
+Render/tmpl unit tests build their loader via a `newFixtureLoader(t)` helper that writes a per-test `fixture.yaml` artifact into a temp dir — they don't depend on what's currently in embed, which kept the test suite stable across the v0.14–v0.20 migration churn.
 
 ## Things you'd touch by feature
 
@@ -113,8 +132,11 @@ Render/tmpl unit tests build their loader via a `newFixtureLoader(t)` helper tha
 | Add a flag to an existing generator | The relevant `cmd/<name>.go`; for shared output flags, `internal/cliflags/cliflags.go` |
 | Change a template's content | Edit `internal/tmpl/templates/<name>.yaml` |
 | Tweak rendered markdown layout (frontmatter, H1, section composition) | `internal/sections/render_artifact.go` |
-| Add a template helper function | `internal/tmpl/funcs.go` |
+| Add a template helper function | `tmpl.Funcs` in `internal/tmpl/tmpl.go` |
 | Modify the templates lifecycle | `cmd/templates.go` |
+| Change how an existing changelog is scanned or rewritten | `internal/changelog/` (`scan.go`, `release.go`, `validate.go`, `links.go`) |
+| Add or change a `doctor` check | `cmd/doctor_checks.go` — check IDs are a public contract |
+| Change where config or templates resolve | `cmd/paths.go` |
 
 ## See also
 

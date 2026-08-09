@@ -9,6 +9,13 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [Unreleased]
 
+### Fixed
+
+- **Documentation audited against the binary in both locales.** A pass over `docs/en`, `docs/ru` and `README.md` comparing every claim to what the code actually does. The corrections that would have cost a reader real time: the landing page described the shipped templates as "embedded Markdown templates", when a template is a v1 YAML artifact from which the Markdown is composed; `srekit task`'s default filename was documented as `Tasker - <title>.md` and has been `investigation-<slug>.md` since v0.20.0; several `jq` examples read fields off the payload root (`jq '.id'`, `jq '.severity'`) that have lived under `meta` since 0.13.0; and the `--json` → edit → `--from` round-trip in both the JSON guide and the postmortem reference showed `jq '.sections.summary = …'`, which cannot work — `--json` emits `sections` as a list and `--from` reads a map, so that command fails with `Cannot index array with string`. The corrected form reshapes the list with `from_entries` first. The section-structure blocks for `runbook`, `slo`, `ebp`, `oncall-report`, `rfc` and `task` listed sections and frontmatter keys the artifacts have not carried for several releases and now match the YAML. Config and templates paths are documented as XDG-first with the legacy path winning if it exists, rather than as `~/.srekit.yaml` throughout. `srekit doctor`, `changelog release` / `validate`, `--lang ru` and `templates migrate` were missing from one or more overview pages and are now listed where a reader would look for them. The architecture page still described `viper`, removed in v0.30.0, and omitted `internal/config`, `internal/changelog` and `cmd/paths.go`; the configuration guide still said there was no way to inspect resolved configuration, which `srekit doctor` has done since v0.31.0.
+- **Each documentation locale is now written in its own language.** The English section-structure lists quoted the bilingual headings the templates render, so an English page carried Russian prose; they now give the stable section `id` and the English term, with a `jq` line that prints the titles as they ship. The Russian pages dropped anglicisms that had a plain Russian equivalent — "Best-effort", "defaults", "Snapshot GC", "escape hatch", "verbatim", "as-is", "preview" — and translated the headings that were still English. Verbatim CLI output, flag and file names are untouched in both: a reader searches their terminal for exactly the string the page shows. `docs/en/commands/changelog.md` keeps its Russian, because the `--lang ru` sample and the accepted change-type vocabulary are what those sections are about.
+- **Stale `--help` text on four `templates` subcommands.** `list` and `diff` described themselves as operating on `*.tmpl`, `validate` documented executing templates against sample data and referred to `--template`, a flag removed in v0.30.0, and `pull` named `~/.srekit.yaml` and `~/.srekit/templates` as the resolution chain rather than the config file and the XDG path. No behaviour change; the commands did the right thing and described the wrong one.
+- **This file now passes its own `srekit changelog validate`.** Two released sections carried a `###` heading that is not one of the format's six change types, which is exactly the drift the `change-types` check exists to catch: `[0.13.0]` had a `Notes for v1.0 direction` heading, now the release's lead-in paragraph above its first change type, and `[0.3.0]` had a `Dependencies` heading, whose two bumps moved into that release's existing `Changed` list. Wording is preserved in both; only the headings moved.
+
 ## [0.32.1] - 2026-08-09
 
 ### Fixed
@@ -374,6 +381,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [0.13.0] - 2026-06-04
 
+**Notes for v1.0 direction.** This release introduces the manifest format on a single command as a prototype. After 2-3 months of practice, the project will decide whether to migrate the remaining generators to YAML-first templates as part of v1.0 — see `plans/srekit-plan.md` for the roadmap. Until then, the bootstrap wrapper gives those commands a uniform JSON contract without forcing their migration.
+
 ### Added
 
 - **Structured `--json` via sidecar sections manifest.** `srekit postmortem` is the first generator backed by a `<template>.sections.yaml` file that declares typed slots (`text` / `list` / `table`), required-flags, and default content. `--json` exposes the document section-by-section in manifest order:
@@ -419,10 +428,6 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
   - Anything that depended on flat `{{ .Title }}` / `{{ .ID }}` / etc. in the template body becomes `{{ .Meta.Title }}` / `{{ .Meta.ID }}` / etc. — the data root is now `{Meta, Sections}`.
 
 - **`templates init/upgrade/diff/list/validate`** now treat `.sections.yaml` as a first-class artifact alongside `.tmpl`. Enumeration is centralized in `tmpl.EmbeddedNames()` / `tmpl.IsTemplateArtifact()` — adding a new artifact type in the future is one helper update, not five duplicated changes. `templates validate` parses `.sections.yaml` as a manifest and surfaces schema errors (unknown type, missing ID, etc.) on a `FAIL` line.
-
-### Notes for v1.0 direction
-
-This release introduces the manifest format on a single command as a prototype. After 2-3 months of practice, the project will decide whether to migrate the remaining generators to YAML-first templates as part of v1.0 — see `plans/srekit-plan.md` for the roadmap. Until then, the bootstrap wrapper gives those commands a uniform JSON contract without forcing their migration.
 
 ## [0.12.1] - 2026-06-04
 
@@ -587,6 +592,7 @@ This release introduces the manifest format on a single command as a prototype. 
 - `cmd/` rewritten to a constructor pattern with no package-level mutable flag state. Tests are parallel-safe and race-clean.
 - `meta.Resolve` no longer reads the global `viper` instance; it accepts a `Lookup` interface (`GetString(key) string`).
 - `Taskfile.yml` uses `go run .` / `go build .` instead of pinning to `main.go`.
+- Dependencies: `github.com/spf13/cobra` 1.6.1 → 1.10.2, `github.com/spf13/viper` 1.15.0 → 1.21.0.
 
 ### Added
 
@@ -598,11 +604,6 @@ This release introduces the manifest format on a single command as a prototype. 
 
 - Removed an unreachable `showVersion` check in `Execute()`. `--version`/`-V` now drives through cobra's `SetVersionTemplate`, printing the full commit/date/builder block as intended.
 - `licAlias`/`sretaskAlias` collapsed into `cobra.Command.Aliases`, eliminating a fragile double-`StringVar` binding to shared package-level vars.
-
-### Dependencies
-
-- `github.com/spf13/cobra` 1.6.1 → 1.10.2
-- `github.com/spf13/viper` 1.15.0 → 1.21.0
 
 ## [0.2.0] - 2026-05-06
 

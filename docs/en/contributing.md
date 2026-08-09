@@ -31,6 +31,7 @@ Optional: `goreleaser` for `make release-dry`, `tokei` for the LoC-badge pre-com
 |---|---|
 | `make run ARGS="<args>"` | `go run . <args>` |
 | `make build` | Builds `./dist/srekit` |
+| `make install` | `go install` |
 | `make test` | `go test --short -coverprofile=cover.out -v ./...` |
 | `make test-race` | `go test -race -coverprofile=cover.out -v ./...` (what CI runs) |
 | `make lint` | `golangci-lint run` at the pinned version |
@@ -38,10 +39,12 @@ Optional: `goreleaser` for `make release-dry`, `tokei` for the LoC-badge pre-com
 | `make govulncheck` | Vulnerability scan (what CI runs) |
 | `make ci` | `lint` + `test-race` — one-shot pre-push check |
 | `make ci-full` | `lint` + `test-race` + `govulncheck` + `docs-build` |
+| `make release-check` | `goreleaser check` — validates `.goreleaser.yaml` |
 | `make release-dry` | `goreleaser release --clean --snapshot --skip=publish,sign` — builds into `./dist` without publishing |
 | `make docs-install` | Creates `./.venv` and installs `docs/requirements.txt` |
 | `make docs-serve` | Serves the docs site at `http://127.0.0.1:8000` |
 | `make docs-build` | Builds the docs into `./site` (strict mode) |
+| `make docs-deploy` | `mkdocs gh-deploy` — called from CI, not by hand |
 | `make tools` | Installs the pinned `golangci-lint` and `govulncheck` into `./bin` |
 | `make fmt` | `gofmt -s -w .` |
 | `make vet` | `go vet ./...` |
@@ -76,11 +79,21 @@ go test ./cmd/ -run TestTemplates -v
 (For maintainers.)
 
 1. Make sure `main` is clean and CI is green.
-2. Move `[Unreleased]` content in `CHANGELOG.md` into `[X.Y.Z] - YYYY-MM-DD`.
-3. `git commit -m "release: X.Y.Z"` + `git push`.
-4. `git tag -a vX.Y.Z -m vX.Y.Z` + `git push origin vX.Y.Z`.
-5. Watch the `goreleaser` workflow — should take ~90 seconds.
-6. Verify the GitHub Release page and `jtprogru/homebrew-tap` cask are updated.
+2. Check the tap token — it is the only credential the pipeline uses that is not the workflow's built-in `GITHUB_TOKEN`, and it fails *after* the release is published:
+
+    ```bash
+    GH_TOKEN=<tap-pat> gh api repos/jtprogru/homebrew-tap --jq .default_branch   # expect: main
+    ```
+
+    A `401 Bad credentials` means rotating the fine-grained PAT (`jtprogru/homebrew-tap`, `Contents: Read and write`) and `gh secret set HOMEBREW_TAP_GITHUB_TOKEN --repo jtprogru/srekit`.
+
+3. Cut the changelog: `srekit changelog release --version X.Y.Z`, or move `[Unreleased]` into `[X.Y.Z] - YYYY-MM-DD` by hand.
+4. `git commit -m "release: X.Y.Z"` + `git push`.
+5. `git tag -a vX.Y.Z -m vX.Y.Z` + `git push origin vX.Y.Z`.
+6. Watch the `goreleaser` workflow — should take ~90 seconds.
+7. Verify the GitHub Release page and `jtprogru/homebrew-tap` cask are updated.
+
+If the cask push fails anyway, re-running the job does not help: the rerun replays the same ref, so a fix landed on `main` is not picked up, and re-uploading existing assets fails with a 422. Fix the token, then delete the release and the tag and push the tag again at the same commit (`gh release delete vX.Y.Z --yes`, `git push origin :refs/tags/vX.Y.Z`, `git push origin vX.Y.Z`). The rebuild is not byte-identical — archive timestamps move the checksums — so anything that recorded the first run's `sha256`s goes stale.
 
 `make release-dry` runs the build locally without publishing — useful for catching `.goreleaser.yaml` issues before tagging.
 

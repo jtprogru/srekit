@@ -1,13 +1,13 @@
 # Кастомные шаблоны: workflow
 
-Built-in шаблоны srekit — это разумные defaults, но любой команде рано или поздно хочется их доработать: принять внутреннюю терминологию, добавить специфичную секцию или убрать ненужную. Workflow кастомных шаблонов даёт это сделать, не теряя возможности забирать upstream-изменения из будущих релизов srekit.
+Встроенные шаблоны srekit — это разумные значения по умолчанию, но любой команде рано или поздно хочется их доработать: принять внутреннюю терминологию, добавить специфичную секцию или убрать ненужную. Сценарий работы с кастомными шаблонами даёт это сделать, не теряя возможности забирать upstream-изменения из будущих релизов srekit.
 
 !!! tip "Начни с готового репозитория"
     [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — публичный репозиторий шаблонов ровно в той раскладке, что описана ниже. Склонируй его вместо скаффолда с нуля или форкни под свой remote:
 
     ```bash
-    git clone https://github.com/jtprogru/sre-templates ~/.srekit/templates
-    echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+    git clone https://github.com/jtprogru/sre-templates ~/.config/srekit/templates
+    echo 'templates_dir: ~/.config/srekit/templates' >> ~/.config/srekit/config.yaml
     ```
 
     Дальше `srekit templates pull` держит его в синхроне с remote, а `srekit templates upgrade` вмёрживает новый embedded-контент из будущих бинарей.
@@ -32,43 +32,43 @@ Built-in шаблоны srekit — это разумные defaults, но люб
 ### 1. Скаффолд
 
 ```bash
-srekit templates init ~/.srekit/templates
-# Templates scaffolded in /Users/you/.srekit/templates (11 .yaml + TEMPLATES.md)
+srekit templates init ~/.config/srekit/templates
+# Templates scaffolded in /Users/you/.config/srekit/templates (9 files + TEMPLATES.md)
 #
 # Next steps — connect a remote (SSH recommended) and push:
-#   cd /Users/you/.srekit/templates
+#   cd /Users/you/.config/srekit/templates
 #   git remote add origin git@github.com:<owner>/<repo>.git
 #   git add . && git commit -m 'initial templates'
 #   git push -u origin main
 #
 # Then point srekit at this directory:
-#   echo 'templates_dir: /Users/you/.srekit/templates' >> ~/.srekit.yaml
-#   # or: export SREKIT_TEMPLATES_DIR=/Users/you/.srekit/templates
+#   echo 'templates_dir: /Users/you/.config/srekit/templates' >> ~/.config/srekit/config.yaml
+#   # or: export SREKIT_TEMPLATES_DIR=/Users/you/.config/srekit/templates
 ```
 
 Несколько деталей:
 
 - `templates init` по умолчанию делает `git init` (`--no-git` чтобы пропустить).
 - Создаёт служебную директорию `.srekit-embedded/` (снапшот embedded на момент init) и дописывает её в `.gitignore`, чтобы она никогда не попала в team-репо шаблонов.
-- Без явного `[dir]` резолвит `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` в yaml; fallback `~/.srekit/templates`.
+- Без явного `[dir]` резолвит `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` в конфиге; запасной вариант — `$XDG_CONFIG_HOME/srekit/templates` либо pre-XDG `~/.srekit/templates`, если такая директория уже существует.
 
 ### 2. Подключить
 
 ```bash
 srekit config init   # задаёт author, email, templates_dir
 # или вручную:
-echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+echo 'templates_dir: ~/.config/srekit/templates' >> ~/.config/srekit/config.yaml
 ```
 
 ### 3. Кастомизировать
 
 ```bash
-cd ~/.srekit/templates
+cd ~/.config/srekit/templates
 $EDITOR runbook.yaml      # правишь v1-артефакт: добавляешь секцию, тюнишь meta_bullets, etc.
 git commit -am "runbook: add 'communications' section"
 ```
 
-Всё что ты меняешь — твоё. Embedded fallback срабатывает только для файлов, которых у тебя нет (например, новый шаблон, добавленный в будущем бинаре, которого у тебя в dir ещё нет). Схема v1-артефакта (frontmatter / title / meta_bullets / header_body / sections / footer_body) описана в [postmortem reference](../commands/postmortem.md). Блоки разделяются ровно одной пустой строкой, а `footer_body` — хвостовой материал уровня документа (канонический пример — блок link reference definitions в changelog): у него нет id и нет места в массиве `sections`.
+Всё что ты меняешь — твоё. Embedded запасной вариант срабатывает только для файлов, которых у тебя нет (например, новый шаблон, добавленный в будущем бинаре, которого у тебя в dir ещё нет). Схема v1-артефакта (frontmatter / title / meta_bullets / header_body / sections / footer_body) описана в [postmortem reference](../commands/postmortem.md). Блоки разделяются ровно одной пустой строкой, а `footer_body` — хвостовой материал уровня документа (канонический пример — блок link reference definitions в changelog): у него нет id и нет места в массиве `sections`.
 
 ### 4. Провалидировать
 
@@ -134,7 +134,7 @@ srekit templates upgrade          # 3-way merge новых embedded в твою 
 3. `changelog.yaml` в твоей директории шаблонов
 4. `changelog.yaml`, вкомпилированный в бинарь
 
-Вариант ищется по *всей* цепочке источников раньше, чем в любом из них пробуется fallback. Порядок важен в одном случае: если ты кастомизировал `changelog.yaml` и своего русского варианта у тебя нет, `--lang ru` отдаст embedded-русский артефакт, а не твою английскую кастомизацию. Ты просил русский, и английский файл — даже свой — не является ответом на этот вопрос.
+Вариант ищется по *всей* цепочке источников раньше, чем в любом из них пробуется запасной вариант. Порядок важен в одном случае: если ты кастомизировал `changelog.yaml` и своего русского варианта у тебя нет, `--lang ru` отдаст embedded-русский артефакт, а не твою английскую кастомизацию. Ты просил русский, и английский файл — даже свой — не является ответом на этот вопрос.
 
 Чтобы кастомизировать русский вариант, правь `changelog.ru.yaml` в своей директории шаблонов, как любой другой файл. Третий язык пока не выбирается: `--lang` принимает только `en` и `ru`, так что положенный рядом `changelog.de.yaml` нечем будет выбрать. Язык, варианта для которого нет нигде, молча откатывается к базовому артефакту, а не падает.
 
@@ -142,11 +142,12 @@ srekit templates upgrade          # 3-way merge новых embedded в твою 
 
 ### "Я наскаффолдил не туда"
 
-Часто бывает, когда поставил `templates_dir:` но забыл передать соответствующий arg в `templates init`. Просто повтори:
+Часто бывает, когда поставил `templates_dir:`, но забыл передать соответствующий arg в `templates init`, — и скаффолд лёг в дефолтную директорию. Повтори без аргумента, потом удали ghost:
 
 ```bash
-srekit templates init   # учтёт templates_dir из yaml
-rm -rf ~/.srekit/templates   # старый ghost
+srekit doctor           # config.templates-dir назовёт директорию, которая реально в силе
+srekit templates init   # учтёт templates_dir из конфига
+rm -rf ~/.config/srekit/templates   # дефолтная директория, если лишняя копия попала туда
 ```
 
 ### "Я снёс директорию `.srekit-embedded/`"

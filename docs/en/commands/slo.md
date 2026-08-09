@@ -36,16 +36,20 @@ srekit slo --service api-gw --target 99.95% --window 90d --latency 250ms \
 
 ## Section structure
 
-- Front matter: `title`, `service`, `target`, `window`, `id`
-- Сервис (Service)
-- SLI / SLO definitions (success ratio, latency percentile)
-- PromQL example — pre-rendered with the service / window / latency values
-- Бюджет ошибок (Error budget)
-- Связанные документы (Related docs) — links to runbook and EBP
+Section headings render bilingually — Russian, with the English term in parentheses. Below they are given by stable `id` and English term; `srekit slo --service X --json | jq -r '.sections[].title'` prints them as they appear in the document.
+
+- Front matter: `id`, `creation_date`, `modification_date`, `type: slo`, `service`, `tags`
+- `sli_definition` — SLI definition: success ratio and latency percentile, with the PromQL pre-rendered from the service / window / latency values
+- `slo_target` — SLO target
+- `error_budget` — Error budget
+- `consequences_of_budget_exhaustion` — Consequences of budget exhaustion: the hand-off point to [`srekit ebp`](ebp.md)
+- `dependencies` — Dependencies
+- `review_cadence` — Review cadence
+- `references` — References
 
 ## Template shape
 
-`slo` ships as a v1 YAML artifact (`internal/tmpl/templates/slo.yaml`) — frontmatter, H1, meta_bullets, sections covering the SLI/SLO definition, error budget, and related-docs links. Template expressions reference `.Meta.<Field>` for `ID`, `Service`, `Target`, `Window`, `LatencyTarget`, `Now`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
+`slo` ships as a v1 YAML artifact (`internal/tmpl/templates/slo.yaml`) — frontmatter, H1, meta_bullets, sections (`sli_definition`, `slo_target`, `error_budget`, `consequences_of_budget_exhaustion`, `dependencies`, `review_cadence`, `references`). Template expressions reference `.Meta.<Field>` for `ID`, `Service`, `Target`, `Window`, `LatencyTarget`, `Now`. See [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) for the full schema reference.
 
 ## See also
 

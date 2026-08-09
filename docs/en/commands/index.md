@@ -19,8 +19,8 @@ srekit's surface is a flat tree of cobra subcommands. Every generator command pr
 
 | Command | Purpose |
 |---|---|
-| [`srekit templates`](templates.md) | Manage a custom templates directory: `init`, `pull`, `list`, `validate`, `diff`, `upgrade` |
-| [`srekit config`](config.md) | Scaffold `~/.srekit.yaml`: `init` |
+| [`srekit templates`](templates.md) | Manage a custom templates directory: `init`, `pull`, `list`, `validate`, `diff`, `upgrade`, `migrate` |
+| [`srekit config`](config.md) | Scaffold the config file (`$XDG_CONFIG_HOME/srekit/config.yaml`): `init` |
 | [`srekit doctor`](doctor.md) | Diagnose the environment read-only: config, templates, identity, `git` |
 | [`srekit completion`](completion.md) | Shell autocomplete: `bash`, `zsh`, `fish`, `powershell` |
 
@@ -42,6 +42,8 @@ There is no `--template FILE` flag. It was removed in v0.30.0 with `srekit licen
 
 `capacity`, `retro` and `license` were removed in v0.30.0 — see [Removed commands](../migration/removed-commands.md).
 
-The persistent flag `--templates-dir DIR` (or env `SREKIT_TEMPLATES_DIR`, or `templates_dir:` in `~/.srekit.yaml`) installs a custom templates directory whose files override the embedded ones. Missing files fall back transparently.
+The persistent flag `--templates-dir DIR` (or env `SREKIT_TEMPLATES_DIR`, or `templates_dir:` in the config file) installs a custom templates directory whose files override the built-in ones. Missing files fall back transparently.
+
+`srekit changelog` also carries a persistent `--lang en|ru` that its `release` and `validate` subcommands inherit. It selects the vocabulary that gets *generated*; what an existing document is parsed as is read out of that document — see [`srekit changelog`](changelog.md#the-russian-variant).
 
 See [Configuration & precedence](../guides/configuration.md) for the full resolution rules.

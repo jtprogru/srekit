@@ -8,7 +8,7 @@ srekit читает конфигурацию из четырёх источни�
 |---|---|
 | **Флаги** | `--author`, `--email`, `--templates-dir` и т.п. в командной строке |
 | **Env** | `SREKIT_AUTHOR`, `SREKIT_EMAIL`, `SREKIT_TEMPLATES_DIR` |
-| **`~/.srekit.yaml`** | Правится вручную или через `srekit config init` |
+| **Конфиг-файл** | `$XDG_CONFIG_HOME/srekit/config.yaml`, правится вручную или через `srekit config init` |
 | **`git config`** | `user.name`, `user.email` из global или local git config |
 
 ## Приоритет
@@ -17,7 +17,7 @@ srekit читает конфигурацию из четырёх источни�
 
 1. Command-line флаг
 2. `SREKIT_<KEY>` env-переменная (например `SREKIT_AUTHOR`)
-3. `~/.srekit.yaml` (например `author:`)
+3. Конфиг-файл (например `author:`)
 4. `git config <git-key>` (только для author/email)
 
 Если все четыре пустые для required-значения — команда падает с понятной ошибкой:
@@ -29,7 +29,7 @@ srekit rfc --title "Move to gRPC"
 
 ## Ключи
 
-### Identity автора
+### Личность автора { #identity }
 
 Используется: `rfc`, `oncall-report` (остальные фолбэчатся на "anonymous" где уместно).
 
@@ -38,7 +38,7 @@ srekit rfc --title "Move to gRPC"
 | name | `author:` (или `full_name:`) | `SREKIT_AUTHOR` | `user.name` |
 | email | `email:` | `SREKIT_EMAIL` | `user.email` |
 
-### Templates directory
+### Директория шаблонов { #templates-dir }
 
 Используется каждой `templates *` подкомандой и каждым генератором (через overlay-loader).
 
@@ -62,17 +62,19 @@ srekit rfc --title "Move to gRPC"
 
 | Ключ | флаг | default |
 |---|---|---|
-| config file | `--config FILE` | `~/.srekit.yaml` |
+| config file | `--config FILE` | `$XDG_CONFIG_HOME/srekit/config.yaml` |
+
+Для свежих установок srekit следует XDG Base Directory Specification, но pre-XDG путь выигрывает, если уже существует: `~/.srekit.yaml` для конфига и `~/.srekit/templates` для директории шаблонов. Так обновление никогда не оставляет тебя с конфигом, который лежит и никем не читается. Если существуют оба, используется legacy, а [`srekit doctor`](../commands/doctor.md) предупреждает, какой из них игнорируется.
 
 `srekit config init` уважает `--config` тоже — передай чтобы записать файл в другое место.
 
 ## yaml-файл
 
 ```yaml
-# ~/.srekit.yaml
+# ~/.config/srekit/config.yaml
 author: Mikhail Savin
 email: jtprogru@gmail.com
-# templates_dir: ~/.srekit/templates   # опционально
+# templates_dir: ~/.config/srekit/templates   # опционально
 # changelog_lang: ru                   # опционально, default: en
 ```
 
@@ -83,7 +85,7 @@ email: jtprogru@gmail.com
 Одна машина, две GitHub identity (личная и рабочая):
 
 ```bash
-# ~/.srekit.yaml содержит личную identity.
+# Конфиг-файл содержит личную identity.
 # На работе:
 SREKIT_AUTHOR="Mikhail Savin" SREKIT_EMAIL="m.savin@work.example.com" \
   srekit rfc --title "Move checkout to gRPC"
@@ -97,9 +99,16 @@ srekit --templates-dir ./project-templates rfc --title "Migrate to gRPC"
 
 ## Дебаг приоритета
 
-Хочешь знать, какой источник выиграл? Запусти с теми же args и сравни вывод, ИЛИ просто проверь env / yaml / git config по очереди. Built-in команды "show resolved config" пока нет — кандидат на v1.0.
+Хочешь знать, какой источник выиграл? Спроси:
+
+```bash
+srekit doctor
+```
+
+`config.file` называет конфиг, который реально читается; `config.env` перечисляет все действующие переменные с префиксом `SREKIT_`; `config.templates-dir` сообщает зарезолвленную директорию шаблонов *и источник, который её дал*; `config.identity` — итоговые author name и email с происхождением каждого значения. `config.shadowed` срабатывает, когда существуют и XDG-, и legacy-путь, так что «правил конфиг, а его никто не читает» выглядит как warning, а не как загадка. См. [`srekit doctor`](../commands/doctor.md).
 
 ## См. также
 
+- [`srekit doctor`](../commands/doctor.md) — read-only отчёт обо всём, что эта страница описывает как «резолвится».
 - [`srekit config init`](../commands/config.md#config-init) — записать yaml-файл интерактивно.
 - [Кастомные шаблоны](custom-templates.md) — end-to-end `templates_dir`.

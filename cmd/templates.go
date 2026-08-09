@@ -45,7 +45,8 @@ func newTemplatesListCmd() *cobra.Command {
 		Use:   "list [dir]",
 		Short: "List templates and their state vs the embedded set",
 		Long: `Walks the configured templates directory (or [dir] if given) and the
-binary's embedded set, classifying each *.tmpl as:
+binary's embedded set, classifying each artifact (*.yaml, plus legacy
+*.tmpl / *.sections.yaml) as:
 
   identical       — user file matches embedded byte-for-byte
   customized      — user file exists but differs from embedded
@@ -549,7 +550,8 @@ func newTemplatesPullCmd() *cobra.Command {
 pass --rebase to rebase local commits on top instead.
 
 The directory is resolved from --templates-dir / SREKIT_TEMPLATES_DIR /
-templates_dir: in ~/.srekit.yaml, falling back to ~/.srekit/templates.`,
+templates_dir: in the config file, falling back to
+$XDG_CONFIG_HOME/srekit/templates.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runTemplatesPull(cmd, rebase)
@@ -598,19 +600,24 @@ func runTemplatesPull(cmd *cobra.Command, rebase bool) error {
 func newTemplatesValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate [dir]",
-		Short: "Parse and dry-run every .tmpl in the templates directory",
+		Short: "Parse every template artifact in the templates directory",
 		Long: `Walk [dir] (default: configured templates dir, falling back to
-$XDG_CONFIG_HOME/srekit/templates), parse each *.tmpl with the same FuncMap srekit uses,
-and — for files whose names match a built-in template — execute the
-template against canonical sample data to catch references to fields that
-don't exist in the struct shape (e.g. a typo'd '.Servce' instead of
-'.Service').
+$XDG_CONFIG_HOME/srekit/templates) and parse each artifact with the parser
+its filename selects:
 
-Files with names that aren't built-ins (your own custom templates used
-via --template) get parse-only validation: we can catch syntax errors
-but have no canonical data shape to execute against.
+  <name>.yaml           the v1 artifact parser — supported version, non-empty
+                        section list, unique ids, recognized type
+                        (text/list/table), required fields present
+  <name>.sections.yaml  the legacy v0.13.x manifest parser, same checks
+  <name>.tmpl           legacy Go-template parse with srekit's FuncMap:
+                        catches syntax errors only
 
-Exits non-zero if any file fails to parse or execute.`,
+A file whose name matches no built-in artifact is reported as parse-only:
+there is no canonical data shape to check its field references against.
+
+Reports every file, then exits non-zero if any failed. Never rewrites
+anything. 'srekit doctor' runs the same parser in its templates.parse
+check, so the two can never disagree.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: runTemplatesValidate,
 	}
@@ -722,7 +729,7 @@ func newTemplatesDiffCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff [dir]",
 		Short: "Show how the templates directory has diverged from the embedded versions",
-		Long: `For each *.tmpl in [dir] (default: configured templates dir), diff
+		Long: `For each artifact in [dir] (default: configured templates dir), diff
 the user's version against the version embedded in this srekit binary.
 Shells out to 'git diff --no-index' so output is a familiar unified
 diff. Templates that don't ship in the binary are reported as

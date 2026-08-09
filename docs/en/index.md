@@ -1,8 +1,8 @@
 # srekit
 
-**srekit** is a CLI that generates the text artifacts SREs deal with every day — investigation logs, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, and changelogs — all from embedded Markdown templates.
+**srekit** is a CLI that generates the text artifacts SREs deal with every day — investigation logs, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, and changelogs.
 
-It is small, focused, and self-contained: a single binary with every template baked in via `//go:embed`, plus a transparent fallback path for custom templates you keep under your own git remote.
+A template is not a Markdown file. It is a **v1 YAML artifact** (`postmortem.yaml`, `slo.yaml`, …) that declares frontmatter, an H1, meta bullets and a list of typed sections; srekit composes the Markdown from that declaration. The shipped set is compiled into the binary, so a fresh install renders everything with no files on disk and no network — and a directory of your own artifacts, kept under your own git remote, overrides it file by file, with anything you have not overridden falling back transparently.
 
 ---
 
@@ -13,10 +13,12 @@ SRE work produces a lot of structured documents that read 80 % the same and diff
 ## What you get
 
 - **8 generator commands** — `task`, `postmortem`, `rfc`, `runbook`, `changelog`, `oncall-report`, `slo`, `ebp`.
-- **Templates as your contract** — every template is bilingual (Russian headings + English technical terms), shipped embedded, and overridable via a custom directory under your own git remote.
-- **Full template lifecycle** — `templates init / pull / list / validate / diff / upgrade`, with a true 3-way merge on upgrade.
+- **Templates as your contract** — every artifact is bilingual (Russian headings + English technical terms), ships compiled into the binary, and is overridable via a custom directory under your own git remote.
+- **Changelog maintenance, not just scaffolding** — `changelog release` cuts a version out of `[Unreleased]` and `changelog validate` lints an existing `CHANGELOG.md` against Keep a Changelog.
+- **Full template lifecycle** — `templates init / pull / list / validate / diff / upgrade / migrate`, with a true 3-way merge on upgrade.
 - **JSON output** — every generator supports `--json` for piping into `jq` and other tools.
-- **Deterministic** — no network calls in the hot path, no hidden state. Author/email/repo resolved from local config and `git`.
+- **A read-only environment check** — `srekit doctor` reports which config file is actually read, where the templates directory resolves, and whether your artifacts still parse.
+- **Deterministic** — no network calls at all, no hidden state. Author/email/repo resolved from local config and `git`.
 
 ## At a glance
 
@@ -27,12 +29,12 @@ srekit postmortem --title "API outage" --severity SEV-1 \
   --owner "@oncall" --out postmortem-2026-05-06.md
 
 # Pipe a generator into jq for scripting
-srekit task --title "Tail latency on api-gw" --json | jq '.id'
+srekit task --title "Tail latency on api-gw" --json | jq -r '.meta.id'
 
 # Manage your customized templates
 srekit templates init     # scaffold your own copy
 srekit templates list     # see what's customized
-srekit templates upgrade  # 3-way merge in new embedded content
+srekit templates upgrade  # 3-way merge in new built-in content
 ```
 
 ## Next steps

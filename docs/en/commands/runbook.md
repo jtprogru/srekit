@@ -1,6 +1,6 @@
 # srekit runbook
 
-Generate a **runbook** — the operational playbook on-call reaches for when an alert fires. Sections: Symptoms, Diagnose, Mitigate, Verify, Escalate.
+Generate a **runbook** — the operational playbook on-call reaches for when an alert fires. Sections: Symptoms, Severity & SLO impact, Diagnose, Mitigate, Verify, After the fact, References.
 
 ## Synopsis
 
@@ -33,13 +33,16 @@ srekit runbook --title "DB connection storm" --stdout
 
 ## Section structure
 
-- Front matter: `title`, `service`, `alert`, `tags`, `id`
-- Симптомы (Symptoms)
-- Диагностика (Diagnose) — investigations to run, dashboards to check
-- Митигация (Mitigate) — bounded steps that stop user impact
-- Проверка (Verify) — how to confirm the mitigation worked
-- Эскалация (Escalate) — who to page if the runbook doesn't resolve it
-- Ссылки (References)
+Section headings render bilingually — Russian, with the English term in parentheses. Below they are given by stable `id` and English term; `srekit runbook -T X --json | jq -r '.sections[].title'` prints them as they appear in the document.
+
+- Front matter: `id`, `creation_date`, `modification_date`, `type: runbook`, `title`, `service`, `alert`, `tags`
+- `symptoms` — Symptoms: what the alert actually looks like
+- `severity_slo_impact` — Severity & SLO impact: how bad this is, and against which budget
+- `diagnose` — Diagnose: investigations to run, dashboards to check
+- `mitigate` — Mitigate: bounded steps that stop user impact — immediate action, rollback, failover
+- `verify` — Verify: how to confirm the mitigation worked
+- `after_the_fact` — After the fact: open a postmortem above a given SEV, fold surprises back into this runbook
+- `references` — References
 
 ## Template shape
 

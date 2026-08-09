@@ -20,7 +20,7 @@ srekit postmortem --title "$TITLE" --severity "$SEV" \
 # Extract metadata and post it elsewhere
 srekit postmortem --title "$TITLE" --severity "$SEV" \
   --start "$START" --end "$END" --json |
-  jq '{title, severity: .severity, started_at: .start, ended_at: .end}' |
+  jq '{title: .meta.title, severity: .meta.severity, started_at: .meta.start, ended_at: .meta.end}' |
   curl -X POST https://tracker.example.com/api/incidents \
     -H 'Content-Type: application/json' -d @-
 ```
@@ -159,7 +159,7 @@ Then `srekit templates upgrade` to 3-way-merge them in.
 
 ## Use a different identity per project
 
-`~/.srekit.yaml` has your personal identity; in a work repo's `.envrc` (via direnv):
+The config file has your personal identity; in a work repo's `.envrc` (via direnv):
 
 ```bash
 export SREKIT_AUTHOR="Mikhail Savin"
@@ -178,7 +178,7 @@ Some teams want all engineers to use the same srekit version for reproducibility
 #!/usr/bin/env bash
 # bin/srekit
 set -euo pipefail
-WANT=0.10.1
+WANT=0.32.1
 HAVE=$(srekit --version 2>&1 | awk '/srekit version:/ {print $3}')
 if [[ "$HAVE" != "$WANT" ]]; then
   echo "srekit $WANT required (have $HAVE)" >&2; exit 1
@@ -195,7 +195,7 @@ Common for multi-repo orgs: one shared `sre-templates` repo, many consumers.
 ```bash
 # In each repo's setup:
 git clone git@github.com:acme/sre-templates ~/.acme/templates
-echo "templates_dir: ~/.acme/templates" >> ~/.srekit.yaml
+echo "templates_dir: ~/.acme/templates" >> ~/.config/srekit/config.yaml
 
 # To pull updates:
 srekit templates pull

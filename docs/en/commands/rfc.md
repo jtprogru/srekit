@@ -40,12 +40,14 @@ srekit rfc --title "X" --status maybe --stdout
 
 ## Section structure
 
-- Front matter: `title`, `status`, `tags`, `id`
-- Контекст (Context)
-- Решение (Decision)
-- Альтернативы (Alternatives)
-- Последствия (Consequences) — split into Positive / Negative / Neutral
-- Ссылки (References)
+Section headings render bilingually — Russian, with the English term in parentheses. Below they are given by stable `id` and English term; `srekit rfc -T X --json | jq -r '.sections[].title'` prints them as they appear in the document.
+
+- Front matter: `id`, `creation_date`, `decision_date`, `status`, `type: rfc`, `title`, `deciders`, `supersedes`, `superseded_by`, `tags`
+- `context` — Context
+- `decision` — Decision
+- `alternatives_considered` — Alternatives considered
+- `consequences` — Consequences: split into Positive / Negative / Neutral sub-headings
+- `references` — References
 
 ## Template shape
 

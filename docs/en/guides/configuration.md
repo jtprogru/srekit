@@ -8,7 +8,7 @@ srekit reads configuration from four sources. Most users only need one of them. 
 |---|---|
 | **Flags** | `--author`, `--email`, `--templates-dir`, etc. on the command line |
 | **Environment** | `SREKIT_AUTHOR`, `SREKIT_EMAIL`, `SREKIT_TEMPLATES_DIR` |
-| **`~/.srekit.yaml`** | Edited by hand or via `srekit config init` |
+| **Config file** | `$XDG_CONFIG_HOME/srekit/config.yaml`, edited by hand or via `srekit config init` |
 | **`git config`** | `user.name`, `user.email` from your global or local git config |
 
 ## Precedence
@@ -17,7 +17,7 @@ Per key, srekit walks the sources in this order and uses the first non-empty val
 
 1. Command-line flag
 2. `SREKIT_<KEY>` env var (e.g. `SREKIT_AUTHOR`)
-3. `~/.srekit.yaml` (e.g. `author:`)
+3. The config file (e.g. `author:`)
 4. `git config <git-key>` (only for author/email)
 
 If all four are empty for a required value, the command exits with a clear error:
@@ -62,17 +62,19 @@ Accepts `en` (the default) or `ru`. An unrecognized value fails, naming the acce
 
 | Key | flag | default |
 |---|---|---|
-| config file | `--config FILE` | `~/.srekit.yaml` |
+| config file | `--config FILE` | `$XDG_CONFIG_HOME/srekit/config.yaml` |
+
+srekit follows the XDG Base Directory Specification for fresh installs, but a pre-XDG path wins if it already exists: `~/.srekit.yaml` for the config and `~/.srekit/templates` for the templates directory. That way an upgrade never leaves you with a config file that sits there unread. When both locations exist, the legacy one is used and [`srekit doctor`](../commands/doctor.md) warns which one is being ignored.
 
 `srekit config init` honors `--config` too — pass it to write the file elsewhere.
 
 ## The yaml file
 
 ```yaml
-# ~/.srekit.yaml
+# ~/.config/srekit/config.yaml
 author: Mikhail Savin
 email: jtprogru@gmail.com
-# templates_dir: ~/.srekit/templates   # optional
+# templates_dir: ~/.config/srekit/templates   # optional
 # changelog_lang: ru                   # optional, default: en
 ```
 
@@ -83,7 +85,7 @@ Generate it with [`srekit config init`](../commands/config.md). The file is writ
 Same machine, two GitHub identities (personal and work):
 
 ```bash
-# ~/.srekit.yaml has personal identity baked in.
+# The config file has personal identity baked in.
 # At work:
 SREKIT_AUTHOR="Mikhail Savin" SREKIT_EMAIL="m.savin@work.example.com" \
   srekit rfc --title "Move checkout to gRPC"
@@ -97,9 +99,16 @@ srekit --templates-dir ./project-templates rfc --title "Migrate to gRPC"
 
 ## Debugging precedence
 
-Want to know which source srekit picked? Run with the same args and diff the output, OR just check the env / yaml / git config in order. There's no built-in "show resolved config" command yet — that's a v1.0 candidate.
+Want to know which source srekit picked? Ask it:
+
+```bash
+srekit doctor
+```
+
+`config.file` names the config actually being read, `config.env` lists every `SREKIT_`-prefixed variable currently in effect, `config.templates-dir` reports the resolved templates directory *and which source supplied it*, and `config.identity` reports the resolved author name and email with the origin of each value. `config.shadowed` fires when both an XDG and a legacy path exist, so a config you edited but nobody reads shows up as a warning rather than as a mystery. See [`srekit doctor`](../commands/doctor.md).
 
 ## See also
 
+- [`srekit doctor`](../commands/doctor.md) — read-only report of everything this page describes as resolved.
 - [`srekit config init`](../commands/config.md#config-init) — write the yaml file interactively.
 - [Custom templates workflow](custom-templates.md) — `templates_dir` start to finish.

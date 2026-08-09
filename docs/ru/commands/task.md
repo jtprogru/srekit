@@ -17,7 +17,7 @@ srekit task --title TITLE [flags]
 
 Плюс [общие output-флаги](index.md#shared-output-flags): `--out`, `--stdout`, `--force`, `--dry-run`, `--json`.
 
-## Default имя файла
+## Имя файла по умолчанию
 
 Если ни `--out`, ни `--stdout` не передан — пишется в `<path>/investigation-<slug>.md` (lowercased, slug-нормализованное).
 
@@ -39,14 +39,14 @@ srekit task --title "Tail latency on api-gw" --path ./tasks
 Достать сгенерированный UUID через `jq`:
 
 ```bash
-srekit task --title "Tail latency on api-gw" --json | jq -r '.id'
+srekit task --title "Tail latency on api-gw" --json | jq -r '.meta.id'
 ```
 
 ## Структура данных для шаблона
 
-`task` шипится как v1 YAML-артефакт (`internal/tmpl/templates/task.yaml`) — frontmatter (`id`, `title`, `creation_date`, `tags`), H1, meta_bullets, список секций (`Контекст / Context`, `Гипотеза / Hypothesis`, `Доказательства / Evidence`, `Выводы / Findings`, `Дальнейшие действия / Action items`, `Ссылки / References`). На вход передаётся `{Meta: {ID, Title, Now string}}`; template-выражения внутри YAML обращаются к `.Meta.<Field>`.
+`task` шипится как v1 YAML-артефакт (`internal/tmpl/templates/task.yaml`) — frontmatter (`id`, `creation_date`, `modification_date`, `type: investigation`, `title`, `tags`), H1, meta_bullets и шесть секций: `context` (Контекст / Context), `hypothesis` (Гипотезы / Hypothesis), `evidence` (Наблюдения / Evidence), `findings` (Выводы / Findings), `action_items` (Задачи / Action items), `references` (Ссылки / References). Template-выражения внутри YAML обращаются к `.Meta.<Field>`; доступны `ID`, `Title`, `CreationDate`, `ModificationDate`.
 
 ## См. также
 
-- [Кастомные шаблоны](../guides/custom-templates.md) — переопределить embedded-артефакт своим `task.yaml`.
+- [Кастомные шаблоны](../guides/custom-templates.md) — переопределить встроенный артефакт своим `task.yaml`.
 - [JSON-вывод](../guides/json-output.md) — пайплайны `--json` в другие тулзы (per-section access через `jq '.sections[] | select(.id=="…").body'`).

@@ -8,17 +8,21 @@
 srekit/
 ├── main.go               # точка входа: cobra.Execute()
 ├── cmd/                  # один .go на команду + общий root
-│   ├── root.go           # cobra root + viper init + persistent --templates-dir / --config
-│   ├── <command>.go      # один файл на генератор + группы templates / config
+│   ├── root.go           # cobra root + persistent --templates-dir / --config / --quiet
+│   ├── paths.go          # XDG-резолв конфига и templates dir; legacy-пути выигрывают, если существуют
+│   ├── doctor*.go        # read-only отчёт об окружении
+│   ├── <command>.go      # один файл на генератор + группы templates / config / changelog
 │   └── cmd_test.go       # smoke-тесты через cobra (SetArgs + capture stdout)
 ├── internal/
 │   ├── ids/              # UUID v4 + slug
-│   ├── clock/            # var Now = time.Now (overridable в тестах)
+│   ├── clock/            # var Now = time.Now (подменяемо в тестах)
 │   ├── meta/             # Author.Resolve + DetectRepo (парсинг git remote)
+│   ├── config/           # самописный YAML + SREKIT_* env конфиг (намеренно не viper)
 │   ├── cliflags/         # общий бандл --out / --stdout / --force / --dry-run / --json
-│   ├── tmpl/             # //go:embed templates/*.yaml + Funcs + Source/Loader + Samples + Validate + DocsMD
+│   ├── tmpl/             # //go:embed templates/*.yaml + Funcs + Source/Loader + Samples + DocsMD
 │   │   └── templates/    # v1 single-file YAML артефакты, по одному на генератор
 │   ├── sections/         # Artifact (v1 single-file) + Section/Manifest + Merge + RenderArtifact + JSONSchema
+│   ├── changelog/        # `changelog release` / `validate` — offset-based правка документа, написанного пользователем
 │   ├── migrate/          # `srekit templates migrate` — heuristic .tmpl → .yaml конвертер
 │   └── render/           # Render() — buildBody/writeBody + JSON short-circuit + artifact branch
 ├── docs/                 # этот сайт (MkDocs Material с i18n)
@@ -65,9 +69,17 @@ Runtime v1 артефакта. `Artifact` — это распаршенный `<
 
 Каждый генератор-cmd содержит `Output` и зовёт `.Bind(cmd, "default-path-description")`. Это шипит общие флаги (`--out` / `--stdout` / `--force` / `--dry-run` / `--json`). Биндинга `--template FILE` нет: каждый генератор резолвит свой артефакт по имени, так что флаг молча игнорировался бы. `RenderOptions(def)` превращает значения флагов в `render.Options`.
 
+### `internal/config`
+
+Самописный ридер YAML + окружения `SREKIT_*`, намеренно не viper. От viper отказались, потому что он тянет `afero → net/http → crypto/tls` в граф сборки, а ни `net/http`, ни `crypto` там быть не должно — см. инвариант о минимализме зависимостей. `config.Global()` — единственный оставшийся кусок package-level mutable state; тесты сеют его через non-parallel хелпер `withConfig(t, kv)`.
+
+### `internal/changelog`
+
+Единственный пакет, который читает документ, написанный *пользователем*; за ним стоят `changelog release` / `changelog validate`. Это построчный сканер регионов, а не Markdown-парсер: `Scan` запоминает байтовые смещения (преамбула, `[Unreleased]`, по региону на каждый заголовок версии, хвостовой блок ссылок), а `Release` вклеивает правки ровно по этим смещениям, всё остальное копируя байт в байт. Пересериализация распарсенной модели нормализовала бы каждую пустую строку и каждый маркер списка в пятилетнем changelog'е и сделала бы релизный коммит нечитаемым для ревью, поэтому byte-identical сохранение вне правимых регионов — свойство дизайна, а не тест, который случайно проходит. Конвенции ссылок берутся из собственного определения `[Unreleased]` в документе; git спрашивают, только когда блока ссылок нет вовсе. Словарь change type'ов — параметр (`English` / `Russian`), определяемый по документу, а не по `--lang`.
+
 ### `internal/meta.Resolve` и `DetectRepo`
 
-`Resolve` идёт flag → viper → git config для `author` и `email`. `DetectRepo` regex-парсит `git config remote.origin.url` против GitHub SSH и HTTPS паттернов.
+`Resolve` идёт flag → env `SREKIT_*` → конфиг-файл → `git config` для `author` и `email`. `DetectRepo` regex-парсит `git config remote.origin.url` против GitHub SSH и HTTPS паттернов.
 
 ### `internal/clock.Now`
 
@@ -88,11 +100,17 @@ Runtime v1 артефакта. `Artifact` — это распаршенный `<
 
 Flow релиза:
 
-1. Bump `CHANGELOG.md` — переместить `[Unreleased]` контент в `[X.Y.Z]`.
+1. Отрезать `CHANGELOG.md` — `srekit changelog release --version X.Y.Z` либо руками переместить `[Unreleased]` в `[X.Y.Z]`.
 2. Commit `release: X.Y.Z` в `main`.
 3. `git tag -a vX.Y.Z -m vX.Y.Z` и `git push origin vX.Y.Z`.
-4. goreleaser билдит 8 артефактов + checksums + GPG sig.
+4. goreleaser билдит 6 архивов (3 OS × 2 arch) + checksums + GPG sig.
 5. Cask в `jtprogru/homebrew-tap/Casks/srekit.rb` переписывается.
+
+Шаг 5 — единственный, который аутентифицируется через `HOMEBREW_TAP_GITHUB_TOKEN`, а не через встроенный в workflow `GITHUB_TOKEN`, поэтому протухший PAT падает *после* того, как GitHub-релиз уже опубликован: релиз выглядит нормально, а tap тихо остаётся на предыдущей версии. Проверяй токен до тега:
+
+```bash
+GH_TOKEN=<tap-pat> gh api repos/jtprogru/homebrew-tap --jq .default_branch
+```
 
 ## Стратегия тестирования
 
@@ -100,10 +118,11 @@ Flow релиза:
 |---|---|---|
 | Unit | `ids.UUID`/`Slug`, `meta.Resolve`/`DetectRepo`, `tmpl.Funcs`/`Loader`, `sections.*`, `cliflags`, `render` (file/stdout/dry-run/JSON/artifact) | `internal/*/*_test.go` |
 | Integration | Smoke через `cobra.Command.SetArgs` + captured stdout для каждой команды, включая templates pull/validate/diff/upgrade/list/migrate и config init | `cmd/cmd_test.go` |
-| Race | `go test -race ./...` на CI | `.github/workflows/tests.yaml` |
-| Lint | `golangci-lint v2.12` с ~50 линтерами | `.golangci.yaml`, `.github/workflows/lint.yaml` |
+| Race | `make test-race` на CI | `.github/workflows/tests.yaml` |
+| Lint | `golangci-lint v2.12.2` с ~50 линтерами, через `make lint` | `.golangci.yaml`, `.github/workflows/lint.yaml` |
+| Уязвимости | `make govulncheck` | `.github/workflows/security.yaml` |
 
-Render/tmpl unit-тесты строят loader через `newFixtureLoader(t)` helper, который пишет per-test `.tmpl` fixture во временную dir — они не зависят от того, что лежит в embed, что и удержало suite стабильным через v0.14–v0.20 миграционный churn.
+Render/tmpl unit-тесты строят loader через `newFixtureLoader(t)` helper, который пишет per-test артефакт `fixture.yaml` во временную dir — они не зависят от того, что лежит в embed, что и удержало набор тестов стабильным через v0.14–v0.20 миграционную перетряску.
 
 ## Что трогать по фиче
 
@@ -113,8 +132,11 @@ Render/tmpl unit-тесты строят loader через `newFixtureLoader(t)`
 | Добавить флаг существующему генератору | Соответствующий `cmd/<name>.go`; для общих output-флагов — `internal/cliflags/cliflags.go` |
 | Изменить контент шаблона | Правь `internal/tmpl/templates/<name>.yaml` |
 | Подкрутить layout rendered markdown (frontmatter, H1, section composition) | `internal/sections/render_artifact.go` |
-| Добавить helper-функцию шаблонов | `internal/tmpl/funcs.go` |
+| Добавить helper-функцию шаблонов | `tmpl.Funcs` в `internal/tmpl/tmpl.go` |
 | Модифицировать жизненный цикл шаблонов | `cmd/templates.go` |
+| Изменить, как сканируется и правится существующий changelog | `internal/changelog/` (`scan.go`, `release.go`, `validate.go`, `links.go`) |
+| Добавить или изменить проверку `doctor` | `cmd/doctor_checks.go` — ID проверок это публичный контракт |
+| Изменить, куда резолвятся конфиг и шаблоны | `cmd/paths.go` |
 
 ## См. также
 

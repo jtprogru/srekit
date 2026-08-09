@@ -30,16 +30,16 @@ srekit ebp --service api-gw --stdout
 
 ## Section structure
 
-- Front matter: `title`, `service`, `owner`, `id`
-- Цель политики (Policy goal)
-- Tiered actions:
-    - 🟡 Yellow — соблюдать SLO, без feature freeze
-    - 🟠 Orange — приоритет на стабильность
-    - 🔴 Red — feature freeze, фокус на reliability
-- Исключения (Exceptions)
-- Эскалация (Escalation)
-- Связанные SLO (Related SLOs)
-- Ссылки (References)
+Section headings render bilingually — Russian, with the English term in parentheses. Below they are given by stable `id` and English term; `srekit ebp --service X --json | jq -r '.sections[].title'` prints them as they appear in the document.
+
+- Front matter: `id`, `creation_date`, `modification_date`, `type: error-budget-policy`, `service`, `tags`
+- `purpose` — Purpose: why the policy exists — agree on the actions before the incident, not during it
+- `triggers` — Triggers: a table mapping budget state to condition — Green (< 50 % spent), Yellow (50–75 %), Orange (75–100 %), Red (exhausted)
+- `tiered_actions` — Tiered actions: what the team actually does at Yellow / Orange / Red
+- `exceptions` — Exceptions
+- `escalation` — Escalation
+- `review` — Review
+- `references` — References
 
 ## Template shape
 

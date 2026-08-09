@@ -1,4 +1,4 @@
-# Migration history (per-release журнал)
+# История миграции (журнал по релизам)
 
 Эта страница — хронологическая запись YAML-first миграции, которая шла через v0.14.0 → v0.20.0. Практический upgrade-рецепт — в [migration guide](v1.md). Эту страницу читай когда нужно знать, что именно зашипилось в каком релизе — для контекста конкретного коммита, чтобы посмотреть как был мигрирован конкретный генератор, или чтобы найти правильный `jq`-snippet для версии бинаря на которой ты застрял.
 
@@ -36,7 +36,7 @@ srekit templates upgrade <твой-templates-dir>
 - `frontmatter:` — free-form map; значения проходят через Go templates.
 - `title:` — строка H1.
 - `meta_bullets:` — bullet-список после H1.
-- `header_body:` — freeform Markdown escape hatch (твой кастомный blockquote, policy text и т.д.).
+- `header_body:` — свободный Markdown для всего, что не лезет в типизированные секции (свои цитаты-блоки, текст политики и т.д.).
 - `sections:` — список секций (тот же что v0.13.x `.sections.yaml`).
 
 Pre-v0.14.0 файлы (`postmortem.md.tmpl`, `postmortem.sections.yaml`) в твоём user-dir **игнорируются** в пользу v1 `postmortem.yaml`. Loader печатает stderr WARN со списком каждого stale-файла при каждом вызове postmortem, пока ты их не удалишь или не запустишь `templates upgrade` (который оставляет их на месте, но создаёт v1 файл рядом — ручной clean-up старых файлов на тебе).
@@ -74,7 +74,7 @@ srekit task -T "X" --json | jq '.sections[] | select(.id=="context").body'   # s
 
 Новый subcommand: best-effort `.tmpl` → `.yaml` конвертер. По умолчанию `--dry-run`; `--apply` пишет файлы. Секции с Go-template control flow (`{{ if }}` / `{{ range }}`) оборачиваются в `git merge`-style diff-маркеры для ручного резолва. См. [`templates migrate` reference](../commands/templates.md#templates-migrate) для полной механики.
 
-**Заметка про data-shape изменения**: конвертер копирует template-выражения as-is. Если мигрированный генератор использует другой data-root (например task перешёл с `.Title` на `.Meta.Title`), converted YAML будет ссылаться на старые пути. Обнови руками или через `sed` под новый root.
+**Заметка про data-shape изменения**: конвертер копирует template-выражения как есть. Если мигрированный генератор использует другой data-root (например task перешёл с `.Title` на `.Meta.Title`), converted YAML будет ссылаться на старые пути. Обнови руками или через `sed` под новый root.
 
 ## Что изменилось в v0.16.0
 
@@ -97,7 +97,7 @@ srekit retro --team platform --json | jq '.sections[0].body'
 srekit retro --team platform --json | jq '.sections[] | select(.id=="action_items").body'
 ```
 
-Users с кастомизированными `retro.md.tmpl` / `slo.md.tmpl` в `templates_dir` получают stderr WARN на каждом вызове. Чтобы мигрировать: `srekit templates upgrade` (скаффолдит новый `.yaml`), потом либо перенеси кастомизации руками, либо запусти `srekit templates migrate <dir> --apply` для авто-конвертации legacy `.tmpl`. После миграции вручную перепиши `{{ .Field }}` → `{{ .Meta.Field }}` в полученном YAML (конвертер копирует template-выражения as-is).
+Пользователи с кастомизированными `retro.md.tmpl` / `slo.md.tmpl` в `templates_dir` получают stderr WARN на каждом вызове. Чтобы мигрировать: `srekit templates upgrade` (скаффолдит новый `.yaml`), потом либо перенеси кастомизации руками, либо запусти `srekit templates migrate <dir> --apply` для авто-конвертации legacy `.tmpl`. После миграции вручную перепиши `{{ .Field }}` → `{{ .Meta.Field }}` в полученном YAML (конвертер копирует template-выражения as-is).
 
 ## Что изменилось в v0.17.0
 
@@ -168,7 +168,7 @@ srekit runbook --title X --service api-gw --json | jq '.sections[] | select(.id=
 
 ### `--template FILE` теперь no-op для всех мигрированных команд
 
-Флаг `--template FILE` исторически давал one-shot escape hatch для рендера через кастомный `text/template`. После миграции команды на artifact path, loader сначала ищет `<name>.yaml` в embed/templates_dir — TemplatePath не доходит. Affected: postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall (всё кроме changelog).
+Флаг `--template FILE` исторически давал одноразовую лазейку для рендера через кастомный `text/template`. После миграции команды на artifact path, loader сначала ищет `<name>.yaml` в embed/templates_dir — TemplatePath не доходит. Affected: postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall (всё кроме changelog).
 
 Per-артефакт кастомизация в v1.x модели — положить `<name>.yaml` в `templates_dir` (через `templates init` / `upgrade`). Для changelog (последний bootstrap-envelope) `--template` ещё работает; будет no-op после v0.20.0.
 
@@ -180,15 +180,15 @@ Users с кастомизированными `runbook.md.tmpl` / `oncall.md.tmp
 
 Последний `.tmpl` заехал в YAML. **Все 11 генераторов на v1**. Embed FS теперь содержит только `.yaml` файлы; `//go:embed templates/*.tmpl` половина паттерна снята (Go требует ≥1 совпадение на glob).
 
-### Section titles теперь template-evaluated
+### Заголовки секций теперь проходят через шаблонизатор
 
-Раньше `RenderedSection.Title` и `## <title>` в markdown эмитились verbatim — если автор клал `{{ .Meta.X }}` в section title, синтаксис оставался в выводе. changelog.yaml использует это для динамического heading: `[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}`. Теперь:
+Раньше `RenderedSection.Title` и `## <title>` в markdown эмитились дословно — если автор клал `{{ .Meta.X }}` в section title, синтаксис оставался в выводе. changelog.yaml использует это для динамического heading: `[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}`. Теперь:
 
 - `sections.Merge` пропускает title через FuncMap.
 - `RenderArtifact` использует уже отрендеренный title (без двойного eval).
 - Структурный `--json` и markdown heading агрейтся.
 
-### Test infra отвязан от embedded `.tmpl`
+### Тестовая инфраструктура отвязана от встроенных `.tmpl`
 
 После v0.20.0 в embed нет `.tmpl` — render/tmpl тесты, ранее опиравшиеся на `<name>.md.tmpl` из embed, переехали на `newFixtureLoader(t)` helper (пишет per-test fixture в temp dir, возвращает `*tmpl.Loader` через `DirSource`). CLI-тесты в `cmd/cmd_test.go` свапнули embed-target с (несуществующего) `changelog.md.tmpl` на `postmortem.yaml`. `TestPerCommandTemplateOverride` удалён (никто не honors `--template`). `TestChangelogJSONBootstrap` переписан как `TestChangelogJSONStructured`.
 

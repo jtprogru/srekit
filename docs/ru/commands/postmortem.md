@@ -2,7 +2,7 @@
 
 Сгенерировать **постмортем** в стиле Google SRE: severity, timeline, impact, detection / mitigation / root cause, action items, lessons. Билингвальные заголовки.
 
-Тело документа собирается из типизированных секций (`text` / `list` / `table`), объявленных в v1-артефакте `postmortem.yaml`, так что `--json` отдаёт структуру секция-за-секцией, а `--from input.json` пересобирает Markdown из отредактированного JSON. Postmortem был прототипом v1 artifact-формата (введён в v0.14.0) и теперь является canonical-референсом схемы для остальных генераторов — секция "Customizing the artifact" ниже документирует каждое поле.
+Тело документа собирается из типизированных секций (`text` / `list` / `table`), объявленных в v1-артефакте `postmortem.yaml`, так что `--json` отдаёт структуру секция-за-секцией, а `--from input.json` пересобирает Markdown из отредактированного JSON. Postmortem был прототипом v1 artifact-формата (введён в v0.14.0) и теперь является каноническим референсом схемы для остальных генераторов — секция «Кастомизация артефакта» ниже документирует каждое поле.
 
 ## Синопсис
 
@@ -39,13 +39,15 @@ srekit postmortem --title "API outage" --severity SEV-1
 srekit postmortem -T "API outage" --severity SEV-1 --json | jq '.sections[].id'
 ```
 
-Round-trip: выгрузить JSON, отредактировать одну секцию, пересобрать Markdown:
+Цикл «выгрузить JSON, отредактировать одну секцию, пересобрать Markdown»:
 
 ```bash
 srekit postmortem -T "API outage" --json > pm.json
-# отредактировать pm.json — например, заполнить sections.summary реальным текстом
+# отредактировать pm.json и скормить обратно
 srekit postmortem -T "API outage" --from pm.json
 ```
+
+`--json` отдаёт `sections` упорядоченным **списком**, а `--from` читает **map** по id секции. Перед правкой форму надо переложить — однострочник на `jq` есть в [JSON-выводе](../guides/json-output.md#round-trip). Минимальный файл для `--from` — только изменённые секции; всё остальное берётся из дефолтов артефакта.
 
 Сгенерировать JSON Schema для редактора / агентской валидации:
 
@@ -71,7 +73,7 @@ srekit postmortem --title "API outage" --severity SEV-1 --json \
   | jq '{title: .meta.title, severity: .meta.severity, started: .meta.start}'
 ```
 
-## JSON shape
+## Форма JSON
 
 ```json
 {
@@ -121,11 +123,11 @@ srekit postmortem --title "API outage" --severity SEV-1 --json \
 
 - Оба поля `meta` и `sections` опциональны.
 - CLI-флаги (`--title`, `--severity`, …) перекрывают `meta` из файла. Это позволяет пинить поле в команде, даже когда читаешь из stdin.
-- Тела секций в `sections` подставляются **as-is** — без template-evaluation — так что round-trip произвольного markdown с `{{ … }}` внутри безопасен.
+- Тела секций в `sections` подставляются **как есть** — без template-evaluation — так что round-trip произвольного markdown с `{{ … }}` внутри безопасен.
 - Section ID, которых нет в манифесте, дают hard error со списком неизвестных ID и known-set (защита от опечаток).
 - Секции, которых нет в input, заполняются дефолтами из манифеста.
 
-## Кастомизация артефакта (v1 формат, v0.14.0+)
+## Кастомизация артефакта (v1 формат, v0.14.0+) { #customizing-the-artifact-v1-format-v0140 }
 
 `srekit templates init <dir>` кладёт один файл `postmortem.yaml` в твой templates dir. Это **v1 артефактный формат**, появившийся в v0.14.0: header (frontmatter / H1 / meta bullets / опц. `header_body`) и секции живут в одном файле. Старый v0.13.x layout (`postmortem.md.tmpl` + `postmortem.sections.yaml`) больше не скаффолдится; user-dir файлы в том формате игнорируются с stderr-предупреждением на каждом вызове.
 
@@ -149,7 +151,7 @@ meta_bullets:                      # bullet-строки после H1 (Go templ
   - "**Тяжесть (Severity):** {{ .Meta.Severity }}"
   - '**Ответственный (Owner):** {{ .Meta.Owner | default "<incident owner>" }}'
 
-header_body: |                     # опц. freeform Markdown escape hatch
+header_body: |                     # опц. свободный Markdown для того, что не лезет в секции
   > **Безвинный разбор (blameless):** ищем причины в системе, не в людях.
 
 sections:

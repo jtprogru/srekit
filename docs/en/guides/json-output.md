@@ -6,7 +6,7 @@ Every generator command supports `--json`. The flag emits a structured payload i
 
 - Default sink is **stdout**. `--out FILE` writes the JSON there.
 - Field names are **camelCase** across every command (`id`, `title`, `latencyTarget`, …).
-- With `--json`, the Markdown default path (`Tasker - <title>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md`, etc.) is **not** used — so JSON never accidentally lands in a `.md` file.
+- With `--json`, the Markdown default path (`investigation-<slug>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md`, etc.) is **not** used — so JSON never accidentally lands in a `.md` file.
 - **Every payload has the shape `{meta, sections}`.** Metadata lives under `meta`; the rendered document is a list of typed sections under `sections`. Each section has `{id, title, type, required, body}` with `type` one of `text` / `list` / `table` and `body` always a string.
 - **Sections are per-artifact**, in manifest order, with stable IDs. Access them via `jq '.sections[] | select(.id == "<id>").body'` — never by index.
 
@@ -50,18 +50,28 @@ srekit changelog --repo owner/repo --json |
 
 ### Round-trip a postmortem
 
+Output and input are not the same shape, and this is the one thing to get right: `--json` emits `sections` as an **ordered list** of section objects, while `--from` reads a **map** keyed by section ID. The list preserves manifest order on the way out; on the way in, order is irrelevant, so a map is the honest shape. Indexing the emitted list with a string (`jq '.sections.summary = …'`) fails with `Cannot index array with string`.
+
+Convert the list to the map, edit, re-render:
+
 ```bash
 # Dump
 srekit postmortem -T "API outage" --severity SEV-1 --json > pm.json
 
-# Edit one section in pm.json (any tool — jq, sed, your editor, an LLM)
-jq '.sections.summary = "27-minute checkout 5xx, mitigated by failing back to cache."' pm.json > pm.edited.json
+# Reshape sections into the --from map, then set one body
+jq '{meta, sections: (.sections | map({key: .id, value: .body}) | from_entries)}
+    | .sections.summary = "27-minute checkout 5xx, mitigated by failing back to cache."' \
+  pm.json > pm.edited.json
 
 # Re-render
 srekit postmortem -T "API outage" --from pm.edited.json
 ```
 
-Note that `--from` reads sections from a **map** keyed by ID (`{"summary": "…"}`), not a list. The JSON output uses a list to preserve manifest order; `--from` uses a map because order is irrelevant on the input side.
+You do not have to send every section back. `--from` overlays whatever it is given onto the artifact's defaults, so the minimal edited file is just the sections you changed:
+
+```json
+{ "sections": { "summary": "27-minute checkout 5xx, mitigated by failing back to cache." } }
+```
 
 ### Round-trip a changelog
 
@@ -69,7 +79,9 @@ Note that `--from` reads sections from a **map** keyed by ID (`{"summary": "…"
 
 ```bash
 srekit changelog --repo acme/api --json > cl.json
-jq '.sections.unreleased = "### Added\n\n- Structured input for changelog.\n"' cl.json > cl.edited.json
+jq '{meta, sections: (.sections | map({key: .id, value: .body}) | from_entries)}
+    | .sections.unreleased = "### Added\n\n- Structured input for changelog.\n"' \
+  cl.json > cl.edited.json
 srekit changelog --from cl.edited.json
 ```
 
@@ -116,24 +128,38 @@ srekit oncall-report --team platform --json --out oncall.json
 Every generator is on the v1 artifact path: `meta` mirrors the per-command flag set, `sections` is the list declared in the artifact YAML. Template authors address meta fields as `.Meta.<Field>` inside the YAML; `--json` emits camelCase under `meta`.
 
 ```jsonc
-// task
-{ "meta": { "id", "title", "now" },
-  "sections": [ ...sections from internal/tmpl/templates/task.yaml... ] }
+// task            — 6 sections
+{ "meta": { "id", "title", "creationDate", "modificationDate" } }
 
-// postmortem
-{ "meta": { "id", "title", "severity", "start", "end", "owner", "now" },
-  "sections": [ ...sections from postmortem.yaml (12 by default)... ] }
+// postmortem      — 12 sections
+{ "meta": { "id", "title", "severity", "start", "end", "owner", "now" } }
 
-// rfc
-{ "meta": { "id", "title", "status", "now", "author": { "name", "email" } },
-  "sections": [ ...sections from rfc.yaml... ] }
+// rfc             — 5 sections
+{ "meta": { "id", "title", "status", "now", "author": { "name", "email" } } }
 
-// slo
-{ "meta": { "id", "service", "target", "window", "latencyTarget", "now" },
-  "sections": [ ...sections from slo.yaml... ] }
+// runbook         — 7 sections
+{ "meta": { "id", "title", "service", "alert", "now" } }
+
+// slo             — 7 sections
+{ "meta": { "id", "service", "target", "window", "latencyTarget", "now" } }
+
+// ebp             — 7 sections
+{ "meta": { "id", "service", "now" } }
+
+// oncall-report   — 8 sections
+{ "meta": { "id", "team", "start", "end", "now", "author": { "name", "email" } } }
+
+// changelog       — 2 sections
+{ "meta": { "repo", "initialVersion", "today" } }
 ```
 
-`author` (where present) is a nested object (`{ "name", "email" }`), addressed as `.meta.author.name` / `.meta.author.email`. Browse `internal/tmpl/templates/<name>.yaml` for the exact section IDs each command ships.
+`sections` is omitted above for brevity — every payload carries it, as the list declared in the corresponding `internal/tmpl/templates/<name>.yaml`. To see the ids a command actually ships, ask the binary rather than this page:
+
+```bash
+srekit runbook -T X --json | jq -r '.sections[].id'
+```
+
+`author` (where present) is a nested object (`{ "name", "email" }`), addressed as `.meta.author.name` / `.meta.author.email`.
 
 ## When to use `--json`
 

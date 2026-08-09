@@ -6,7 +6,7 @@
 
 - Default sink — **stdout**. `--out FILE` пишет JSON туда.
 - Имена полей — **camelCase** во всех командах (`id`, `title`, `latencyTarget`, …).
-- С `--json` Markdown default-путь (`Tasker - <title>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md` и т.п.) **не** используется — JSON не попадёт случайно в `.md` файл.
+- С `--json` Markdown default-путь (`investigation-<slug>.md`, `postmortem-<YYYY-MM-DD>-<slug>.md` и т.п.) **не** используется — JSON не попадёт случайно в `.md` файл.
 - **У каждого payload форма `{meta, sections}`.** Метаданные живут под `meta`; отрендеренный документ — список типизированных секций под `sections`. У каждой секции `{id, title, type, required, body}`, где `type` — это `text` / `list` / `table`, а `body` всегда строка.
 - **Секции per-artifact**, в порядке манифеста, со стабильными ID. Обращайся `jq '.sections[] | select(.id == "<id>").body'` — никогда по индексу.
 
@@ -48,28 +48,40 @@ srekit changelog --repo owner/repo --json |
   jq -r '.sections[] | select(.id == "initial_release").body'
 ```
 
-### Round-trip постмортема
+### Цикл JSON → правка → Markdown для постмортема { #round-trip }
+
+Вывод и ввод — разной формы, и это главное, что здесь надо не перепутать: `--json` отдаёт `sections` **упорядоченным списком** объектов, а `--from` читает **map** по ID секции. Список сохраняет порядок манифеста на выходе; на входе порядок неважен, поэтому честная форма — map. Попытка проиндексировать выданный список строкой (`jq '.sections.summary = …'`) падает с `Cannot index array with string`.
+
+Преобразуй список в map, отредактируй, пересобери:
 
 ```bash
 # Выгрузить
 srekit postmortem -T "API outage" --severity SEV-1 --json > pm.json
 
-# Отредактировать одну секцию в pm.json (любой инструмент — jq, sed, твой редактор, LLM)
-jq '.sections.summary = "27-минутный 5xx на checkout, замитигировано failback-ом на cache."' pm.json > pm.edited.json
+# Переложить sections в форму --from и поставить одно тело
+jq '{meta, sections: (.sections | map({key: .id, value: .body}) | from_entries)}
+    | .sections.summary = "27-минутный 5xx на checkout, замитигировано failback-ом на cache."' \
+  pm.json > pm.edited.json
 
 # Пересобрать
 srekit postmortem -T "API outage" --from pm.edited.json
 ```
 
-`--from` читает секции как **map**, ключ — ID (`{"summary": "…"}`), а не как list. JSON-вывод использует list, чтобы сохранять порядок манифеста; `--from` использует map, потому что порядок на входе неважен.
+Возвращать все секции не обязательно. `--from` накладывает то, что ему дали, поверх дефолтов артефакта, так что минимальный файл — только изменённые секции:
 
-### Round-trip changelog'а
+```json
+{ "sections": { "summary": "27-минутный 5xx на checkout, замитигировано failback-ом на cache." } }
+```
+
+### Тот же цикл для changelog'а
 
 `changelog` тоже принимает `--from`, с той же формой payload'а:
 
 ```bash
 srekit changelog --repo acme/api --json > cl.json
-jq '.sections.unreleased = "### Added\n\n- Structured input for changelog.\n"' cl.json > cl.edited.json
+jq '{meta, sections: (.sections | map({key: .id, value: .body}) | from_entries)}
+    | .sections.unreleased = "### Added\n\n- Structured input for changelog.\n"' \
+  cl.json > cl.edited.json
 srekit changelog --from cl.edited.json
 ```
 
@@ -111,29 +123,43 @@ srekit oncall-report --team platform --json --out oncall.json
 
 `--dry-run` тоже работает — печатает "would write N bytes to oncall.json" плюс тело.
 
-## Per-command структура payload
+## Структура payload по командам
 
 Все генераторы на v1 artifact path: `meta` отражает per-command набор флагов, `sections` — список из YAML-артефакта. Авторы шаблонов обращаются к meta-полям как `.Meta.<Field>` внутри YAML; `--json` отдаёт camelCase под `meta`.
 
 ```jsonc
-// task
-{ "meta": { "id", "title", "now" },
-  "sections": [ ...секции из internal/tmpl/templates/task.yaml... ] }
+// task            — 6 секций
+{ "meta": { "id", "title", "creationDate", "modificationDate" } }
 
-// postmortem
-{ "meta": { "id", "title", "severity", "start", "end", "owner", "now" },
-  "sections": [ ...секции из postmortem.yaml (по умолчанию 12)... ] }
+// postmortem      — 12 секций
+{ "meta": { "id", "title", "severity", "start", "end", "owner", "now" } }
 
-// rfc
-{ "meta": { "id", "title", "status", "now", "author": { "name", "email" } },
-  "sections": [ ...секции из rfc.yaml... ] }
+// rfc             — 5 секций
+{ "meta": { "id", "title", "status", "now", "author": { "name", "email" } } }
 
-// slo
-{ "meta": { "id", "service", "target", "window", "latencyTarget", "now" },
-  "sections": [ ...секции из slo.yaml... ] }
+// runbook         — 7 секций
+{ "meta": { "id", "title", "service", "alert", "now" } }
+
+// slo             — 7 секций
+{ "meta": { "id", "service", "target", "window", "latencyTarget", "now" } }
+
+// ebp             — 7 секций
+{ "meta": { "id", "service", "now" } }
+
+// oncall-report   — 8 секций
+{ "meta": { "id", "team", "start", "end", "now", "author": { "name", "email" } } }
+
+// changelog       — 2 секции
+{ "meta": { "repo", "initialVersion", "today" } }
 ```
 
-`author` (где есть) — вложенный объект (`{ "name", "email" }`), обращаться `.meta.author.name` / `.meta.author.email`. Точные section ID каждой команды смотри в `internal/tmpl/templates/<name>.yaml`.
+`sections` выше опущены для краткости — они есть в каждом payload'е и повторяют список из соответствующего `internal/tmpl/templates/<name>.yaml`. Реальные id команды спрашивай не у этой страницы, а у бинарника:
+
+```bash
+srekit runbook -T X --json | jq -r '.sections[].id'
+```
+
+`author` (где есть) — вложенный объект (`{ "name", "email" }`), обращаться `.meta.author.name` / `.meta.author.email`.
 
 ## Когда использовать `--json`
 
