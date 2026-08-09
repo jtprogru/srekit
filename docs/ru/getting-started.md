@@ -17,7 +17,7 @@
     go install github.com/jtprogru/srekit@latest
     ```
 
-    Требует Go 1.25+.
+    Требует Go 1.26+ (в модуле объявлен `go 1.26.4`).
 
 === "Готовые бинарники"
 
@@ -28,9 +28,10 @@
 
 ```bash
 srekit --version
-# srekit version: 0.10.1
+# srekit version: 0.32.1
 # from commit: ...
 # built date: ...
+# built by: goreleaser
 ```
 
 ## 2. Разовая настройка
@@ -39,8 +40,10 @@ srekit --version
 
 1. флаги `--author` / `--email`
 2. env-переменные `SREKIT_AUTHOR` / `SREKIT_EMAIL`
-3. `author:` / `email:` в `~/.srekit.yaml`
+3. `author:` / `email:` в конфиг-файле
 4. `git config user.name` / `git config user.email`
+
+Конфиг лежит в `$XDG_CONFIG_HOME/srekit/config.yaml` (то есть `~/.config/srekit/config.yaml`, если переменная не выставлена). Старый `~/.srekit.yaml` продолжает читаться и выигрывает, если уже существует, — мигрировать ничего не нужно.
 
 Если у тебя уже выставлен глобальный `git config`, **можно не настраивать ничего вообще**. Если хочешь yaml-файл:
 
@@ -49,7 +52,7 @@ srekit config init
 # Author name [Mikhail Savin]: ⏎
 # Email [jtprogru@gmail.com]: ⏎
 # Templates dir (leave empty to use embedded templates only): ⏎
-# Wrote /Users/jtprogru/.srekit.yaml
+# Wrote /Users/jtprogru/.config/srekit/config.yaml
 ```
 
 `srekit config init --yes` идёт без промптов, использует значения из флагов и `git config`. Полная картина — в [Конфигурация](guides/configuration.md).
@@ -87,13 +90,23 @@ srekit postmortem --title "API outage" --severity SEV-1 \
 
 Флага `--template FILE` больше нет: он удалён в v0.30.0 вместе с `srekit license`, единственной командой, чей render-путь его читал. Кастомизация per-artifact — положить `<name>.yaml` в `templates_dir`, см. [Custom templates workflow](guides/custom-templates.md).
 
-Если не передал ни `--out`, ни `--stdout`, у каждой команды есть разумный default-путь (например `Tasker - <title>.md` для `srekit task`, `oncall-<team>-<start>.md` для отчёта дежурного).
+Если не передал ни `--out`, ни `--stdout`, у каждой команды есть разумный default-путь (например `investigation-<slug>.md` для `srekit task`, `oncall-<team>-<start>.md` для отчёта дежурного).
 
-## 5. Дальше
+## 5. Проверить окружение
+
+Если генератор подставил не того автора или кажется, что твои кастомные шаблоны игнорируются, — не гадай, спроси srekit, что он на самом деле зарезолвил:
+
+```bash
+srekit doctor
+```
+
+Команда только читает и не ходит в сеть. `srekit doctor --quiet` печатает только то, что требует внимания, так что тишина означает «всё в порядке» — см. [`srekit doctor`](commands/doctor.md).
+
+## 6. Дальше
 
 Этого хватит для повседневного использования. Если хочется глубже:
 
-- **[Кастомные шаблоны](guides/custom-templates.md)** — форк embedded шаблонов в свой git-репо и подтягивание upstream-изменений через clean merge.
+- **[Кастомные шаблоны](guides/custom-templates.md)** — форк встроенных артефактов в свой git-репо и подтягивание upstream-изменений через clean merge.
 - **[jtprogru/sre-templates](https://github.com/jtprogru/sre-templates)** — готовый репозиторий шаблонов ровно в той раскладке, которую ждёт srekit. Склонируй его и нацель на него `templates_dir`, чтобы не скаффолдить с нуля.
 - **[JSON-вывод](guides/json-output.md)** — пайплайны генераторов в `jq` для CI-скриптов и интеграций.
 - **[Обзор команд](commands/index.md)** — полный reference по каждой подкоманде и флагу.
