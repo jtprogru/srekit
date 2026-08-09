@@ -9,13 +9,15 @@
 [![security](https://github.com/jtprogru/srekit/actions/workflows/security.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/security.yaml)
 [![goreleaser](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml)
 [![Homebrew](https://img.shields.io/badge/Homebrew-jtprogru%2Ftap-FBB040?logo=homebrew&logoColor=white)](https://github.com/jtprogru/homebrew-tap)
-![Go LoC](https://img.shields.io/badge/go-11082%20LoC-blueviolet?logo=go)
+![Go LoC](https://img.shields.io/badge/go-11088%20LoC-blueviolet?logo=go)
 
 📚 **Documentation:** [jtprogru.github.io/srekit](https://jtprogru.github.io/srekit/) (EN + RU, full command reference, guides, recipes, architecture).
 
 Генератор текстовых артефактов SRE: investigation log'и, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, changelog'и.
 
-Все markdown-шаблоны двуязычные: заголовки и метки в формате `Русский (English)`, тело — на русском. Технические идентификаторы (SLO/SLI/RFC/PromQL/UTC/SEV), ключи YAML frontmatter и PromQL-выражения остаются английскими. Шаблон `changelog` остаётся полностью английским, чтобы не ломать тулинг вокруг Keep a Changelog.
+Шаблон здесь — не markdown-файл, а v1 YAML-артефакт (`postmortem.yaml`, `slo.yaml`, …), который декларирует frontmatter, H1, meta-буллеты и список типизированных секций; markdown srekit собирает из этой декларации. Поставочный набор вкомпилирован в бинарник, а директория с твоими артефактами переопределяет его пофайлово — то, чего у тебя нет, прозрачно берётся из встроенного.
+
+Все артефакты двуязычные: заголовки и метки в формате `Русский (English)`, тело — на русском. Технические идентификаторы (SLO/SLI/RFC/PromQL/UTC/SEV), ключи YAML frontmatter и PromQL-выражения остаются английскими. `changelog` по умолчанию полностью английский, чтобы не ломать тулинг вокруг Keep a Changelog; русский вариант — opt-in через `--lang ru`.
 
 Извлечён из [gch](https://github.com/jtprogru/gch) в рамках распиливания монолита.
 
@@ -75,9 +77,12 @@ srekit --help
 С `--json` команда не рендерит шаблон, а пишет в stdout (или `--out FILE`) структуру, которую увидел бы шаблон. Удобно для пайплайнов:
 
 ```bash
-srekit task --title "Tail latency" --json | jq '.id'
-srekit postmortem --title X --severity SEV-1 --json | jq '.severity'
+srekit task --title "Tail latency" --json | jq -r '.meta.id'
+srekit postmortem --title X --severity SEV-1 --json | jq -r '.meta.severity'
+srekit postmortem --title X --json | jq -r '.sections[] | select(.id == "summary").body'
 ```
+
+Форма payload'а одна для всех генераторов: `{meta, sections}`, где `sections` — упорядоченный список `{id, title, type, required, body}`. Обращайся по `id`, не по индексу.
 
 Ключи — camelCase во всех командах (включая `templates list --json`); это публичный контракт. При `--json` markdown-дефолт пути игнорируется, чтобы JSON случайно не оказался в `.md`-файле.
 
@@ -102,7 +107,7 @@ srekit postmortem --title "API outage" --severity SEV-1 \
 
 ```bash
 srekit postmortem -T "Cache stampede" --json > pm.json   # выгрузить sections в JSON
-# ...редактируешь pm.json...
+# ...редактируешь pm.json (--json отдаёт список, --from читает map по id — переложи форму)...
 srekit postmortem -T X --from pm.json                    # обратно в markdown
 srekit postmortem --schema > postmortem.schema.json      # JSON Schema для тулинга/агентов
 srekit postmortem --validate pm.json                     # required sections непустые, нет unknown ID
@@ -129,7 +134,18 @@ srekit runbook --title "p99 latency spike" --service api-gw --alert APIHighLaten
 ```bash
 srekit changelog --out CHANGELOG.md                    # репо детектится из git remote
 srekit changelog --repo jtprogru/srekit --version 0.2.0
+srekit changelog --lang ru                             # русские change type'ы (Добавлено, Изменено, …)
 ```
+
+`changelog` — единственная группа, которая не только генерирует, но и **сопровождает** уже существующий документ:
+
+```bash
+srekit changelog release --version 1.2.0 --dry-run   # посмотреть, что получится
+srekit changelog release --version 1.2.0             # [Unreleased] → ## [1.2.0] - YYYY-MM-DD, блок ссылок обновлён
+srekit changelog validate                            # линт против Keep a Changelog, exit != 0 при провале
+```
+
+`release` правит текст и на этом останавливается: не коммитит, не тегает, не пушит. Меняются ровно три региона — `[Unreleased]`, вставленная версия и блок ссылок; всё остальное (преамбула, стиль пустых строк и маркеров списка, ранее выпущенные версии) выходит байт в байт таким же, каким вошло. Конвенции ссылок берутся из собственной строки `[Unreleased]` документа, а не из git, так что self-hosted GitLab и теги без префикса `v` сохраняют свою форму. Язык change type'ов определяется по документу, а не по `--lang`: команда, перешедшая на русский, не испортит свой прежний английский `CHANGELOG.md`.
 
 ### `srekit oncall-report` — недельный отчёт дежурного
 
@@ -158,14 +174,14 @@ srekit ebp --service api-gw --out ebp-api-gw.md
 ### `srekit templates init` — твои собственные шаблоны под git
 
 ```bash
-srekit templates init                # → ~/.srekit/templates
+srekit templates init                # → $XDG_CONFIG_HOME/srekit/templates
 srekit templates init ./team-templates --no-git
 ```
 
-Раскладывает все встроенные шаблоны в директорию, пишет `TEMPLATES.md` со справочником плейсхолдеров и FuncMap, и делает `git init`. Дальше:
+Раскладывает все встроенные артефакты в директорию, пишет `TEMPLATES.md` со справочником плейсхолдеров и FuncMap, и делает `git init`. Дальше:
 
 ```bash
-cd ~/.srekit/templates
+cd ~/.config/srekit/templates
 git remote add origin git@github.com:your-team/sre-templates.git
 git add . && git commit -m "initial templates" && git push -u origin main
 ```
@@ -173,12 +189,14 @@ git add . && git commit -m "initial templates" && git push -u origin main
 Подключение директории к `srekit`:
 
 ```bash
-echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
-# или: export SREKIT_TEMPLATES_DIR=~/.srekit/templates
-# или: srekit --templates-dir ~/.srekit/templates …  (на одну команду)
+echo 'templates_dir: ~/.config/srekit/templates' >> ~/.config/srekit/config.yaml
+# или: export SREKIT_TEMPLATES_DIR=~/.config/srekit/templates
+# или: srekit --templates-dir ~/.config/srekit/templates …  (на одну команду)
 ```
 
 Если файла нет в твоей директории, `srekit` тихо берёт встроенный — можно оверрайдить только то, что нужно.
+
+Готовый репозиторий ровно в этой раскладке — [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates): клонируй как `templates_dir`, чтобы пропустить `init`, или форкни под свою организацию.
 
 Флага `--template FILE` (one-shot подмена шаблона) больше нет ни у одной команды — он ушёл в v0.30.0 вместе с `srekit license`, своим последним потребителем. Кастомизация делается через `<name>.yaml` в `templates_dir` (см. ниже про `templates init` / `upgrade`).
 
@@ -261,6 +279,18 @@ srekit templates upgrade --force     # перезаписать и кастом�
 
 Без снапшота (старый user dir, до этой версии) — fallback на additive поведение (skip + seed снапшота для следующего apgrade). Сидкар `.srekit-embedded/` автоматически попадает в `.gitignore` твоей dir. `TEMPLATES.md` обновляется всегда (это reference, не точка кастомизации).
 
+### `srekit doctor` — диагностика окружения
+
+```bash
+srekit doctor                                       # полный отчёт
+srekit doctor --quiet                               # только то, что требует внимания
+srekit doctor --json | jq -e '.status != "error"'   # гейт в CI
+```
+
+Показывает состояние, которое srekit резолвит до того, как что-то отрендерить: какой конфиг реально читается (и не затенён ли второй), куда резолвится templates dir и парсятся ли ещё её артефакты, резолвится ли identity автора вообще, есть ли `git` в `PATH`. Только читает: ничего не создаёт, не чинит и не ходит в сеть.
+
+Каждая проверка отдаёт `ok`, `warn` или `error`. Exit code — `1`, если хотя бы одна `error`, иначе `0`: **`warn` никогда не роняет запуск**, поэтому `doctor` безопасно ставить в CI. `--quiet` не меняет exit code — в здоровом окружении он не печатает ничего, то есть тишина означает «всё в порядке». ID проверок (`config.file`, `config.identity`, `templates.parse`, `dependencies.git`, …) — публичный контракт: на них гейтятся чужие пайплайны.
+
 ### `srekit completion` — shell autocomplete
 
 ```bash
@@ -275,7 +305,8 @@ srekit completion bash > /etc/bash_completion.d/srekit
 ```yaml
 author: Mikhail Savin
 email: jtprogru@example.com
-# templates_dir: ~/.srekit/templates
+# templates_dir: ~/.config/srekit/templates
+# changelog_lang: ru
 ```
 
 Или через env: `SREKIT_AUTHOR`, `SREKIT_EMAIL`, `SREKIT_TEMPLATES_DIR`. Альтернативный путь к файлу — `srekit --config ./my.yaml …`.
@@ -332,7 +363,7 @@ cargo install tokei           # через cargo
 
 С **v1.0** релиз станет stability stamp:
 
-- **Стабильный публичный контракт.** CLI-флаги, имена и порядок section ID в `--json`, схема `<name>.yaml` (`version` / `frontmatter` / `title` / `meta_bullets` / `header_body` / `sections`), словарь section `type` (`text` / `list` / `table`), ключи в `~/.srekit.yaml` и `SREKIT_*` env. Любое из этого ломается только в major-релизе с migration-инструкцией.
+- **Стабильный публичный контракт.** CLI-флаги, имена и порядок section ID в `--json`, схема `<name>.yaml` (`version` / `frontmatter` / `title` / `meta_bullets` / `header_body` / `sections` / `footer_body`), словарь section `type` (`text` / `list` / `table`), ID проверок `doctor`, ключи конфиг-файла и `SREKIT_*` env. Любое из этого ломается только в major-релизе с migration-инструкцией.
 - **Соблюдение обратной совместимости через 1.x.** Поддерживается чтение legacy `.tmpl` и `.sections.yaml` файлов в user-`templates_dir` (с stderr `WARN`); их удаление — кандидат на 2.0.
 - **Deprecation-цикл.** Когда мы что-то планируем убрать, оно сначала становится no-op или начинает писать `WARN` минимум один minor-релиз, потом удаляется в следующем major. Пример из недавнего: `--template FILE` на не-license командах с v0.20.0 был silent no-op, в v0.22.0 убран с CLI-surface, а в v0.30.0 удалён совсем — вместе с `srekit license`, единственной командой, которая его honor-ила.
 
