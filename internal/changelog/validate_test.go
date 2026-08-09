@@ -126,14 +126,14 @@ func TestValidateChangeTypeFailureListsAllowedSet(t *testing.T) {
 func TestValidateReportsEveryCheck(t *testing.T) {
 	t.Parallel()
 	results := Validate(scan(t, "# Changelog\n"), Vocabularies())
-	if len(results) != 6 {
-		t.Fatalf("want 6 checks, got %d", len(results))
+	if len(results) != 7 {
+		t.Fatalf("want 7 checks, got %d", len(results))
 	}
 	seen := map[string]bool{}
 	for _, r := range results {
 		seen[r.Name] = true
 	}
-	for _, name := range []string{CheckHeadingShape, CheckUnreleased, CheckOrder, CheckDuplicates, CheckChangeTypes, CheckLinks} {
+	for _, name := range []string{CheckHeadingShape, CheckUnreleased, CheckOrder, CheckDuplicates, CheckChangeTypes, CheckVocabulary, CheckLinks} {
 		if !seen[name] {
 			t.Errorf("check %q missing", name)
 		}

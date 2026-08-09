@@ -517,8 +517,8 @@ func TestChangelogValidateFailures(t *testing.T) {
 				t.Errorf("the detail should name %q:\n%s", c.names, out)
 			}
 			// Every check is reported, not just the failing one.
-			if got := strings.Count(out, "OK    ") + strings.Count(out, "FAIL  "); got != 6 {
-				t.Errorf("want all 6 checks reported, got %d:\n%s", got, out)
+			if got := strings.Count(out, "OK    ") + strings.Count(out, "FAIL  "); got != 7 {
+				t.Errorf("want all 7 checks reported, got %d:\n%s", got, out)
 			}
 		})
 	}

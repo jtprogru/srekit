@@ -21,6 +21,7 @@ const (
 	CheckOrder        = "version-order"
 	CheckDuplicates   = "no-duplicate-versions"
 	CheckChangeTypes  = "change-types"
+	CheckVocabulary   = "change-type-language"
 	CheckLinks        = "link-definitions"
 )
 
@@ -32,11 +33,16 @@ func Validate(doc *Document, vocabs []Vocabulary) []CheckResult {
 		checkOrder(doc),
 		checkDuplicates(doc),
 		checkChangeTypes(doc, vocabs),
+		checkVocabulary(doc, vocabs),
 		checkLinks(doc),
 	}
 }
 
 func pass(name string) CheckResult { return CheckResult{Name: name, OK: true} }
+
+func passWith(name, format string, a ...any) CheckResult {
+	return CheckResult{Name: name, OK: true, Detail: fmt.Sprintf(format, a...)}
+}
 
 func fail(name, format string, a ...any) CheckResult {
 	return CheckResult{Name: name, Detail: fmt.Sprintf(format, a...)}
@@ -138,6 +144,23 @@ func checkChangeTypes(doc *Document, vocabs []Vocabulary) CheckResult {
 		return pass(CheckChangeTypes)
 	}
 	return fail(CheckChangeTypes, "unrecognized change type %s; allowed: %s", strings.Join(bad, "; "), allowedTypes(vocabs))
+}
+
+// checkVocabulary reports which change-type vocabulary the document is
+// written in, and fails when that question has no single answer.
+//
+// It reports on a pass as well as a failure, because a user who expected
+// one language and got the other is otherwise handed a list of passing
+// checks that measured the wrong thing.
+func checkVocabulary(doc *Document, vocabs []Vocabulary) CheckResult {
+	switch {
+	case doc.Mixed():
+		return fail(CheckVocabulary, "document mixes change-type vocabularies: %s; a changelog must use one language throughout", doc.DescribeMix())
+	case doc.Lang == "":
+		return fail(CheckVocabulary, "no recognized change types found; expected one of: %s", allowedTypes(vocabs))
+	default:
+		return passWith(CheckVocabulary, "%s (%s) change types", LangName(doc.Lang), doc.Lang)
+	}
 }
 
 func allowedTypes(vocabs []Vocabulary) string {

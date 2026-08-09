@@ -21,7 +21,12 @@ func newChangelogValidateCmd() *cobra.Command {
   version-order          released versions appear in descending version order
   no-duplicate-versions  no version appears twice
   change-types           every ### subsection is one of the six change types
+  change-type-language   the document uses one change-type vocabulary, not two
   link-definitions       every version heading has a matching link definition
+
+The change-type vocabulary is read out of the document, in either English
+or Russian, and reported. --lang selects what is generated; it never
+influences what is parsed.
 
 Reports every check, then exits non-zero if any failed. It never rewrites
 the file.`,
@@ -32,6 +37,13 @@ the file.`,
   srekit changelog validate docs/CHANGELOG.md`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Inherited from the parent and not used here — the vocabulary is
+			// detected from the document — but still rejected when it names a
+			// language that does not exist.
+			if _, err := resolveChangelogLang(cmd); err != nil {
+				return err
+			}
+
 			path := defaultChangelogPath
 			if len(args) == 1 {
 				path = args[0]
@@ -51,6 +63,12 @@ the file.`,
 			var failed int
 			for _, r := range results {
 				if r.OK {
+					// A passing check may still have something to say — which
+					// change-type vocabulary was detected, for one.
+					if r.Detail != "" {
+						fmt.Fprintf(out, "OK    %s: %s\n", r.Name, r.Detail)
+						continue
+					}
 					fmt.Fprintf(out, "OK    %s\n", r.Name)
 					continue
 				}

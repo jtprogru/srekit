@@ -183,6 +183,151 @@ func TestChangelogUnknownLangInConfigRejected(t *testing.T) {
 	}
 }
 
+// russianScaffold is a Russian changelog with one real entry, the shape a
+// release is actually cut from.
+const russianScaffold = `# Changelog
+
+Все заметные изменения в этом проекте документируются в этом файле.
+
+## [Unreleased]
+
+### Добавлено
+
+-
+
+### Исправлено
+
+- Гонка в пуле соединений.
+
+## [0.1.0] - 2026-01-01
+
+### Добавлено
+
+- Первый релиз.
+
+[Unreleased]: https://github.com/acme/api/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/acme/api/releases/tag/v0.1.0
+`
+
+func TestChangelogReleasePreservesRussianVocabulary(t *testing.T) {
+	read := writeChangelog(t, russianScaffold)
+	if _, err := runCLI(t, "changelog", "release", "--version", "0.2.0", "--date", "2026-03-04"); err != nil {
+		t.Fatal(err)
+	}
+	got := read()
+	if !strings.Contains(got, "## [0.2.0] - 2026-03-04\n\n### Исправлено\n\n- Гонка в пуле соединений.") {
+		t.Errorf("the released version should carry the Russian change type:\n%s", got)
+	}
+	// The empty placeholder is pruned in either vocabulary.
+	if strings.Contains(got, "## [0.2.0] - 2026-03-04\n\n### Добавлено") {
+		t.Errorf("an empty Russian placeholder should be dropped:\n%s", got)
+	}
+}
+
+// Generation and parsing run in opposite directions: a team that switched
+// to Russian still has an English CHANGELOG.md from before the switch, and
+// release must not translate it out from under them.
+func TestChangelogReleaseIgnoresLangWhenParsing(t *testing.T) {
+	read := writeChangelog(t, releasedScaffold)
+	if _, err := runCLI(t, "changelog", "release", "--version", "0.2.0", "--date", "2026-03-04", "--lang", "ru"); err != nil {
+		t.Fatal(err)
+	}
+	got := read()
+	if !strings.Contains(got, "### Fixed") {
+		t.Errorf("--lang ru must not touch an English document's change types:\n%s", got)
+	}
+	if strings.Contains(got, "Исправлено") {
+		t.Errorf("no Russian heading should appear in an English document:\n%s", got)
+	}
+}
+
+// mixedScaffold is a half-translated changelog: `### Added` and
+// `### Исправлено` in one document, where neither a reader nor a tool can
+// group the entries.
+const mixedScaffold = `# Changelog
+
+## [Unreleased]
+
+### Added
+
+- A new endpoint.
+
+### Исправлено
+
+- Гонка в пуле соединений.
+
+## [0.1.0] - 2026-01-01
+
+### Added
+
+- Initial release.
+
+[Unreleased]: https://github.com/acme/api/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/acme/api/releases/tag/v0.1.0
+`
+
+func TestChangelogValidateRejectsMixedVocabularies(t *testing.T) {
+	writeChangelog(t, mixedScaffold)
+	out, err := runCLI(t, "changelog", "validate")
+	if err == nil {
+		t.Fatalf("expected a non-zero exit:\n%s", out)
+	}
+	if !strings.Contains(out, "FAIL  change-type-language") {
+		t.Errorf("the mixed document should fail the vocabulary check:\n%s", out)
+	}
+	for _, want := range []string{`"Added"`, `"Исправлено"`} {
+		if !strings.Contains(out, want) {
+			t.Errorf("the detail should name %s:\n%s", want, out)
+		}
+	}
+}
+
+func TestChangelogReleaseRefusesMixedVocabularies(t *testing.T) {
+	read := writeChangelog(t, mixedScaffold)
+	out, err := runCLI(t, "changelog", "release", "--version", "0.2.0")
+	if err == nil {
+		t.Fatalf("expected a non-zero exit:\n%s", out)
+	}
+	if !strings.Contains(out, "mixes change-type vocabularies") {
+		t.Errorf("the error should explain the mix:\n%s", out)
+	}
+	if got := read(); got != mixedScaffold {
+		t.Errorf("a refused release must leave the file byte-identical:\n%s", got)
+	}
+}
+
+func TestChangelogValidateReportsDetectedVocabulary(t *testing.T) {
+	writeChangelog(t, russianScaffold)
+	out, err := runCLI(t, "changelog", "validate")
+	if err != nil {
+		t.Fatalf("unexpected failure:\n%s", out)
+	}
+	if !strings.Contains(out, "OK    change-type-language: Russian (ru)") {
+		t.Errorf("validate should name the vocabulary it used:\n%s", out)
+	}
+}
+
+func TestChangelogValidateNoChangeTypesAtAll(t *testing.T) {
+	writeChangelog(t, `# Changelog
+
+## [Unreleased]
+
+## [0.1.0] - 2026-01-01
+
+- Initial release.
+
+[Unreleased]: https://github.com/acme/api/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/acme/api/releases/tag/v0.1.0
+`)
+	out, err := runCLI(t, "changelog", "validate")
+	if err == nil {
+		t.Fatalf("expected a non-zero exit:\n%s", out)
+	}
+	if !strings.Contains(out, "FAIL  change-type-language: no recognized change types") {
+		t.Errorf("a document with no change types is neither language:\n%s", out)
+	}
+}
+
 // The variant is a file like any other in the embedded set: it is listed,
 // scaffolded, snapshotted and upgraded on its own, never conflated with the
 // base artifact it falls back to.
