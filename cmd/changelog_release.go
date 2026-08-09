@@ -51,6 +51,14 @@ then commit and tag yourself.`,
   srekit changelog release --version 1.2.0 docs/CHANGELOG.md`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// --lang is inherited from the parent and governs generation, not
+			// parsing — the vocabulary below is detected from the document.
+			// It is still validated here so an unrecognized value fails in
+			// the whole command group rather than only where it is used.
+			if _, err := resolveChangelogLang(cmd); err != nil {
+				return err
+			}
+
 			// The date is checked before the file is read so a typo cannot
 			// get as far as touching the user's document.
 			if date == "" {
