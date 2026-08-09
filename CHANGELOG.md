@@ -9,6 +9,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-08-09
+
 ### Added
 
 - **`srekit changelog --lang ru`** — a shipped Russian changelog artifact, and the resolution rule that finds it. Keep a Changelog publishes an official Russian edition whose change types are `Добавлено`, `Изменено`, `Устарело`, `Удалено`, `Исправлено`, `Безопасность`, and a Russian-speaking team whose changelog nobody's CI parses had no way to get one except hand-editing a scaffolded copy that then diverges on every `templates upgrade`. `changelog.ru.yaml` is a maintained artifact instead: it is listed, snapshotted, diffed and merged like any other file, against its own snapshot, so editing one language leaves the other alone. Only the change-type headings and the surrounding prose are translated — `## [Unreleased]`, the version headings and the link reference labels keep their English form, because a heading and the reference label that points at it are two halves of one link and the label is the part that points outward, at tags and compare URLs. The default is untouched: an unqualified `srekit changelog` is byte-identical to what it produced before the flag existed. Anything that greps `### Added` will not survive the switch, which is documented as a warning in both locales and is why the flag has to be asked for out loud.
@@ -617,7 +619,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/jtprogru/srekit/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/jtprogru/srekit/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/jtprogru/srekit/compare/v0.29.3...v0.30.0
 [0.29.3]: https://github.com/jtprogru/srekit/compare/v0.29.2...v0.29.3
