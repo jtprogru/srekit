@@ -48,6 +48,16 @@ Used by every `templates *` subcommand and by every generator (via the overlay l
 
 The flag is a **persistent flag** on the root command — it applies to every subcommand.
 
+### Changelog language
+
+Used by [`srekit changelog`](../commands/changelog.md#the-russian-variant) and inherited by its `release` and `validate` subcommands.
+
+| Key | yaml | env | flag |
+|---|---|---|---|
+| changelog_lang | `changelog_lang:` | `SREKIT_CHANGELOG_LANG` | `--lang` |
+
+Accepts `en` (the default) or `ru`. An unrecognized value fails, naming the accepted ones, before anything is written — a typo here does not silently fall back to English. The setting governs what is generated; it never influences how an existing changelog is parsed.
+
 ### Config file location
 
 | Key | flag | default |
@@ -63,6 +73,7 @@ The flag is a **persistent flag** on the root command — it applies to every su
 author: Mikhail Savin
 email: jtprogru@gmail.com
 # templates_dir: ~/.srekit/templates   # optional
+# changelog_lang: ru                   # optional, default: en
 ```
 
 Generate it with [`srekit config init`](../commands/config.md). The file is written `0o600` (user-only) and uses tilde-style home expansion for paths (`~/foo` resolves to `$HOME/foo`).

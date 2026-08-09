@@ -123,6 +123,21 @@ The upgrade flow:
 
 For conflicts, resolve `<<<<<<<` markers like any merge, commit, push. The snapshot is already at the new embedded — the next `templates upgrade` treats your resolution as the new base.
 
+## Language variants
+
+One artifact ships in two languages: `changelog.yaml` and `changelog.ru.yaml`. They are two files, not two halves of one, and the lifecycle treats them that way — both are scaffolded by `templates init`, both appear as their own entry in `templates list` with their own status, both get their own snapshot under `.srekit-embedded/`, and `templates upgrade` merges each against its own base. Editing your copy of one language leaves the other untouched.
+
+Resolution when [`srekit changelog --lang ru`](../commands/changelog.md#the-russian-variant) asks for a variant:
+
+1. `changelog.ru.yaml` in your templates dir
+2. `changelog.ru.yaml` embedded in the binary
+3. `changelog.yaml` in your templates dir
+4. `changelog.yaml` embedded in the binary
+
+The variant is looked up across *every* source before the fallback is tried in any of them. That ordering matters in one case: if you have customized `changelog.yaml` and have no Russian variant of your own, `--lang ru` gives you the embedded Russian artifact, not your English customization. You asked for Russian, and an English file — even yours — is not an answer to that question.
+
+To customize the Russian variant, edit `changelog.ru.yaml` in your templates dir like any other file. A third language of your own is not selectable yet: `--lang` accepts only `en` and `ru`, so dropping a `changelog.de.yaml` into the directory gives you nothing to select it with. A language for which no variant exists anywhere falls back to the base artifact silently rather than failing.
+
 ## Recovery paths
 
 ### "I scaffolded into the wrong directory"

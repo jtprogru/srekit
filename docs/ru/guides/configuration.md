@@ -48,6 +48,16 @@ srekit rfc --title "Move to gRPC"
 
 Флаг — **persistent flag** на root, применяется к каждой подкоманде.
 
+### Язык changelog { #changelog-lang }
+
+Используется [`srekit changelog`](../commands/changelog.md#ru-variant) и наследуется его подкомандами `release` и `validate`.
+
+| Ключ | yaml | env | флаг |
+|---|---|---|---|
+| changelog_lang | `changelog_lang:` | `SREKIT_CHANGELOG_LANG` | `--lang` |
+
+Принимает `en` (default) или `ru`. Нераспознанное значение падает с ошибкой, называющей допустимые, ещё до того как что-либо записано: опечатка здесь не откатывается молча в английский. Настройка управляет тем, что генерируется, и никогда не влияет на то, как парсится уже существующий changelog.
+
 ### Расположение конфига
 
 | Ключ | флаг | default |
@@ -63,6 +73,7 @@ srekit rfc --title "Move to gRPC"
 author: Mikhail Savin
 email: jtprogru@gmail.com
 # templates_dir: ~/.srekit/templates   # опционально
+# changelog_lang: ru                   # опционально, default: en
 ```
 
 Сгенерировать через [`srekit config init`](../commands/config.md). Файл пишется `0o600` (user-only), пути с tilde-стиль раскрытием (`~/foo` → `$HOME/foo`).
