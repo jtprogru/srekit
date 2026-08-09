@@ -37,6 +37,19 @@ type AlreadyReleasedError struct {
 	Line    int
 }
 
+// MixedVocabularyError reports a document whose change types come from
+// more than one language. Releasing it would file entries under headings
+// that duplicate each other in two languages, so the rewrite refuses and
+// the file is left exactly as it was.
+type MixedVocabularyError struct {
+	// Detail names the offending headings and their lines.
+	Detail string
+}
+
+func (e *MixedVocabularyError) Error() string {
+	return fmt.Sprintf("document mixes change-type vocabularies (%s); a changelog must use one language throughout", e.Detail)
+}
+
 func (e *AlreadyReleasedError) Error() string {
 	return fmt.Sprintf("version %s is already released (line %d); re-running a release would file entries accumulated since under a version that shipped without them", e.Version, e.Line)
 }
@@ -45,6 +58,9 @@ func (e *AlreadyReleasedError) Error() string {
 // output routing. Every failure returns before any bytes are produced, so a
 // caller that writes only on success cannot half-edit a file.
 func Release(doc *Document, opts ReleaseOptions) ([]byte, error) {
+	if doc.Mixed() {
+		return nil, &MixedVocabularyError{Detail: doc.DescribeMix()}
+	}
 	if doc.Unreleased == nil {
 		return nil, ErrNoUnreleased
 	}

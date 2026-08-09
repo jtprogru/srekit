@@ -20,6 +20,12 @@ type Options struct {
 	Default string
 	JSON    bool // emit the caller's structured payload as JSON instead of rendering markdown
 	Quiet   bool // suppress informational messages (the "wrote <file>" line, dry-run notes)
+	// Lang selects a language variant of the artifact (`<name>.<lang>.yaml`).
+	// Empty means the base artifact, which is what every generator but
+	// `changelog` passes: the rest are bilingual by construction and have
+	// nothing to select between. A language with no variant falls back to
+	// the base artifact rather than failing.
+	Lang string
 }
 
 // ArtifactPayload is implemented by cmd-level data structs that join the
@@ -56,15 +62,15 @@ func buildBody(loader *tmpl.Loader, name string, data any, opts Options) ([]byte
 		return append(b, '\n'), nil
 	}
 
-	return renderArtifactPath(loader, name, data)
+	return renderArtifactPath(loader, name, data, opts.Lang)
 }
 
 // renderArtifactPath loads the v1 single-file YAML artifact for name,
 // parses it, extracts the pre-merged section list + ctx from data (which
 // must implement ArtifactPayload), and composes the markdown via
 // sections.RenderArtifact.
-func renderArtifactPath(loader *tmpl.Loader, name string, data any) ([]byte, error) {
-	artifactBytes, err := loader.LoadArtifactBytes(name)
+func renderArtifactPath(loader *tmpl.Loader, name string, data any, lang string) ([]byte, error) {
+	artifactBytes, err := loader.LoadArtifactBytesLang(name, lang)
 	if err != nil {
 		return nil, fmt.Errorf("load artifact for %q: %w", name, err)
 	}

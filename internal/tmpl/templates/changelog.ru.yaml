@@ -1,0 +1,57 @@
+version: 1
+
+title: Changelog
+
+# Русский вариант changelog: переведены только типы изменений и проза.
+# `[Unreleased]`, заголовки версий и метки ссылочных определений остаются
+# английскими — это идентификаторы, которые должны совпадать со ссылками в
+# конце документа и с тегами проекта, а не проза.
+header_body: |
+  Все заметные изменения в этом проекте документируются в этом файле.
+
+  Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
+  и этот проект придерживается [Семантического версионирования](https://semver.org/lang/ru/spec/v2.0.0.html).
+
+sections:
+  - id: unreleased
+    title: '[Unreleased]'
+    type: text
+    default_body: |
+      ### Добавлено
+
+      -
+
+      ### Изменено
+
+      -
+
+      ### Устарело
+
+      -
+
+      ### Удалено
+
+      -
+
+      ### Исправлено
+
+      -
+
+      ### Безопасность
+
+      -
+  - id: initial_release
+    title: '[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}'
+    type: text
+    default_body: |
+      ### Добавлено
+
+      - Первый релиз.
+
+# Link reference definitions are a document-level footer, not prose
+# belonging to the last version section: Keep a Changelog treats them as
+# the tail of the document, and keeping them here means a section body
+# supplied through --from can never drop them.
+footer_body: |
+  [Unreleased]: https://github.com/{{ .Meta.Repo }}/compare/v{{ .Meta.InitialVersion }}...HEAD
+  [{{ .Meta.InitialVersion }}]: https://github.com/{{ .Meta.Repo }}/releases/tag/v{{ .Meta.InitialVersion }}

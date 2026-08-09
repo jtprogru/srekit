@@ -18,6 +18,7 @@
 package changelog
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -44,9 +45,39 @@ var English = Vocabulary{ //nolint:gochecknoglobals // immutable specification d
 	Types: []string{"Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"},
 }
 
+// Russian is the change-type set of the specification's Russian edition,
+// matching the headings the `changelog.ru.yaml` artifact generates.
+//
+// The six terms are the ones the specification names; a synonym a user
+// wrote by hand (`Исправления` for `Исправлено`) is reported as an
+// unrecognized change type rather than quietly accepted, because a
+// vocabulary that accepts synonyms is not a vocabulary.
+var Russian = Vocabulary{ //nolint:gochecknoglobals // immutable specification data, not mutable state
+	Lang:  "ru",
+	Types: []string{"Добавлено", "Изменено", "Устарело", "Удалено", "Исправлено", "Безопасность"},
+}
+
 // Vocabularies returns the set the scanner recognizes by default. It is a
 // function rather than a package-level slice so no caller can mutate it.
-func Vocabularies() []Vocabulary { return []Vocabulary{English} }
+//
+// Both languages are always recognized, whatever `--lang` says: generation
+// and parsing run in opposite directions and must not share a setting. A
+// team that switches to Russian still has an English CHANGELOG.md from
+// before the switch, and `release` must not corrupt it.
+func Vocabularies() []Vocabulary { return []Vocabulary{English, Russian} }
+
+// LangName returns the human-readable name of a vocabulary tag, for
+// output a person reads rather than a tool parses.
+func LangName(lang string) string {
+	switch lang {
+	case English.Lang:
+		return "English"
+	case Russian.Lang:
+		return "Russian"
+	default:
+		return lang
+	}
+}
 
 // Region is a half-open byte range [Start, End) into Document.Src.
 type Region struct {
@@ -388,6 +419,49 @@ func classify(heading string, vocabs []Vocabulary) (lang string, ok bool) {
 		}
 	}
 	return "", false
+}
+
+// LangHeading is the first change-type heading of one vocabulary, kept so
+// a report about a mixed document can point at the actual lines rather
+// than at the language tags.
+type LangHeading struct {
+	Lang    string
+	Heading string
+	Line    int
+}
+
+// FirstHeadingByLang returns one heading per vocabulary present in the
+// document, in the order the vocabularies first appear. A document that
+// is not mixed yields at most one entry.
+func (d *Document) FirstHeadingByLang() []LangHeading {
+	seen := map[string]bool{}
+	var out []LangHeading
+	for _, s := range d.Sections() {
+		for _, c := range s.Changes {
+			if !c.Recognized || seen[c.Lang] {
+				continue
+			}
+			seen[c.Lang] = true
+			out = append(out, LangHeading{Lang: c.Lang, Heading: c.Heading, Line: c.Line})
+		}
+	}
+	return out
+}
+
+// Mixed reports whether the document's change types come from more than
+// one vocabulary — a half-translated changelog, where `### Added` and
+// `### Добавлено` mean the same thing and neither a reader nor a tool can
+// group them.
+func (d *Document) Mixed() bool { return len(d.Langs) > 1 }
+
+// DescribeMix renders the offending headings for an error or a check
+// detail: `English "Added" (line 5), Russian "Исправлено" (line 12)`.
+func (d *Document) DescribeMix() string {
+	parts := make([]string, 0, 2)
+	for _, h := range d.FirstHeadingByLang() {
+		parts = append(parts, fmt.Sprintf("%s %q (line %d)", LangName(h.Lang), h.Heading, h.Line))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func detectLangs(secs []*Section) (first string, all []string) {

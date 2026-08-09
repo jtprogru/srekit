@@ -19,8 +19,11 @@ srekit changelog validate [FILE]
 | `--repo` | нет | `<owner>/<name>` slug. Если не передан — srekit берёт `meta.repo` из payload'а `--from`, а если и его нет — читает `git config remote.origin.url` и парсит GitHub SSH или HTTPS URL'ы. |
 | `--version` | нет | Начальный version anchor (например `0.1.0`). Default: `0.1.0`. |
 | `--from` | нет | Читать тела секций из JSON-файла; `-` читает stdin. |
+| `--lang` | нет | Язык генерируемых change type: `en` или `ru`. Default: `en`, либо `changelog_lang` из конфига. См. [Русский вариант](#ru-variant). |
 
 Плюс [общие output-флаги](index.md#shared-output-flags). Default имя файла: `CHANGELOG.md`.
+
+`--lang` персистентный на всю группу команд, так что `release` и `validate` его тоже принимают. Ни та, ни другая на него не смотрят: словарь change type обе читают из документа, который перед ними лежит.
 
 ## Примеры
 
@@ -65,6 +68,59 @@ srekit changelog --from cl.json
 Скаффолд включает скелет `[Unreleased]` / `[<version>]` с шестью подсекциями Keep a Changelog и заканчивается блоком link reference definitions на `github.com/<repo>/compare/v<version>...HEAD`.
 
 Этот блок ссылок — футер уровня документа, а не часть тела последней секции. Поэтому он переживает payload `--from`, заменяющий `initial_release`, и именно его переписывает [`changelog release`](#release).
+
+## Русский вариант { #ru-variant }
+
+Все остальные артефакты srekit двуязычные — заголовки `Русский (English)` над русской прозой. `changelog` — исключение, и по умолчанию остаётся английским, потому что его парсит тулинг вокруг Keep a Changelog. Русскоязычной команде, чей changelog не читает ничей CI, можно переключиться:
+
+```bash
+srekit changelog --repo acme/api --lang ru --stdout
+```
+
+```markdown
+# Changelog
+
+Все заметные изменения в этом проекте документируются в этом файле.
+
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
+и этот проект придерживается [Семантического версионирования](https://semver.org/lang/ru/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Добавлено
+
+-
+
+### Изменено
+
+-
+
+...
+
+## [0.1.0] - 2026-03-04
+
+### Добавлено
+
+- Первый релиз.
+
+[Unreleased]: https://github.com/acme/api/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/acme/api/releases/tag/v0.1.0
+```
+
+Чтобы не набирать флаг каждый раз — `changelog_lang: ru` в конфиге или `SREKIT_CHANGELOG_LANG=ru` в окружении, см. [Конфигурация](../guides/configuration.md#changelog-lang). Флаг выигрывает у обоих. Нераспознанное значение падает с ошибкой, называющей `en` и `ru`, до того как что-либо записано.
+
+!!! warning "Это ломает тулинг, который читает твой changelog"
+    Всё, что грепает `### Added`, группирует записи по типу изменения или собирает release notes из файла, перестанет находить то, что ожидает. Релизная автоматизация, changelog-агрегаторы и линтеры `keep-a-changelog` написаны под английскую шестёрку. `srekit changelog validate` и `release` понимают оба словаря; за пределами srekit этого никто не обещает. Default остаётся английским ровно для того, чтобы это было решением, которое принимают, а не наследуют.
+
+### Что остаётся английским
+
+Переводятся только заголовки change type и окружающая проза. `## [Unreleased]`, заголовки версий и метки ссылочных определений в русском варианте сохраняют английскую форму.
+
+В Markdown `## [Unreleased]` и `[Unreleased]: <url>` — две половины одной reference link, текст заголовка *и есть* метка. Перевести заголовок — значит перевести метку, а метка это та часть документа, которая смотрит наружу: на compare-URL, собранный из тегов. У русского проекта теги всё равно `v1.2.0`, а compare-ссылки всё равно живут на англоязычной форже. Плюс `[Unreleased]` — единственный якорь, который вообще делает changelog машинно-находимым: по нему `changelog release` находит точку вставки, по нему же её находит любой другой инструмент. Перевод заканчивается ровно там, где документ перестаёт быть прозой.
+
+### Как переопределить вариант
+
+`changelog.ru.yaml` — такой же шипящийся артефакт, как остальные: `srekit templates init` его скаффолдит, `templates list` показывает отдельной записью, `templates upgrade` мёржит против его собственного снапшота. Правка своей копии одного языка не трогает другой. См. [Кастомные шаблоны](../guides/custom-templates.md#language-variants).
 
 ## Как резать релиз { #release }
 
@@ -166,7 +222,8 @@ OK    heading-shape
 OK    unreleased-section
 FAIL  version-order: versions must appear in descending order: 1.1.0 (line 12) is listed above 1.2.0 (line 24)
 OK    no-duplicate-versions
-FAIL  change-types: unrecognized change type line 31: Improvements; allowed: Added, Changed, Deprecated, Removed, Fixed, Security
+FAIL  change-types: unrecognized change type line 31: Improvements; allowed: Added, Changed, Deprecated, Removed, Fixed, Security, Добавлено, Изменено, Устарело, Удалено, Исправлено, Безопасность
+OK    change-type-language: English (en) change types
 OK    link-definitions
 ```
 
@@ -176,18 +233,33 @@ OK    link-definitions
 | `unreleased-section` | Секция `[Unreleased]` присутствует и стоит выше всех выпущенных версий. |
 | `version-order` | Выпущенные версии идут по убыванию. Сравнение посегментно-числовое, поэтому `1.10.0` корректно оказывается выше `1.9.0`. |
 | `no-duplicate-versions` | Ни одна версия не встречается дважды. |
-| `change-types` | Каждая подсекция `###` — одна из `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`. |
+| `change-types` | Каждая подсекция `###` — одна из `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security` либо их русских эквивалентов. |
+| `change-type-language` | Документ использует один словарь change type, а не два. Сообщает, какой именно распознан. |
 | `link-definitions` | У каждого заголовка версии есть определение в блоке link reference definitions. |
 
 Сообщается каждая проверка — и прошедшая, и упавшая: человеку, который чинит разъехавшийся changelog, нужен весь список за один проход, а не первая ошибка. Ненулевой код возврата — если упала хотя бы одна.
 
-Словарь change type — это шесть типов из спецификации, а не то, что написано в твоём кастомном `changelog.yaml`. Переименованный заголовок здесь падает, и это правильный ответ: формат называет именно эти шесть.
+Словарь change type — это шесть типов из спецификации на каждый язык, а не то, что написано в твоём кастомном `changelog.yaml`. Переименованный заголовок здесь падает, и это правильный ответ: формат называет именно эти шесть. Русский документ, переведённый руками до появления варианта, упадёт, если в нём синоним — `Исправления` вместо `Исправлено`, — и в ошибке будет перечислен допустимый набор.
+
+### На каком языке документ
+
+Оба словаря распознаются всегда, а какой из них в силе — читается из самого документа, по первому распознанному заголовку change type. `--lang` на это не влияет: генерация и парсинг идут в противоположные стороны, и у команды, которая переключилась на русский, всё ещё лежит английский `CHANGELOG.md` с прошлых времён, который `release` не должен испортить.
+
+`validate` сообщает распознанный словарь прямо в прошедшей проверке `change-type-language` — чтобы тот, кто ждал одного языка и получил другой, увидел расхождение, а не список зелёных проверок, измеривших не то.
+
+Документ, в котором словари смешаны, падает с указанием заголовков-нарушителей, а `release` от такого отказывается и оставляет файл байт-в-байт прежним:
+
+```
+FAIL  change-type-language: document mixes change-type vocabularies: English "Added" (line 5), Russian "Исправлено" (line 12); a changelog must use one language throughout
+```
+
+Наполовину переведённый changelog — это файл, где `### Added` и `### Добавлено` означают одно и то же, и ни читатель, ни инструмент не могут сгруппировать записи. Документ, в котором нет ни одного распознанного change type, тоже считается ошибкой, а не поводом угадать язык.
 
 `validate` сообщает, но не чинит. Правка разъехавшегося документа — это изменение, которое ты должен увидеть.
 
 ## Структура данных для шаблона
 
-`changelog` шипится как v1 YAML-артефакт (`internal/tmpl/templates/changelog.yaml`) — H1 + `header_body` (intro-параграф) + две секции (`unreleased` и `initial_release`) + `footer_body` (блок link reference definitions). Заголовок секции `initial_release` динамический (`[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}`); section titles template-evaluated с v0.20.0. Template-выражения обращаются к `.Meta.<Field>` для `Today` (дата `2006-01-02`), `Repo` (`<owner>/<name>`), `InitialVersion`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
+`changelog` шипится двумя v1 YAML-артефактами — `internal/tmpl/templates/changelog.yaml` и его русским вариантом `changelog.ru.yaml`, структурно идентичными вплоть до id секций. Каждый — H1 + `header_body` (intro-параграф) + две секции (`unreleased` и `initial_release`) + `footer_body` (блок link reference definitions). Заголовок секции `initial_release` динамический (`[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}`); section titles template-evaluated с v0.20.0. Template-выражения обращаются к `.Meta.<Field>` для `Today` (дата `2006-01-02`), `Repo` (`<owner>/<name>`), `InitialVersion`. См. [`srekit postmortem`](postmortem.md#customizing-the-artifact-v1-format-v0140) для полной схемы.
 
 ## См. также
 

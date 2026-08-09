@@ -142,6 +142,22 @@ func ArtifactNameFor(name string) string {
 	return name + ".yaml"
 }
 
+// ArtifactVariantNameFor maps an artifact name and a language tag to the
+// variant filename: ("changelog", "ru") yields "changelog.ru.yaml". An
+// empty lang yields exactly what ArtifactNameFor would.
+//
+// Like ArtifactNameFor it is idempotent, including for a name that already
+// carries the segment: "changelog.ru.yaml" in Russian stays
+// "changelog.ru.yaml" rather than growing a second one.
+func ArtifactVariantNameFor(name, lang string) string {
+	base := strings.TrimSuffix(ArtifactNameFor(name), ".yaml")
+	if lang == "" {
+		return base + ".yaml"
+	}
+	base = strings.TrimSuffix(base, "."+lang)
+	return base + "." + lang + ".yaml"
+}
+
 // LoadArtifactBytes resolves the v1 single-file artifact named by name
 // (the bare artifact name, e.g. "postmortem") and returns its raw YAML
 // bytes. Walks Sources in order, so a user-dir artifact shadows the
@@ -153,7 +169,43 @@ func ArtifactNameFor(name string) string {
 // Parsing is left to internal/sections.ParseArtifact so this package
 // doesn't depend on artifact types.
 func (l *Loader) LoadArtifactBytes(name string) ([]byte, error) {
-	artifactName := ArtifactNameFor(name)
+	return l.LoadArtifactBytesLang(name, "")
+}
+
+// LoadArtifactBytesLang resolves the artifact named by name in the
+// requested language. An empty lang behaves exactly like
+// LoadArtifactBytes.
+//
+// The variant lookup runs across the whole source chain before the
+// fallback does, not per source. Given a templates directory holding a
+// customized `changelog.yaml` and no Russian variant, that yields the
+// embedded `changelog.ru.yaml`: the user asked for Russian, and an
+// English file — even their own — is not an answer to that question.
+// Per-source ordering would silently ignore the language whenever the
+// base artifact had been customized, which is the worst failure mode
+// available, since the selection would appear to work and produce the
+// other language.
+//
+// A language with no variant in any source falls back silently. That
+// makes "requested a language nobody ships a variant for" indistinguishable
+// from "requested no language", which is what keeps the rule usable for
+// artifacts that have no variants at all.
+func (l *Loader) LoadArtifactBytesLang(name, lang string) ([]byte, error) {
+	if lang != "" {
+		b, err := l.readFromSources(ArtifactVariantNameFor(name, lang))
+		if err == nil {
+			return b, nil
+		}
+		if !errors.Is(err, fs.ErrNotExist) {
+			return nil, err
+		}
+	}
+	return l.readFromSources(ArtifactNameFor(name))
+}
+
+// readFromSources walks the chain for one concrete filename, treating
+// fs.ErrNotExist as fall-through and returning it when every source misses.
+func (l *Loader) readFromSources(artifactName string) ([]byte, error) {
 	for _, s := range l.Sources {
 		b, err := s.Read(artifactName)
 		if errors.Is(err, fs.ErrNotExist) {
