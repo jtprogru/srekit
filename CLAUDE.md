@@ -96,7 +96,17 @@ Conventional-commit prefixes. `CHANGELOG.md` is hand-maintained in Keep a Change
 
 Behavior changes must update `docs/en` **and** `docs/ru` — the two locales are kept in sync, and English-only is an incomplete change.
 
-Release: move `[Unreleased]` into `[X.Y.Z] - YYYY-MM-DD`, commit `release: X.Y.Z`, then `git tag -a vX.Y.Z && git push origin vX.Y.Z`. goreleaser builds linux/darwin/freebsd × amd64/arm64, GPG-signs checksums, and rewrites the `jtprogru/homebrew-tap` cask. `Version` / `Commit` / `Date` / `BuiltBy` in `cmd/root.go` are ldflags-injected.
+Release: `srekit changelog release --version X.Y.Z` (or move `[Unreleased]` into `[X.Y.Z] - YYYY-MM-DD` by hand), commit `release: X.Y.Z`, then `git tag -a vX.Y.Z && git push origin vX.Y.Z`. goreleaser builds linux/darwin/freebsd × amd64/arm64, GPG-signs checksums, and rewrites the `jtprogru/homebrew-tap` cask. `Version` / `Commit` / `Date` / `BuiltBy` in `cmd/root.go` are ldflags-injected.
+
+**Check the tap token before tagging.** The cask push is the last step of the pipeline and the only one that authenticates with `HOMEBREW_TAP_GITHUB_TOKEN` rather than the workflow's built-in `GITHUB_TOKEN`, so an expired PAT fails *after* the GitHub release is already published — the release looks fine and the tap silently stays on the previous version. A fine-grained PAT expires on a timer; this has bitten 0.31.0. Run first, expecting `main`:
+
+```bash
+GH_TOKEN=<tap-pat> gh api repos/jtprogru/homebrew-tap --jq .default_branch
+```
+
+A `401 Bad credentials` means rotate the PAT (fine-grained, `jtprogru/homebrew-tap`, `Contents: Read and write`) and `gh secret set HOMEBREW_TAP_GITHUB_TOKEN --repo jtprogru/srekit` — the secret name is read by both `.github/workflows/goreleaser.yaml` and `.goreleaser.yaml`, so setting it under any other name changes nothing.
+
+Recovering when it fails anyway: re-running the job does not work. The rerun replays the same ref, so a config fix landed on `main` is not picked up, and `replace_existing_artifacts` defaults to off, so re-uploading the existing assets fails with a 422. Fix the token, then delete the release and the tag and push the tag again at the same commit (`gh release delete vX.Y.Z --yes`, `git push origin :refs/tags/vX.Y.Z`, `git push origin vX.Y.Z`). The rebuild is not byte-identical — archive timestamps move the `sha256`s even at an unchanged commit — so anything that recorded the first run's checksums goes stale.
 
 ## OpenSpec
 
