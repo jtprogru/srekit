@@ -6,8 +6,8 @@ Built-in шаблоны srekit — это разумные defaults, но люб
     [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — публичный репозиторий шаблонов ровно в той раскладке, что описана ниже. Склонируй его вместо скаффолда с нуля или форкни под свой remote:
 
     ```bash
-    git clone https://github.com/jtprogru/sre-templates ~/.srekit/templates
-    echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+    git clone https://github.com/jtprogru/sre-templates ~/.config/srekit/templates
+    echo 'templates_dir: ~/.config/srekit/templates' >> ~/.config/srekit/config.yaml
     ```
 
     Дальше `srekit templates pull` держит его в синхроне с remote, а `srekit templates upgrade` вмёрживает новый embedded-контент из будущих бинарей.
@@ -32,38 +32,38 @@ Built-in шаблоны srekit — это разумные defaults, но люб
 ### 1. Скаффолд
 
 ```bash
-srekit templates init ~/.srekit/templates
-# Templates scaffolded in /Users/you/.srekit/templates (11 .yaml + TEMPLATES.md)
+srekit templates init ~/.config/srekit/templates
+# Templates scaffolded in /Users/you/.config/srekit/templates (9 files + TEMPLATES.md)
 #
 # Next steps — connect a remote (SSH recommended) and push:
-#   cd /Users/you/.srekit/templates
+#   cd /Users/you/.config/srekit/templates
 #   git remote add origin git@github.com:<owner>/<repo>.git
 #   git add . && git commit -m 'initial templates'
 #   git push -u origin main
 #
 # Then point srekit at this directory:
-#   echo 'templates_dir: /Users/you/.srekit/templates' >> ~/.srekit.yaml
-#   # or: export SREKIT_TEMPLATES_DIR=/Users/you/.srekit/templates
+#   echo 'templates_dir: /Users/you/.config/srekit/templates' >> ~/.config/srekit/config.yaml
+#   # or: export SREKIT_TEMPLATES_DIR=/Users/you/.config/srekit/templates
 ```
 
 Несколько деталей:
 
 - `templates init` по умолчанию делает `git init` (`--no-git` чтобы пропустить).
 - Создаёт служебную директорию `.srekit-embedded/` (снапшот embedded на момент init) и дописывает её в `.gitignore`, чтобы она никогда не попала в team-репо шаблонов.
-- Без явного `[dir]` резолвит `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` в yaml; fallback `~/.srekit/templates`.
+- Без явного `[dir]` резолвит `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` в конфиге; fallback — `$XDG_CONFIG_HOME/srekit/templates` либо pre-XDG `~/.srekit/templates`, если такая директория уже существует.
 
 ### 2. Подключить
 
 ```bash
 srekit config init   # задаёт author, email, templates_dir
 # или вручную:
-echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+echo 'templates_dir: ~/.config/srekit/templates' >> ~/.config/srekit/config.yaml
 ```
 
 ### 3. Кастомизировать
 
 ```bash
-cd ~/.srekit/templates
+cd ~/.config/srekit/templates
 $EDITOR runbook.yaml      # правишь v1-артефакт: добавляешь секцию, тюнишь meta_bullets, etc.
 git commit -am "runbook: add 'communications' section"
 ```
@@ -142,11 +142,12 @@ srekit templates upgrade          # 3-way merge новых embedded в твою 
 
 ### "Я наскаффолдил не туда"
 
-Часто бывает, когда поставил `templates_dir:` но забыл передать соответствующий arg в `templates init`. Просто повтори:
+Часто бывает, когда поставил `templates_dir:`, но забыл передать соответствующий arg в `templates init`, — и скаффолд лёг в дефолтную директорию. Повтори без аргумента, потом удали ghost:
 
 ```bash
-srekit templates init   # учтёт templates_dir из yaml
-rm -rf ~/.srekit/templates   # старый ghost
+srekit doctor           # config.templates-dir назовёт директорию, которая реально в силе
+srekit templates init   # учтёт templates_dir из конфига
+rm -rf ~/.config/srekit/templates   # дефолтная директория, если лишняя копия попала туда
 ```
 
 ### "Я снёс директорию `.srekit-embedded/`"

@@ -6,8 +6,8 @@ srekit's built-in templates are good defaults, but every team eventually wants t
     [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) is a public templates repo in exactly the layout below. Clone it instead of scaffolding from scratch, or fork it to keep your own remote:
 
     ```bash
-    git clone https://github.com/jtprogru/sre-templates ~/.srekit/templates
-    echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+    git clone https://github.com/jtprogru/sre-templates ~/.config/srekit/templates
+    echo 'templates_dir: ~/.config/srekit/templates' >> ~/.config/srekit/config.yaml
     ```
 
     From there `srekit templates pull` keeps it in sync with the remote and `srekit templates upgrade` merges in new embedded content from future binaries.
@@ -32,38 +32,38 @@ The `.srekit-embedded/` sidecar inside your templates dir holds a byte-exact cop
 ### 1. Scaffold
 
 ```bash
-srekit templates init ~/.srekit/templates
-# Templates scaffolded in /Users/you/.srekit/templates (11 .yaml + TEMPLATES.md)
+srekit templates init ~/.config/srekit/templates
+# Templates scaffolded in /Users/you/.config/srekit/templates (9 files + TEMPLATES.md)
 #
 # Next steps — connect a remote (SSH recommended) and push:
-#   cd /Users/you/.srekit/templates
+#   cd /Users/you/.config/srekit/templates
 #   git remote add origin git@github.com:<owner>/<repo>.git
 #   git add . && git commit -m 'initial templates'
 #   git push -u origin main
 #
 # Then point srekit at this directory:
-#   echo 'templates_dir: /Users/you/.srekit/templates' >> ~/.srekit.yaml
-#   # or: export SREKIT_TEMPLATES_DIR=/Users/you/.srekit/templates
+#   echo 'templates_dir: /Users/you/.config/srekit/templates' >> ~/.config/srekit/config.yaml
+#   # or: export SREKIT_TEMPLATES_DIR=/Users/you/.config/srekit/templates
 ```
 
 A few details to notice:
 
 - `templates init` runs `git init` by default (`--no-git` to skip).
 - It seeds `.srekit-embedded/` as a sidecar and appends it to `.gitignore` so it never leaks into your team's templates repo.
-- Without an explicit `[dir]` argument it resolves `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` in yaml, falling back to `~/.srekit/templates`.
+- Without an explicit `[dir]` argument it resolves `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` in the config file, falling back to `$XDG_CONFIG_HOME/srekit/templates` — or the pre-XDG `~/.srekit/templates` when that directory already exists.
 
 ### 2. Wire it up
 
 ```bash
 srekit config init   # sets author, email, templates_dir
 # or hand-edit:
-echo 'templates_dir: ~/.srekit/templates' >> ~/.srekit.yaml
+echo 'templates_dir: ~/.config/srekit/templates' >> ~/.config/srekit/config.yaml
 ```
 
 ### 3. Customize
 
 ```bash
-cd ~/.srekit/templates
+cd ~/.config/srekit/templates
 $EDITOR runbook.yaml      # edit the v1 artifact: add a section, tweak meta_bullets, etc.
 git commit -am "runbook: add 'communications' section"
 ```
@@ -142,11 +142,12 @@ To customize the Russian variant, edit `changelog.ru.yaml` in your templates dir
 
 ### "I scaffolded into the wrong directory"
 
-Common when you set `templates_dir:` but forgot to pass the matching arg to `templates init`. Just rerun:
+Common when you set `templates_dir:` but forgot to pass the matching arg to `templates init`, so the scaffold landed in the default location instead. Rerun without the argument, then delete the ghost:
 
 ```bash
-srekit templates init   # respects templates_dir from yaml
-rm -rf ~/.srekit/templates   # old ghost
+srekit doctor           # config.templates-dir names the directory actually in effect
+srekit templates init   # respects templates_dir from the config file
+rm -rf ~/.config/srekit/templates   # the default dir, if that is where the stray copy went
 ```
 
 ### "I lost my .srekit-embedded sidecar"
