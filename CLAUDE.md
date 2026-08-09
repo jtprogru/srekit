@@ -9,15 +9,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-task ci              # lint + race tests — the one-shot pre-push check
-task test            # go test --short -coverprofile=cover.out -v ./...
-task test:race       # go test -race -v ./...  (what CI runs)
-task lint            # golangci-lint -v run
-task build           # CGO_ENABLED=0 go build -o ./dist/srekit .
-task run -- <args>   # go run . <args>
-task release:dry     # goreleaser snapshot build into ./dist, no publish
-task docs:serve      # MkDocs at http://127.0.0.1:8000
-task docs:build      # mkdocs build --strict
+make                 # list every target (help is the default goal)
+make ci              # lint + race tests — the one-shot pre-push check
+make test            # go test --short -coverprofile=cover.out -v ./...
+make test-race       # go test -race -coverprofile=cover.out -v ./...  (what CI runs)
+make lint            # golangci-lint run at the pinned version, from ./bin
+make govulncheck     # vulnerability scan (what CI runs)
+make build           # CGO_ENABLED=0 go build -o ./dist/srekit .
+make run ARGS="…"    # go run . <args>
+make release-dry     # goreleaser snapshot build into ./dist, no publish
+make docs-serve      # MkDocs at http://127.0.0.1:8000
+make docs-build      # mkdocs build --strict
 ```
 
 Single test / subset:
@@ -28,7 +30,9 @@ go test ./internal/sections/ -run TestRenderArtifact -v
 go test ./cmd/ -run TestTemplates -v      # run this whole suite when touching cmd/templates.go — the 3-way merge has subtle invariants
 ```
 
-Toolchain must match CI or gosec taint rules produce false positives: Go **1.26.4**, `golangci-lint` **v2.12** (~50 linters enabled, including `gochecknoglobals`).
+Toolchain must match CI or gosec taint rules produce false positives. Go **1.26.4** is on you; `golangci-lint` (**v2.12.2**, ~50 linters including `gochecknoglobals`) and `govulncheck` are pinned in the `Makefile` and installed into `./bin` by their targets, so `make lint` resolves to the same binary locally and on a runner — invoking a system-wide `golangci-lint` directly bypasses that pin.
+
+The `Makefile` must stay compatible with **GNU Make 3.81** — that is the system `make` on macOS and Apple will not ship newer (GPLv3). No `.ONESHELL` / `.SHELLFLAGS` (3.82+), no `!=` / `$(file ...)` (4.0+), no `$(intcmp)` / `$(let)` (4.4+); one command per recipe line. A 4.x runner swallows the incompatibility silently, so verify locally. Every CI workflow except `goreleaser.yaml` calls a Make target rather than a raw command — a target's behaviour is CI's behaviour.
 
 ## Architecture
 
