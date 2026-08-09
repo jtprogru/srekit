@@ -20,7 +20,7 @@ srekit postmortem --title "$TITLE" --severity "$SEV" \
 # Извлечь метаданные и запостить
 srekit postmortem --title "$TITLE" --severity "$SEV" \
   --start "$START" --end "$END" --json |
-  jq '{title, severity: .severity, started_at: .start, ended_at: .end}' |
+  jq '{title: .meta.title, severity: .meta.severity, started_at: .meta.start, ended_at: .meta.end}' |
   curl -X POST https://tracker.example.com/api/incidents \
     -H 'Content-Type: application/json' -d @-
 ```
@@ -159,7 +159,7 @@ srekit templates diff --name-only
 
 ## Разные identity под разные проекты
 
-`~/.srekit.yaml` содержит личную identity; в `.envrc` рабочего репо (через direnv):
+Конфиг-файл содержит личную identity; в `.envrc` рабочего репо (через direnv):
 
 ```bash
 export SREKIT_AUTHOR="Mikhail Savin"
@@ -178,7 +178,7 @@ export SREKIT_EMAIL="m.savin@work.example.com"
 #!/usr/bin/env bash
 # bin/srekit
 set -euo pipefail
-WANT=0.10.1
+WANT=0.32.1
 HAVE=$(srekit --version 2>&1 | awk '/srekit version:/ {print $3}')
 if [[ "$HAVE" != "$WANT" ]]; then
   echo "srekit $WANT required (have $HAVE)" >&2; exit 1
@@ -195,7 +195,7 @@ exec srekit "$@"
 ```bash
 # В setup'е каждого репо:
 git clone git@github.com:acme/sre-templates ~/.acme/templates
-echo "templates_dir: ~/.acme/templates" >> ~/.srekit.yaml
+echo "templates_dir: ~/.acme/templates" >> ~/.config/srekit/config.yaml
 
 # Подтянуть обновления:
 srekit templates pull

@@ -43,9 +43,11 @@ Round-trip: dump JSON, edit one section, re-render Markdown:
 
 ```bash
 srekit postmortem -T "API outage" --json > pm.json
-# edit pm.json — e.g. set sections.summary to a real summary
+# edit pm.json, then feed it back
 srekit postmortem -T "API outage" --from pm.json
 ```
+
+`--json` emits `sections` as an ordered **list**; `--from` reads a **map** keyed by section id. Reshape before editing — [JSON output](../guides/json-output.md#round-trip-a-postmortem) has the one-line `jq` for it. The minimal `--from` file is just the sections you changed; everything else falls back to the artifact defaults.
 
 Generate a JSON Schema for editor tooling / agent input validation:
 

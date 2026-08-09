@@ -43,9 +43,11 @@ Round-trip: выгрузить JSON, отредактировать одну с�
 
 ```bash
 srekit postmortem -T "API outage" --json > pm.json
-# отредактировать pm.json — например, заполнить sections.summary реальным текстом
+# отредактировать pm.json и скормить обратно
 srekit postmortem -T "API outage" --from pm.json
 ```
+
+`--json` отдаёт `sections` упорядоченным **списком**, а `--from` читает **map** по id секции. Перед правкой форму надо переложить — однострочник на `jq` есть в [JSON-выводе](../guides/json-output.md#round-trip). Минимальный файл для `--from` — только изменённые секции; всё остальное берётся из дефолтов артефакта.
 
 Сгенерировать JSON Schema для редактора / агентской валидации:
 
@@ -125,7 +127,7 @@ srekit postmortem --title "API outage" --severity SEV-1 --json \
 - Section ID, которых нет в манифесте, дают hard error со списком неизвестных ID и known-set (защита от опечаток).
 - Секции, которых нет в input, заполняются дефолтами из манифеста.
 
-## Кастомизация артефакта (v1 формат, v0.14.0+)
+## Кастомизация артефакта (v1 формат, v0.14.0+) { #customizing-the-artifact-v1-format-v0140 }
 
 `srekit templates init <dir>` кладёт один файл `postmortem.yaml` в твой templates dir. Это **v1 артефактный формат**, появившийся в v0.14.0: header (frontmatter / H1 / meta bullets / опц. `header_body`) и секции живут в одном файле. Старый v0.13.x layout (`postmortem.md.tmpl` + `postmortem.sections.yaml`) больше не скаффолдится; user-dir файлы в том формате игнорируются с stderr-предупреждением на каждом вызове.
 
