@@ -291,6 +291,26 @@ srekit --config ./my.yaml config init # альтернативный путь
 
 ## Development
 
+Локальная разработка живёт в `Makefile`. Из зависимостей нужны только Go 1.26.4 и GNU Make — системный `make` на macOS (3.81) и в любом Linux-дистрибутиве подходит. `golangci-lint`, `govulncheck` и MkDocs Makefile ставит сам при первом запуске, версии запинены в нём же.
+
+```bash
+make            # список целей
+make ci         # lint + race-тесты, one-shot pre-push check
+make build      # ./dist/srekit
+make run ARGS="postmortem --title 'API down' --stdout"
+```
+
+| Цель | Что делает |
+|---|---|
+| `make ci` | `golangci-lint run` + `go test -race` — то же, что гоняет CI |
+| `make test` / `make test-race` | быстрые тесты / с race-детектором, обе с покрытием |
+| `make lint` / `make lint-fix` | линт на запиненной версии `golangci-lint` |
+| `make govulncheck` | скан известных уязвимостей |
+| `make docs-serve` / `make docs-build` | MkDocs на `http://127.0.0.1:8000` / сборка в `./site` |
+| `make release-dry` | goreleaser-снапшот в `./dist` без публикации |
+
+GitHub Actions вызывают ровно эти цели, а не отдельные команды, поэтому зелёный `make ci` локально и зелёный пайплайн означают одно и то же. Полный список — `make help` и [contributing](https://jtprogru.github.io/srekit/contributing/).
+
 В репозитории лежит pre-commit hook (`.githooks/pre-commit`), который обновляет Go LoC бейдж в `README.md` через [`tokei`](https://github.com/XAMPPRocky/tokei). Хук не подключается автоматически — это делается явно:
 
 ```bash

@@ -22,10 +22,17 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+          cache: true
+      # govulncheck is pinned in the Makefile and installed into ./bin by the target.
+      - name: Cache govulncheck
+        uses: actions/cache@v4
+        with:
+          path: ./bin
+          key: govulncheck-${{ runner.os }}-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            govulncheck-${{ runner.os }}-
       - name: Run govulncheck
-        run: govulncheck ./...
+        run: make govulncheck
 
   bearer:
     name: bearer (informational)

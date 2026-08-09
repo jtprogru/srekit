@@ -7,34 +7,48 @@ Thanks for considering a contribution. srekit is small, opinionated, and aims to
 ```bash
 git clone git@github.com:jtprogru/srekit.git
 cd srekit
-go mod download
-task ci      # runs lint + race tests
+make ci      # runs lint + race tests
 ```
 
 Required:
 
-- Go **1.25+**
-- [Task](https://taskfile.dev/) (optional but recommended — see `Taskfile.yml` for the full list of targets)
-- `golangci-lint` **v2.12** (must match CI; see [the version-skew lesson](#version-skew) below)
-- For docs: Python 3 + `pip install -r docs/requirements.txt`
+- Go **1.26.4** (must match CI — see [the version-skew lesson](#version-skew) below)
+- GNU Make **3.81+** — the system `make` on macOS and every Linux distro qualifies, nothing to install
+- git, bash, and the usual POSIX utilities
 
-## Taskfile targets
+Everything else is installed by the Makefile on first use, at a version pinned in the Makefile itself:
 
-| Task | What it does |
+- `golangci-lint` and `govulncheck` → `./bin` (via `go install`, which does not touch `go.mod`)
+- MkDocs and its plugins → `./.venv` (needs Python 3 with `venv`)
+
+Optional: `goreleaser` for `make release-dry`, `tokei` for the LoC-badge pre-commit hook.
+
+## Make targets
+
+`make` on its own prints this list. CI calls these same targets, so a green `make ci` means the same thing locally and on a runner.
+
+| Target | What it does |
 |---|---|
-| `task run -- <args>` | `go run . <args>` |
-| `task build` | Builds `./dist/srekit` |
-| `task test` | `go test --short -coverprofile=cover.out -v ./...` |
-| `task test:race` | `go test -race -v ./...` (what CI runs) |
-| `task lint` | `golangci-lint -v run` |
-| `task ci` | `lint` + `test:race` — one-shot pre-push check |
-| `task release:dry` | `goreleaser release --clean --snapshot --skip=publish,sign` — builds into `./dist` without publishing |
-| `task docs:install` | `pip install -r docs/requirements.txt` |
-| `task docs:serve` | Serves the docs site at `http://127.0.0.1:8000` |
-| `task docs:build` | Builds the docs into `./site` (strict mode) |
-| `task fmt` | `gofmt -s -w .` |
-| `task vet` | `go vet ./...` |
-| `task tidy` | `go mod tidy` |
+| `make run ARGS="<args>"` | `go run . <args>` |
+| `make build` | Builds `./dist/srekit` |
+| `make test` | `go test --short -coverprofile=cover.out -v ./...` |
+| `make test-race` | `go test -race -coverprofile=cover.out -v ./...` (what CI runs) |
+| `make lint` | `golangci-lint run` at the pinned version |
+| `make lint-fix` | Same, with `--fix` |
+| `make govulncheck` | Vulnerability scan (what CI runs) |
+| `make ci` | `lint` + `test-race` — one-shot pre-push check |
+| `make ci-full` | `lint` + `test-race` + `govulncheck` + `docs-build` |
+| `make release-dry` | `goreleaser release --clean --snapshot --skip=publish,sign` — builds into `./dist` without publishing |
+| `make docs-install` | Creates `./.venv` and installs `docs/requirements.txt` |
+| `make docs-serve` | Serves the docs site at `http://127.0.0.1:8000` |
+| `make docs-build` | Builds the docs into `./site` (strict mode) |
+| `make tools` | Installs the pinned `golangci-lint` and `govulncheck` into `./bin` |
+| `make fmt` | `gofmt -s -w .` |
+| `make vet` | `go vet ./...` |
+| `make tidy` | `go mod tidy` |
+| `make clean` | Removes `dist/`, `site/`, `bin/`, `cover.out` |
+
+The Makefile is written for GNU Make **3.81** — that is the system `make` on macOS and Apple will not ship a newer one. When editing it, avoid `.ONESHELL` and `.SHELLFLAGS` (3.82+), `!=` and `$(file ...)` (4.0+), `$(intcmp)` and `$(let)` (4.4+), and verify on 3.81 before pushing: a 4.x runner will swallow the incompatibility silently.
 
 ## Code style
 
@@ -47,8 +61,8 @@ Required:
 ## Pre-push checklist
 
 ```bash
-task ci      # lint clean, race tests pass
-task build   # builds without errors
+make ci      # lint clean, race tests pass
+make build   # builds without errors
 ```
 
 If you're touching `cmd/templates.go`, run the full templates suite manually too — the 3-way merge has subtle invariants:
@@ -68,18 +82,15 @@ go test ./cmd/ -run TestTemplates -v
 5. Watch the `goreleaser` workflow — should take ~90 seconds.
 6. Verify the GitHub Release page and `jtprogru/homebrew-tap` cask are updated.
 
-`task release:dry` runs the build locally without publishing — useful for catching `.goreleaser.yaml` issues before tagging.
+`make release-dry` runs the build locally without publishing — useful for catching `.goreleaser.yaml` issues before tagging.
 
 ## Known caveats
 
 ### Version skew
 
-CI pins `golangci-lint v2.12`. If you run an older version locally, gosec rules `G703` (path traversal taint) and `G705` (XSS taint) may fire false positives on the config init code path. Match local to CI:
+`golangci-lint` is pinned in the Makefile (`GOLANGCI_LINT_VERSION`) and installed into `./bin`, so `make lint` resolves to the same binary locally and in CI. Running a system-wide `golangci-lint` directly bypasses that pin — on an older version, gosec rules `G703` (path traversal taint) and `G705` (XSS taint) fire false positives on the config init code path. Use `make lint`.
 
-```bash
-brew install golangci-lint
-golangci-lint version    # should be 2.12.x
-```
+The Go toolchain is not pinned by the Makefile — match `go.mod` and the `GO_VERSION` in the workflows.
 
 ### Global state in tests
 

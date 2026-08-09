@@ -16,6 +16,7 @@
 
 dist/
 site/
+bin/
 *.log
 .vscode/
 plans/
