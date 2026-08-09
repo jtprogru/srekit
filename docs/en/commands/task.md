@@ -39,12 +39,12 @@ srekit task --title "Tail latency on api-gw" --path ./tasks
 Pipe into `jq` to grab the generated UUID:
 
 ```bash
-srekit task --title "Tail latency on api-gw" --json | jq -r '.id'
+srekit task --title "Tail latency on api-gw" --json | jq -r '.meta.id'
 ```
 
 ## Template shape
 
-`task` ships as a v1 YAML artifact (`internal/tmpl/templates/task.yaml`) — frontmatter (`id`, `title`, `creation_date`, `tags`), H1, meta_bullets, and the section list (`Контекст / Context`, `Гипотеза / Hypothesis`, `Доказательства / Evidence`, `Выводы / Findings`, `Дальнейшие действия / Action items`, `Ссылки / References`). The data passed in is `{Meta: {ID, Title, Now string}}`; template expressions inside the YAML reference `.Meta.<Field>`.
+`task` ships as a v1 YAML artifact (`internal/tmpl/templates/task.yaml`) — frontmatter (`id`, `creation_date`, `modification_date`, `type: investigation`, `title`, `tags`), H1, meta_bullets, and six sections: `context` (Контекст / Context), `hypothesis` (Гипотезы / Hypothesis), `evidence` (Наблюдения / Evidence), `findings` (Выводы / Findings), `action_items` (Задачи / Action items), `references` (Ссылки / References). Template expressions inside the YAML reference `.Meta.<Field>`; the available fields are `ID`, `Title`, `CreationDate`, `ModificationDate`.
 
 ## See also
 

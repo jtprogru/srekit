@@ -1,6 +1,6 @@
 # srekit runbook
 
-Сгенерировать **runbook** — operational playbook, к которому дежурный обращается, когда сработал алерт. Секции: Symptoms, Diagnose, Mitigate, Verify, Escalate.
+Сгенерировать **runbook** — operational playbook, к которому дежурный обращается, когда сработал алерт. Секции: Symptoms, Severity & SLO impact, Diagnose, Mitigate, Verify, After the fact, References.
 
 ## Синопсис
 
@@ -33,12 +33,13 @@ srekit runbook --title "DB connection storm" --stdout
 
 ## Структура секций
 
-- Front matter: `title`, `service`, `alert`, `tags`, `id`
-- Симптомы (Symptoms)
+- Front matter: `id`, `creation_date`, `modification_date`, `type: runbook`, `title`, `service`, `alert`, `tags`
+- Симптомы (Symptoms) — как алерт выглядит на практике
+- Тяжесть и влияние на SLO (Severity & SLO impact) — насколько всё плохо и по какому бюджету бьёт
 - Диагностика (Diagnose) — что проверить, какие дашборды смотреть
-- Митигация (Mitigate) — ограниченные шаги для остановки user impact
+- Смягчение (Mitigate) — ограниченные шаги для остановки user impact: немедленное действие, откат, переключение
 - Проверка (Verify) — как убедиться что митигация сработала
-- Эскалация (Escalate) — кого звать, если runbook не помогает
+- Постфактум (After the fact) — завести постмортем выше заданного SEV, вернуть сюрпризы обратно в этот runbook
 - Ссылки (References)
 
 ## Структура данных для шаблона

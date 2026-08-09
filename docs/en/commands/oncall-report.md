@@ -44,13 +44,14 @@ If you ran the report on Sunday 2026-05-10, you'd get `2026-05-04 → 2026-05-10
 
 ## Section structure
 
-- Front matter: `title`, `team`, `start`, `end`, `id`
-- Сводка (Summary)
-- Дежурство (On-call shift) — who was on, hand-offs
-- Pages — table of incidents with severity/runbook columns
-- Тойл (Toil) — repetitive work that should be automated
+- Front matter: `id`, `creation_date`, `type: oncall-report`, `team`, `period_start`, `period_end`, `oncaller`, `tags`
+- TL;DR — two or three sentences: quiet shift, busy one, or on fire
+- Пейджеры (Pages) — table of pages with alert / service / action columns, plus the actionable-vs-false-positive tally
+- Инциденты (Incidents) — links out to incident docs and postmortems
+- Тоил (Toil) — repetitive manual work that should be automated
 - Гигиена алертов (Alert hygiene) — noisy / silent alerts that need tuning
-- Уроки (Lessons)
+- Передать следующему дежурному (Follow-ups for next on-caller)
+- Победы (Wins)
 - Ссылки (References)
 
 ## Template shape

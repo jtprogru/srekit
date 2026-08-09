@@ -40,11 +40,11 @@ srekit rfc --title "X" --status maybe --stdout
 
 ## Section structure
 
-- Front matter: `title`, `status`, `tags`, `id`
+- Front matter: `id`, `creation_date`, `decision_date`, `status`, `type: rfc`, `title`, `deciders`, `supersedes`, `superseded_by`, `tags`
 - Контекст (Context)
 - Решение (Decision)
-- Альтернативы (Alternatives)
-- Последствия (Consequences) — split into Positive / Negative / Neutral
+- Рассмотренные альтернативы (Alternatives considered)
+- Последствия (Consequences) — split into Плюсы / Минусы / Нейтральное
 - Ссылки (References)
 
 ## Template shape
