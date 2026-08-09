@@ -74,7 +74,7 @@ srekit postmortem --title "API outage" --severity SEV-1 \
   --out postmortem-2026-05-06.md
 ```
 
-Inspect it — every section is pre-filled with bilingual headings (`Постмортем (Postmortem)`) and SRE-canonical fields (severity, timeline, impact, root cause, action items).
+Inspect it — every section is pre-filled with bilingual headings (Russian, with the English term in parentheses) and SRE-canonical fields (severity, timeline, impact, root cause, action items).
 
 ## 4. The unified flag set
 

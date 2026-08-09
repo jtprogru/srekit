@@ -137,7 +137,7 @@ srekit templates migrate ./team-templates --apply   # write <name>.yaml files
 2. If a sibling `<name>.sections.yaml` exists, its section list takes precedence over the heuristic-parsed sections from the `.tmpl` (the v0.13.x → v1 case).
 3. Section type inference is minimal: GFM tables → `type: table`; everything else → `type: text` with `default_body` verbatim.
 4. Sections containing Go-template control flow (`{{ if }}` / `{{ range }}` / `{{ with }}`) are wrapped in `git merge`-style diff markers — the converter doesn't try to translate control flow into the typed-sections vocabulary. The output `OK (with diff markers — review needed)` flags these so you know which files need manual cleanup.
-5. Section IDs are derived from the English portion of bilingual headings (e.g. `Контекст (Context)` → `context`); otherwise from a slugified whole heading.
+5. Section IDs are derived from the English portion of a bilingual heading — the term in parentheses, so a heading whose parenthesised term is `Context` yields `context`. A heading with no parenthesised term is slugified whole.
 6. The new `<name>.yaml` is written next to the `.tmpl`. Original `.tmpl` and `.sections.yaml` files are **not deleted** — review the new YAML, then delete the legacy files manually when ready.
 
 **Defaults to `--dry-run`** (prints YAML preview); pass `--apply` to write files.

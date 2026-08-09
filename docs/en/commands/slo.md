@@ -36,14 +36,16 @@ srekit slo --service api-gw --target 99.95% --window 90d --latency 250ms \
 
 ## Section structure
 
+Section headings render bilingually — Russian, with the English term in parentheses. Below they are given by stable `id` and English term; `srekit slo --service X --json | jq -r '.sections[].title'` prints them as they appear in the document.
+
 - Front matter: `id`, `creation_date`, `modification_date`, `type: slo`, `service`, `tags`
-- Определение SLI (SLI definition) — success ratio and latency percentile, with the PromQL pre-rendered from the service / window / latency values
-- Цель SLO (SLO target)
-- Бюджет ошибок (Error budget)
-- Последствия истощения бюджета (Consequences of budget exhaustion) — the hand-off point to [`srekit ebp`](ebp.md)
-- Зависимости (Dependencies)
-- Регулярность пересмотра (Review cadence)
-- Ссылки (References)
+- `sli_definition` — SLI definition: success ratio and latency percentile, with the PromQL pre-rendered from the service / window / latency values
+- `slo_target` — SLO target
+- `error_budget` — Error budget
+- `consequences_of_budget_exhaustion` — Consequences of budget exhaustion: the hand-off point to [`srekit ebp`](ebp.md)
+- `dependencies` — Dependencies
+- `review_cadence` — Review cadence
+- `references` — References
 
 ## Template shape
 

@@ -154,7 +154,7 @@ Same dogfooded recipe as the prior releases. After v0.19.0 **only `changelog`** 
 
 **Hand-fixes applied at ship time** (the auto-converter is heuristic, not 100%):
 
-- `oncall.yaml` "Pages" section: in the legacy `.tmpl` the GFM table was followed by a prose line `Всего пейджеров: _N_ …`. The converter classified the section as `type: table` and dropped the trailing prose. The shipped version makes the section `type: text` with the table inlined as `default_body`, preserving the original layout 1:1.
+- `oncall.yaml` "Pages" section: in the legacy `.tmpl` the GFM table was followed by a prose line tallying the pages. The converter classified the section as `type: table` and dropped the trailing prose. The shipped version makes the section `type: text` with the table inlined as `default_body`, preserving the original layout 1:1.
 - `runbook.yaml` "Severity & SLO impact" section: the slugifier produced `slo_severity_slo_impact` (the bilingual heading double-counted "SLO"). Renamed to `severity_slo_impact`. Section IDs are part of the structured-JSON contract, so manual cleanup is worth the diff churn.
 
 **JSON shape migration** (same pattern):

@@ -44,7 +44,7 @@ srekit task --title "Tail latency on api-gw" --json | jq -r '.meta.id'
 
 ## Template shape
 
-`task` ships as a v1 YAML artifact (`internal/tmpl/templates/task.yaml`) — frontmatter (`id`, `creation_date`, `modification_date`, `type: investigation`, `title`, `tags`), H1, meta_bullets, and six sections: `context` (Контекст / Context), `hypothesis` (Гипотезы / Hypothesis), `evidence` (Наблюдения / Evidence), `findings` (Выводы / Findings), `action_items` (Задачи / Action items), `references` (Ссылки / References). Template expressions inside the YAML reference `.Meta.<Field>`; the available fields are `ID`, `Title`, `CreationDate`, `ModificationDate`.
+`task` ships as a v1 YAML artifact (`internal/tmpl/templates/task.yaml`) — frontmatter (`id`, `creation_date`, `modification_date`, `type: investigation`, `title`, `tags`), H1, meta_bullets, and six sections: `context`, `hypothesis`, `evidence`, `findings`, `action_items`, `references`. Their headings render bilingually — Russian, with the English term in parentheses; `srekit task -T X --json | jq -r '.sections[].title'` prints them as they appear in the document. Template expressions inside the YAML reference `.Meta.<Field>`; the available fields are `ID`, `Title`, `CreationDate`, `ModificationDate`.
 
 ## See also
 

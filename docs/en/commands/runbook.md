@@ -33,14 +33,16 @@ srekit runbook --title "DB connection storm" --stdout
 
 ## Section structure
 
+Section headings render bilingually — Russian, with the English term in parentheses. Below they are given by stable `id` and English term; `srekit runbook -T X --json | jq -r '.sections[].title'` prints them as they appear in the document.
+
 - Front matter: `id`, `creation_date`, `modification_date`, `type: runbook`, `title`, `service`, `alert`, `tags`
-- Симптомы (Symptoms) — what the alert actually looks like
-- Тяжесть и влияние на SLO (Severity & SLO impact) — how bad this is, and against which budget
-- Диагностика (Diagnose) — investigations to run, dashboards to check
-- Смягчение (Mitigate) — bounded steps that stop user impact: immediate action, rollback, failover
-- Проверка (Verify) — how to confirm the mitigation worked
-- Постфактум (After the fact) — open a postmortem above a given SEV, fold surprises back into this runbook
-- Ссылки (References)
+- `symptoms` — Symptoms: what the alert actually looks like
+- `severity_slo_impact` — Severity & SLO impact: how bad this is, and against which budget
+- `diagnose` — Diagnose: investigations to run, dashboards to check
+- `mitigate` — Mitigate: bounded steps that stop user impact — immediate action, rollback, failover
+- `verify` — Verify: how to confirm the mitigation worked
+- `after_the_fact` — After the fact: open a postmortem above a given SEV, fold surprises back into this runbook
+- `references` — References
 
 ## Template shape
 

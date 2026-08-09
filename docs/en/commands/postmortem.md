@@ -87,23 +87,29 @@ srekit postmortem --title "API outage" --severity SEV-1 --json \
     "now": "2026-06-04T12:34:30+03:00"
   },
   "sections": [
-    { "id": "summary",      "title": "Краткое описание (Summary)", "type": "text",  "required": true,  "body": "…" },
-    { "id": "impact",       "title": "Влияние (Impact)",            "type": "list",  "required": true,  "body": "- …" },
-    { "id": "timeline",     "title": "Хронология (Timeline)",       "type": "table", "required": true,  "body": "| Время | Событие |\n|---|---|\n…" },
-    { "id": "root_cause",   "title": "Корневая причина (Root Cause)","type": "text",  "required": true,  "body": "…" },
-    { "id": "detection",    "title": "Обнаружение (Detection)",      "type": "list",  "required": false, "body": "- …" },
-    { "id": "resolution",   "title": "Разрешение (Resolution)",      "type": "list",  "required": false, "body": "- …" },
-    { "id": "what_went_well",  "title": "Что сработало хорошо (What went well)",  "type": "list",  "required": false, "body": "- " },
-    { "id": "what_went_wrong", "title": "Что пошло не так (What went wrong)",     "type": "list",  "required": false, "body": "- " },
-    { "id": "where_got_lucky", "title": "Где нам повезло (Where we got lucky)",   "type": "list",  "required": false, "body": "- " },
-    { "id": "action_items", "title": "Задачи (Action items)",         "type": "table", "required": true,  "body": "| # | Действие | … |" },
-    { "id": "lessons_learned", "title": "Извлечённые уроки (Lessons learned)", "type": "list", "required": false, "body": "- " },
-    { "id": "references",   "title": "Ссылки (References)",           "type": "list",  "required": false, "body": "- " }
+    { "id": "summary",         "type": "text",  "required": true,  "title": "…", "body": "…" },
+    { "id": "impact",          "type": "list",  "required": true,  "title": "…", "body": "- …" },
+    { "id": "timeline",        "type": "table", "required": true,  "title": "…", "body": "| … |" },
+    { "id": "root_cause",      "type": "text",  "required": true,  "title": "…", "body": "…" },
+    { "id": "detection",       "type": "list",  "required": false, "title": "…", "body": "- …" },
+    { "id": "resolution",      "type": "list",  "required": false, "title": "…", "body": "- …" },
+    { "id": "what_went_well",  "type": "list",  "required": false, "title": "…", "body": "- " },
+    { "id": "what_went_wrong", "type": "list",  "required": false, "title": "…", "body": "- " },
+    { "id": "where_got_lucky", "type": "list",  "required": false, "title": "…", "body": "- " },
+    { "id": "action_items",    "type": "table", "required": true,  "title": "…", "body": "| … |" },
+    { "id": "lessons_learned", "type": "list",  "required": false, "title": "…", "body": "- " },
+    { "id": "references",      "type": "list",  "required": false, "title": "…", "body": "- " }
   ]
 }
 ```
 
 Sections appear in manifest order. `body` is always a string regardless of `type`; for `list` and `table` it's the rendered markdown fragment so consumers see the same value through Markdown and JSON paths.
+
+`title` is elided above because it renders bilingually — Russian, with the English term in parentheses — and the ids are what you address. To see the titles as they ship:
+
+```bash
+srekit postmortem -T X --json | jq -r '.sections[] | "\(.id)\t\(.title)"'
+```
 
 ## `--from` input format
 
@@ -145,7 +151,7 @@ frontmatter:                       # free-form map; values run through Go templa
   severity: "{{ .Meta.Severity }}"
   tags: [postmortem, incident]
 
-title: "Постмортем (Postmortem) — {{ .Meta.Title }}"   # H1 (Go template)
+title: "Postmortem — {{ .Meta.Title }}"                # H1 (Go template)
 
 meta_bullets:                      # bullet lines after the H1 (Go templates)
   - "**Severity:** {{ .Meta.Severity }}"

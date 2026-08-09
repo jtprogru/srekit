@@ -44,15 +44,17 @@ If you ran the report on Sunday 2026-05-10, you'd get `2026-05-04 → 2026-05-10
 
 ## Section structure
 
+Section headings render bilingually — Russian, with the English term in parentheses. Below they are given by stable `id` and English term; `srekit oncall-report --team X --json | jq -r '.sections[].title'` prints them as they appear in the document.
+
 - Front matter: `id`, `creation_date`, `type: oncall-report`, `team`, `period_start`, `period_end`, `oncaller`, `tags`
-- TL;DR — two or three sentences: quiet shift, busy one, or on fire
-- Пейджеры (Pages) — table of pages with alert / service / action columns, plus the actionable-vs-false-positive tally
-- Инциденты (Incidents) — links out to incident docs and postmortems
-- Тоил (Toil) — repetitive manual work that should be automated
-- Гигиена алертов (Alert hygiene) — noisy / silent alerts that need tuning
-- Передать следующему дежурному (Follow-ups for next on-caller)
-- Победы (Wins)
-- Ссылки (References)
+- `tl_dr` — TL;DR: two or three sentences — quiet shift, busy one, or on fire
+- `pages` — Pages: table of pages with alert / service / action columns, plus the actionable-vs-false-positive tally
+- `incidents` — Incidents: links out to incident docs and postmortems
+- `toil` — Toil: repetitive manual work that should be automated
+- `alert_hygiene` — Alert hygiene: noisy / silent alerts that need tuning
+- `follow_ups_for_next_on_caller` — Follow-ups for next on-caller
+- `wins` — Wins
+- `references` — References
 
 ## Template shape
 
