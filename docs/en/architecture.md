@@ -27,7 +27,7 @@ srekit/
 │   └── dependabot.yml
 ├── .goreleaser.yaml
 ├── .golangci.yaml
-└── Taskfile.yml
+└── Makefile
 ```
 
 ## Key abstractions
@@ -118,5 +118,5 @@ Render/tmpl unit tests build their loader via a `newFixtureLoader(t)` helper tha
 
 ## See also
 
-- [Contributing](contributing.md) — local dev setup, Taskfile, release process.
+- [Contributing](contributing.md) — local dev setup, Make targets, release process.
 - [GitHub source](https://github.com/jtprogru/srekit) — read the code directly; it's small.
