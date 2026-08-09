@@ -29,7 +29,7 @@ srekit rfc --title "Move to gRPC"
 
 ## Ключи
 
-### Identity автора
+### Личность автора { #identity }
 
 Используется: `rfc`, `oncall-report` (остальные фолбэчатся на "anonymous" где уместно).
 
@@ -38,7 +38,7 @@ srekit rfc --title "Move to gRPC"
 | name | `author:` (или `full_name:`) | `SREKIT_AUTHOR` | `user.name` |
 | email | `email:` | `SREKIT_EMAIL` | `user.email` |
 
-### Templates directory
+### Директория шаблонов { #templates-dir }
 
 Используется каждой `templates *` подкомандой и каждым генератором (через overlay-loader).
 

@@ -48,7 +48,7 @@ srekit changelog --repo owner/repo --json |
   jq -r '.sections[] | select(.id == "initial_release").body'
 ```
 
-### Round-trip постмортема { #round-trip }
+### Цикл JSON → правка → Markdown для постмортема { #round-trip }
 
 Вывод и ввод — разной формы, и это главное, что здесь надо не перепутать: `--json` отдаёт `sections` **упорядоченным списком** объектов, а `--from` читает **map** по ID секции. Список сохраняет порядок манифеста на выходе; на входе порядок неважен, поэтому честная форма — map. Попытка проиндексировать выданный список строкой (`jq '.sections.summary = …'`) падает с `Cannot index array with string`.
 
@@ -73,7 +73,7 @@ srekit postmortem -T "API outage" --from pm.edited.json
 { "sections": { "summary": "27-минутный 5xx на checkout, замитигировано failback-ом на cache." } }
 ```
 
-### Round-trip changelog'а
+### Тот же цикл для changelog'а
 
 `changelog` тоже принимает `--from`, с той же формой payload'а:
 
@@ -123,7 +123,7 @@ srekit oncall-report --team platform --json --out oncall.json
 
 `--dry-run` тоже работает — печатает "would write N bytes to oncall.json" плюс тело.
 
-## Per-command структура payload
+## Структура payload по командам
 
 Все генераторы на v1 artifact path: `meta` отражает per-command набор флагов, `sections` — список из YAML-артефакта. Авторы шаблонов обращаются к meta-полям как `.Meta.<Field>` внутри YAML; `--json` отдаёт camelCase под `meta`.
 

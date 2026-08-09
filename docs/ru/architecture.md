@@ -15,7 +15,7 @@ srekit/
 │   └── cmd_test.go       # smoke-тесты через cobra (SetArgs + capture stdout)
 ├── internal/
 │   ├── ids/              # UUID v4 + slug
-│   ├── clock/            # var Now = time.Now (overridable в тестах)
+│   ├── clock/            # var Now = time.Now (подменяемо в тестах)
 │   ├── meta/             # Author.Resolve + DetectRepo (парсинг git remote)
 │   ├── config/           # самописный YAML + SREKIT_* env конфиг (намеренно не viper)
 │   ├── cliflags/         # общий бандл --out / --stdout / --force / --dry-run / --json
@@ -122,7 +122,7 @@ GH_TOKEN=<tap-pat> gh api repos/jtprogru/homebrew-tap --jq .default_branch
 | Lint | `golangci-lint v2.12.2` с ~50 линтерами, через `make lint` | `.golangci.yaml`, `.github/workflows/lint.yaml` |
 | Уязвимости | `make govulncheck` | `.github/workflows/security.yaml` |
 
-Render/tmpl unit-тесты строят loader через `newFixtureLoader(t)` helper, который пишет per-test артефакт `fixture.yaml` во временную dir — они не зависят от того, что лежит в embed, что и удержало suite стабильным через v0.14–v0.20 миграционный churn.
+Render/tmpl unit-тесты строят loader через `newFixtureLoader(t)` helper, который пишет per-test артефакт `fixture.yaml` во временную dir — они не зависят от того, что лежит в embed, что и удержало набор тестов стабильным через v0.14–v0.20 миграционную перетряску.
 
 ## Что трогать по фиче
 

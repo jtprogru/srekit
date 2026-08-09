@@ -23,9 +23,9 @@ srekit --config ./my.yaml config init       # кастомный путь (че�
 | `--email EMAIL` | Переопределить резолв email |
 | `--templates-dir PATH` | Default templates directory, который запишется в конфиг |
 | `--force` | Перезаписать существующий конфиг |
-| `--yes` / `-y` | Non-interactive; принять defaults |
+| `--yes` / `-y` | Non-interactive; принять значения по умолчанию |
 
-### Defaults
+### Значения по умолчанию
 
 Если флаг опущен, srekit заполняет default из `git config user.name` / `git config user.email`. Если ни флага, ни git config, и команда non-interactive — падаем с ошибкой, не пишем невалидный файл.
 
@@ -40,7 +40,7 @@ email: jtprogru@gmail.com
 # templates_dir: ~/.config/srekit/templates  # optional; uncomment to override embedded templates
 ```
 
-Mode `0o600` (user-only). `templates_dir:` идёт как закомментированный hint когда не задан — раскомментируй чтобы включить, или передай `--templates-dir PATH` на init чтобы записать сразу.
+Режим файла `0o600` (только владелец). `templates_dir:` идёт закомментированной подсказкой, когда не задан — раскомментируй чтобы включить, или передай `--templates-dir PATH` на init чтобы записать сразу.
 
 ### Целевой путь
 

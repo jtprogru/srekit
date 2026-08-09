@@ -10,7 +10,7 @@
 | [`srekit postmortem`](postmortem.md) | Постмортем (Google SRE-style) | `--title` |
 | [`srekit rfc`](rfc.md) | RFC / ADR | `--title` |
 | [`srekit runbook`](runbook.md) | Operational runbook | `--title` |
-| [`srekit changelog`](changelog.md) | Keep a Changelog scaffold | — |
+| [`srekit changelog`](changelog.md) | Заготовка Keep a Changelog | — |
 | [`srekit oncall-report`](oncall-report.md) | Недельный отчёт дежурного | `--team` |
 | [`srekit slo`](slo.md) | SLO / SLI документ | `--service` |
 | [`srekit ebp`](ebp.md) | Error budget policy | `--service` |
@@ -38,7 +38,7 @@
 
 Команда, которая правит уже принадлежащий тебе документ, генератором не является и несёт более узкий набор: `--dry-run`, `--stdout` и `--json` в обычных значениях, но ни `--out`, ни `--force`. Её точка назначения — тот файл, на который её навели: вторая не имеет смысла, а guard от перезаписи защищал бы от собственной цели команды. Сегодня такая команда одна — [`srekit changelog release`](changelog.md#release).
 
-Флага `--template FILE` нет. Он удалён в v0.30.0 вместе с `srekit license`, единственной командой, чей render-путь его читал; кастомизация per-artifact — положить `<name>.yaml` в `templates_dir`, см. [Custom templates workflow](../guides/custom-templates.md).
+Флага `--template FILE` нет. Он удалён в v0.30.0 вместе с `srekit license`, единственной командой, чей render-путь его читал; кастомизация per-artifact — положить `<name>.yaml` в `templates_dir`, см. [Кастомные шаблоны](../guides/custom-templates.md).
 
 Команды `capacity`, `retro` и `license` удалены в v0.30.0 — см. [Удалённые команды](../migration/removed-commands.md).
 

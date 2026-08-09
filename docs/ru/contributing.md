@@ -1,8 +1,8 @@
 # Контрибьютинг
 
-Спасибо за интерес к contribution. srekit — маленький, opinionated и стремится таким и остаться — пожалуйста открой issue перед PR, который добавляет новую команду, новую third-party зависимость или меняет имя флага.
+Спасибо за интерес к contribution. srekit — маленький, со своей позицией, и стремится таким и остаться — пожалуйста открой issue перед PR, который добавляет новую команду, новую third-party зависимость или меняет имя флага.
 
-## Local setup
+## Локальная установка
 
 ```bash
 git clone git@github.com:jtprogru/srekit.git
@@ -12,7 +12,7 @@ make ci      # запускает lint + race tests
 
 Требуется:
 
-- Go **1.26.4** (должен совпадать с CI; см. [version-skew урок](#version-skew) ниже)
+- Go **1.26.4** (должен совпадать с CI; см. [урок про расхождение версий](#version-skew) ниже)
 - GNU Make **3.81+** — системный `make` на macOS и в любом Linux-дистрибутиве подходит, ставить нечего
 - git, bash и обычные POSIX-утилиты
 
@@ -23,7 +23,7 @@ make ci      # запускает lint + race tests
 
 Опционально: `goreleaser` для `make release-dry`, `tokei` для pre-commit хука с LoC-бейджем.
 
-## Make targets
+## Цели Make
 
 `make` без аргументов печатает этот список. CI зовёт ровно эти же цели, поэтому зелёный `make ci` локально и зелёный пайплайн означают одно и то же.
 
@@ -61,14 +61,14 @@ Makefile написан под GNU Make **3.81** — это системный `
 - Не глушить lint-находки без обоснования — используй формат `//nolint:<linter> // <code>: <reason>`, как мы делаем для `gosec` G306.
 - Держи публичные CLI-флаги минимальными. Новый флаг — PR-worthy change.
 
-## Pre-push чек-лист
+## Чек-лист перед пушем
 
 ```bash
 make ci      # lint clean, race tests pass
 make build   # сбилдилось
 ```
 
-Если трогаешь `cmd/templates.go`, прогони и полный templates suite руками — у 3-way merge тонкие инварианты:
+Если трогаешь `cmd/templates.go`, прогони и полный набор тестов templates руками — у 3-way merge тонкие инварианты:
 
 ```bash
 go test ./cmd/ -run TestTemplates -v
@@ -99,7 +99,7 @@ go test ./cmd/ -run TestTemplates -v
 
 ## Известные нюансы
 
-### Version skew
+### Расхождение версий { #version-skew }
 
 `golangci-lint` запинен в Makefile (`GOLANGCI_LINT_VERSION`) и ставится в `./bin`, поэтому `make lint` резолвится в один и тот же бинарь локально и в CI. Запуск системного `golangci-lint` напрямую обходит пин — на старой версии gosec правила `G703` (path traversal taint) и `G705` (XSS taint) дают false positive на коде config init. Используй `make lint`.
 

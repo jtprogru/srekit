@@ -17,7 +17,7 @@ srekit task --title TITLE [flags]
 
 Плюс [общие output-флаги](index.md#shared-output-flags): `--out`, `--stdout`, `--force`, `--dry-run`, `--json`.
 
-## Default имя файла
+## Имя файла по умолчанию
 
 Если ни `--out`, ни `--stdout` не передан — пишется в `<path>/investigation-<slug>.md` (lowercased, slug-нормализованное).
 
