@@ -374,6 +374,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [0.13.0] - 2026-06-04
 
+**Notes for v1.0 direction.** This release introduces the manifest format on a single command as a prototype. After 2-3 months of practice, the project will decide whether to migrate the remaining generators to YAML-first templates as part of v1.0 — see `plans/srekit-plan.md` for the roadmap. Until then, the bootstrap wrapper gives those commands a uniform JSON contract without forcing their migration.
+
 ### Added
 
 - **Structured `--json` via sidecar sections manifest.** `srekit postmortem` is the first generator backed by a `<template>.sections.yaml` file that declares typed slots (`text` / `list` / `table`), required-flags, and default content. `--json` exposes the document section-by-section in manifest order:
@@ -419,10 +421,6 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
   - Anything that depended on flat `{{ .Title }}` / `{{ .ID }}` / etc. in the template body becomes `{{ .Meta.Title }}` / `{{ .Meta.ID }}` / etc. — the data root is now `{Meta, Sections}`.
 
 - **`templates init/upgrade/diff/list/validate`** now treat `.sections.yaml` as a first-class artifact alongside `.tmpl`. Enumeration is centralized in `tmpl.EmbeddedNames()` / `tmpl.IsTemplateArtifact()` — adding a new artifact type in the future is one helper update, not five duplicated changes. `templates validate` parses `.sections.yaml` as a manifest and surfaces schema errors (unknown type, missing ID, etc.) on a `FAIL` line.
-
-### Notes for v1.0 direction
-
-This release introduces the manifest format on a single command as a prototype. After 2-3 months of practice, the project will decide whether to migrate the remaining generators to YAML-first templates as part of v1.0 — see `plans/srekit-plan.md` for the roadmap. Until then, the bootstrap wrapper gives those commands a uniform JSON contract without forcing their migration.
 
 ## [0.12.1] - 2026-06-04
 
@@ -587,6 +585,7 @@ This release introduces the manifest format on a single command as a prototype. 
 - `cmd/` rewritten to a constructor pattern with no package-level mutable flag state. Tests are parallel-safe and race-clean.
 - `meta.Resolve` no longer reads the global `viper` instance; it accepts a `Lookup` interface (`GetString(key) string`).
 - `Taskfile.yml` uses `go run .` / `go build .` instead of pinning to `main.go`.
+- Dependencies: `github.com/spf13/cobra` 1.6.1 → 1.10.2, `github.com/spf13/viper` 1.15.0 → 1.21.0.
 
 ### Added
 
@@ -598,11 +597,6 @@ This release introduces the manifest format on a single command as a prototype. 
 
 - Removed an unreachable `showVersion` check in `Execute()`. `--version`/`-V` now drives through cobra's `SetVersionTemplate`, printing the full commit/date/builder block as intended.
 - `licAlias`/`sretaskAlias` collapsed into `cobra.Command.Aliases`, eliminating a fragile double-`StringVar` binding to shared package-level vars.
-
-### Dependencies
-
-- `github.com/spf13/cobra` 1.6.1 → 1.10.2
-- `github.com/spf13/viper` 1.15.0 → 1.21.0
 
 ## [0.2.0] - 2026-05-06
 
