@@ -31,6 +31,7 @@ make ci      # запускает lint + race tests
 |---|---|
 | `make run ARGS="<args>"` | `go run . <args>` |
 | `make build` | Билдит `./dist/srekit` |
+| `make install` | `go install` |
 | `make test` | `go test --short -coverprofile=cover.out -v ./...` |
 | `make test-race` | `go test -race -coverprofile=cover.out -v ./...` (что запускает CI) |
 | `make lint` | `golangci-lint run` на запиненной версии |
@@ -38,10 +39,12 @@ make ci      # запускает lint + race tests
 | `make govulncheck` | Скан уязвимостей (что запускает CI) |
 | `make ci` | `lint` + `test-race` — one-shot pre-push check |
 | `make ci-full` | `lint` + `test-race` + `govulncheck` + `docs-build` |
+| `make release-check` | `goreleaser check` — валидирует `.goreleaser.yaml` |
 | `make release-dry` | `goreleaser release --clean --snapshot --skip=publish,sign` — билдит в `./dist` без публикации |
 | `make docs-install` | Создаёт `./.venv` и ставит `docs/requirements.txt` |
 | `make docs-serve` | Сервит docs-сайт на `http://127.0.0.1:8000` |
 | `make docs-build` | Билдит docs в `./site` (strict mode) |
+| `make docs-deploy` | `mkdocs gh-deploy` — зовётся из CI, не руками |
 | `make tools` | Ставит запиненные `golangci-lint` и `govulncheck` в `./bin` |
 | `make fmt` | `gofmt -s -w .` |
 | `make vet` | `go vet ./...` |
@@ -76,11 +79,21 @@ go test ./cmd/ -run TestTemplates -v
 (Для мейнтейнеров.)
 
 1. Убедиться что `main` чистый и CI зелёный.
-2. Переместить `[Unreleased]` контент в `CHANGELOG.md` в `[X.Y.Z] - YYYY-MM-DD`.
-3. `git commit -m "release: X.Y.Z"` + `git push`.
-4. `git tag -a vX.Y.Z -m vX.Y.Z` + `git push origin vX.Y.Z`.
-5. Подождать `goreleaser` workflow — ~90 секунд.
-6. Проверить GitHub Release страницу и `jtprogru/homebrew-tap` cask.
+2. Проверить токен от tap'а — это единственный credential в пайплайне, который не является встроенным в workflow `GITHUB_TOKEN`, и падает он *после* публикации релиза:
+
+    ```bash
+    GH_TOKEN=<tap-pat> gh api repos/jtprogru/homebrew-tap --jq .default_branch   # ожидается: main
+    ```
+
+    `401 Bad credentials` означает ротацию fine-grained PAT (`jtprogru/homebrew-tap`, `Contents: Read and write`) и `gh secret set HOMEBREW_TAP_GITHUB_TOKEN --repo jtprogru/srekit`.
+
+3. Отрезать changelog: `srekit changelog release --version X.Y.Z` либо руками переместить `[Unreleased]` в `[X.Y.Z] - YYYY-MM-DD`.
+4. `git commit -m "release: X.Y.Z"` + `git push`.
+5. `git tag -a vX.Y.Z -m vX.Y.Z` + `git push origin vX.Y.Z`.
+6. Подождать `goreleaser` workflow — ~90 секунд.
+7. Проверить GitHub Release страницу и `jtprogru/homebrew-tap` cask.
+
+Если пуш в cask всё же упал, перезапуск job'а не помогает: rerun проигрывает тот же ref, поэтому фикс, приехавший в `main`, не подхватится, а повторная заливка существующих артефактов падает с 422. Почини токен, потом удали релиз и тег и запушь тег заново на том же коммите (`gh release delete vX.Y.Z --yes`, `git push origin :refs/tags/vX.Y.Z`, `git push origin vX.Y.Z`). Пересборка не byte-identical — таймстемпы в архивах двигают checksums, — так что всё, что записало `sha256` первого прогона, протухает.
 
 `make release-dry` локально билдит без публикации — полезно отловить `.goreleaser.yaml`-баги до тегирования.
 
