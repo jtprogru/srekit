@@ -27,6 +27,64 @@ srekit postmortem --title "$TITLE" --severity "$SEV" \
 
 ---
 
+## Релизный день: отрезать changelog, потом затегать
+
+`srekit changelog release` правит текст и на этом останавливается. Он не коммитит, не тегает и не пушит, поэтому необратимые шаги остаются под твоей рукой:
+
+```bash
+VERSION=1.2.0
+
+# 1. Посмотреть до того, как это ляжет в файл
+srekit changelog release --version "$VERSION" --dry-run
+
+# 2. Отрезать: [Unreleased] уезжает под датированный заголовок, блок ссылок обновлён
+srekit changelog release --version "$VERSION"
+
+# 3. Отревьюить diff — изменились только [Unreleased], новая версия и блок ссылок
+git diff CHANGELOG.md
+
+# 4. Закоммитить и затегать
+git commit -am "release: $VERSION"
+git tag -a "v$VERSION" -m "$VERSION"
+git push origin main "v$VERSION"
+```
+
+Бэкфилл версии, вышедшей до перехода на srekit, или версии, которую отозвали:
+
+```bash
+srekit changelog release --version 0.0.5 --date 2014-12-13 --yanked
+```
+
+---
+
+## CI-гейт: упасть, если changelog разъехался
+
+Ловить региональную дату, выдуманный change type или пропущенное определение ссылки на pull request'е, а не после того, как на документе споткнётся downstream-тулинг:
+
+```yaml
+name: changelog
+on: [pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: |
+          curl -fsSL https://github.com/jtprogru/srekit/releases/latest/download/srekit_Linux_x86_64.tar.gz \
+            | tar xz srekit
+      - run: ./srekit changelog validate
+```
+
+Сообщается каждая проверка, job падает, если упала хотя бы одна. Локально — та же команда:
+
+```bash
+srekit changelog validate
+# OK    heading-shape
+# FAIL  change-types: unrecognized change type line 31: Improvements; allowed: Added, Changed, ...
+```
+
+---
+
 ## Массово отрендерить runbook'и для всех сервисов из списка
 
 ```bash

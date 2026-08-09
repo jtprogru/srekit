@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`srekit` is a single-binary Go CLI that generates SRE text artifacts (investigation log, postmortem, runbook, RFC/ADR, on-call report, SLO, error budget policy, changelog) from templates compiled into the binary via `//go:embed`. Extracted from the [gch](https://github.com/jtprogru/gch) monolith. Pre-1.0 (0.30.x line). `capacity`, `retro` and `license` were removed in 0.30.0; `cmd/retired.go` keeps hidden stubs that explain the removal until 1.0.
+`srekit` is a single-binary Go CLI that generates SRE text artifacts (investigation log, postmortem, runbook, RFC/ADR, on-call report, SLO, error budget policy, changelog) from templates compiled into the binary via `//go:embed`. It also *maintains* one artifact it did not necessarily generate: `changelog release` and `changelog validate` edit and lint an existing `CHANGELOG.md`. That is a genuine widening of what the tool is — every other write path renders a fresh document and either creates a file or refuses to — and the conservatism of `internal/changelog` follows from it. Extracted from the [gch](https://github.com/jtprogru/gch) monolith. Pre-1.0 (0.30.x line). `capacity`, `retro` and `license` were removed in 0.30.0; `cmd/retired.go` keeps hidden stubs that explain the removal until 1.0.
 
 ## Commands
 
@@ -54,6 +54,7 @@ Key pieces:
 - **`internal/config`** — hand-rolled YAML+env config (`SREKIT_*` prefix). Deliberately not viper.
 - **`internal/clock`** — `var Now = time.Now` indirection so tests can pin the wall clock (e.g. the Sunday on-call week-boundary test).
 - **`internal/migrate`** — heuristic `.tmpl` → `.yaml` converter behind `srekit templates migrate`.
+- **`internal/changelog`** — the only reader of a document the *user* wrote, behind `changelog release` / `changelog validate`. A line-oriented region scanner, deliberately not a Markdown parser and not a model-then-reserialize round trip: `Scan` records byte offsets (preamble, `[Unreleased]`, one region per version heading, the trailing link block) and `Release` splices at those offsets, copying everything else through untouched. Reserializing would normalize every blank line and bullet marker in a five-year-old changelog and make the release commit unreviewable, so byte-identical preservation outside the edited regions is a property of the design, not a test that happens to pass. Link conventions (host, path, URL shape, `v` prefix) are derived from the document's own `[Unreleased]` definition, never from git — git is consulted only when there is no block at all. The change-type vocabulary is a parameter (`Vocabulary`), which is what lets `changelog-ru-variant` add a second one without reworking the scanner.
 
 Generators identify an artifact by its **bare name** — `render.Render(..., "slo", ...)` and `loader.LoadArtifactBytes("slo")` resolve `internal/tmpl/templates/slo.yaml`. `tmpl.ArtifactNameFor` normalizes the name and is idempotent, and it still accepts the pre-v1.0 spellings (`slo.md.tmpl`, `slo.tmpl`, `slo.yaml`) so external tooling keeps working. The literal `.md.tmpl` / `.sections.yaml` strings that remain in `cmd/*.go` are arguments to `warnStaleLegacyFiles` — they name files on the *user's* disk to warn about, not templates to load. Don't collapse them.
 

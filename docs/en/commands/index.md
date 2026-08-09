@@ -36,6 +36,8 @@ Every generator command accepts:
 | `--dry-run` | show what would be written, do not write |
 | `--json` | emit the template data payload as JSON (default sink: stdout) |
 
+A command that edits a document you already own is not a generator and carries a narrower bundle: `--dry-run`, `--stdout` and `--json` with their usual meanings, but neither `--out` nor `--force`. Its destination is the file it was pointed at, so a second destination has no meaning, and an overwrite guard would guard against the command's own purpose. [`srekit changelog release`](changelog.md#cutting-a-release) is the one such command today.
+
 There is no `--template FILE` flag. It was removed in v0.30.0 with `srekit license`, the one command whose render path read it; per-artifact customization is via dropping a `<name>.yaml` into your `templates_dir` — see [Custom templates workflow](../guides/custom-templates.md).
 
 `capacity`, `retro` and `license` were removed in v0.30.0 — see [Removed commands](../migration/removed-commands.md).

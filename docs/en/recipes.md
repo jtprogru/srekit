@@ -27,6 +27,64 @@ srekit postmortem --title "$TITLE" --severity "$SEV" \
 
 ---
 
+## Release day: cut the changelog, then tag
+
+`srekit changelog release` edits text and stops there. It does not commit, tag or push, so the irreversible steps stay under your hand:
+
+```bash
+VERSION=1.2.0
+
+# 1. Look at it before it lands
+srekit changelog release --version "$VERSION" --dry-run
+
+# 2. Cut it: [Unreleased] moves under a dated heading, link block updated
+srekit changelog release --version "$VERSION"
+
+# 3. Review the diff — only [Unreleased], the new version and the link block changed
+git diff CHANGELOG.md
+
+# 4. Commit and tag
+git commit -am "release: $VERSION"
+git tag -a "v$VERSION" -m "$VERSION"
+git push origin main "v$VERSION"
+```
+
+Backfilling a version that shipped before you adopted srekit, or one that was withdrawn:
+
+```bash
+srekit changelog release --version 0.0.5 --date 2014-12-13 --yanked
+```
+
+---
+
+## CI gate: fail if the changelog has drifted
+
+Catch a regional date, an invented change type or a missing link definition on the pull request rather than after a downstream tool chokes on it:
+
+```yaml
+name: changelog
+on: [pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: |
+          curl -fsSL https://github.com/jtprogru/srekit/releases/latest/download/srekit_Linux_x86_64.tar.gz \
+            | tar xz srekit
+      - run: ./srekit changelog validate
+```
+
+Every check is reported and the job fails if any of them did. Locally, the same command:
+
+```bash
+srekit changelog validate
+# OK    heading-shape
+# FAIL  change-types: unrecognized change type line 31: Improvements; allowed: Added, Changed, ...
+```
+
+---
+
 ## Bulk-render runbooks for every service in a list
 
 ```bash
