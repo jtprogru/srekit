@@ -19,8 +19,8 @@
 
 | Команда | Назначение |
 |---|---|
-| [`srekit templates`](templates.md) | Управление кастомной директорией шаблонов: `init`, `pull`, `list`, `validate`, `diff`, `upgrade` |
-| [`srekit config`](config.md) | Скаффолд `~/.srekit.yaml`: `init` |
+| [`srekit templates`](templates.md) | Управление кастомной директорией шаблонов: `init`, `pull`, `list`, `validate`, `diff`, `upgrade`, `migrate` |
+| [`srekit config`](config.md) | Скаффолд конфиг-файла (`$XDG_CONFIG_HOME/srekit/config.yaml`): `init` |
 | [`srekit doctor`](doctor.md) | Диагностика окружения только на чтение: конфиг, шаблоны, identity, `git` |
 | [`srekit completion`](completion.md) | Shell автодополнение: `bash`, `zsh`, `fish`, `powershell` |
 
@@ -42,6 +42,8 @@
 
 Команды `capacity`, `retro` и `license` удалены в v0.30.0 — см. [Удалённые команды](../migration/removed-commands.md).
 
-Persistent-флаг `--templates-dir DIR` (или env `SREKIT_TEMPLATES_DIR`, или `templates_dir:` в `~/.srekit.yaml`) подключает кастомную директорию шаблонов, чьи файлы переопределяют embedded. Отсутствующие файлы прозрачно фолбэчатся.
+Persistent-флаг `--templates-dir DIR` (или env `SREKIT_TEMPLATES_DIR`, или `templates_dir:` в конфиг-файле) подключает кастомную директорию шаблонов, чьи файлы переопределяют встроенные. Отсутствующие файлы прозрачно фолбэчатся.
+
+У `srekit changelog` есть ещё один persistent-флаг — `--lang en|ru`, который наследуют подкоманды `release` и `validate`. Он выбирает словарь, который *генерируется*; язык существующего документа определяется по самому документу — см. [`srekit changelog`](changelog.md#ru-variant).
 
 Полный набор правил резолва — в [Конфигурация](../guides/configuration.md).

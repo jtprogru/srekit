@@ -1,12 +1,14 @@
 # srekit templates
 
-Управление кастомной директорией шаблонов, чьи файлы переопределяют embedded. Отсутствующие файлы прозрачно фолбэчатся на embedded — можно переопределить один шаблон или весь набор.
+Управление кастомной директорией шаблонов, чьи файлы переопределяют встроенные. Отсутствующие файлы прозрачно фолбэчатся на набор, вкомпилированный в бинарник, — можно переопределить один артефакт или весь набор.
 
-Группа из шести подкоманд, образующих жизненный цикл:
+В группе семь подкоманд. Шесть из них образуют рабочий цикл:
 
 ```
    init  →  pull  →  list  →  validate  →  diff  →  upgrade  →  ...
 ```
+
+Седьмая, [`migrate`](#templates-migrate), — однократный конвертер для директорий, созданных до v0.14.0; в цикл она не входит.
 
 Развёрнутый гайд — в **[Кастомные шаблоны](../guides/custom-templates.md)**.
 
@@ -20,13 +22,14 @@
 Скаффолд кастомной директории шаблонов из embedded-набора, опционально с `git init`. Дополнительно создаёт служебную директорию `.srekit-embedded/` со снапшотом embedded — её использует `templates upgrade` как merge-base — и дописывает её в `.gitignore`.
 
 ```bash
-srekit templates init                     # резолвит templates_dir из конфига; fallback на ~/.srekit/templates
+srekit templates init                     # резолвит templates_dir из конфига; fallback на $XDG_CONFIG_HOME/srekit/templates
 srekit templates init ./team-templates    # явная директория
 srekit templates init --no-git            # пропустить git init
 srekit templates init --force             # перезаписать существующие
+# Templates scaffolded in ./team-templates (9 files + TEMPLATES.md)
 ```
 
-**Флаги**: `--force`, `--no-git`. Аргумент `[dir]` выигрывает у конфига; без него — резолв через `--templates-dir` / `SREKIT_TEMPLATES_DIR` / yaml; fallback `~/.srekit/templates`.
+**Флаги**: `--force`, `--no-git`. Аргумент `[dir]` выигрывает у конфига; без него — резолв через `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` в конфиге. Fallback — `$XDG_CONFIG_HOME/srekit/templates` либо pre-XDG `~/.srekit/templates`, если такая директория уже существует.
 
 ---
 
@@ -143,7 +146,7 @@ srekit templates migrate ./team-templates --apply   # пишет файлы <nam
 
 - Template-выражения внутри секционных body передаются as-is. Если новый генератор использует другую data-форму (например `.Meta.Title` вместо `.Title`), ссылки придётся обновить руками.
 - Списки с intro-текстом (`_italic_` за которым `- items`) остаются `type: text`, а не `type: list` с `default_body`. Если хочешь typed-форму — рефакторь руками.
-- License-шаблоны (`license_*.tmpl`) пропускаются — они зашиты в бинарь с v0.14.0 и не мигрируют.
+- `.tmpl` для команды, которой больше нет (`capacity`, `retro`, `license` — все [удалены в v0.30.0](../migration/removed-commands.md)), сконвертируется, но рендерить полученный `.yaml` будет некому.
 
 **Флаги**: `--apply` (пишет файлы; default — dry-run).
 
@@ -153,4 +156,5 @@ srekit templates migrate ./team-templates --apply   # пишет файлы <nam
 
 - [Кастомные шаблоны](../guides/custom-templates.md) — развёрнутый гайд.
 - [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — готовый репозиторий шаблонов: склонировать или форкнуть.
-- [`srekit config`](config.md) — указать srekit на твою templates dir через `~/.srekit.yaml`.
+- [`srekit config`](config.md) — указать srekit на твою templates dir через конфиг-файл.
+- [`srekit doctor`](doctor.md) — показывает, какая templates dir реально в силе, парсятся ли её артефакты и насколько они разошлись с текущим бинарником.

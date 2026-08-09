@@ -1,12 +1,14 @@
 # srekit templates
 
-Manage a custom templates directory whose files override the embedded ones. Missing files transparently fall back to embedded, so you can override a single template or the whole set.
+Manage a custom templates directory whose files override the built-in ones. Missing files transparently fall back to the set compiled into the binary, so you can override a single artifact or the whole set.
 
-The group has six subcommands forming a lifecycle:
+The group has seven subcommands. Six of them form the steady-state lifecycle:
 
 ```
    init  →  pull  →  list  →  validate  →  diff  →  upgrade  →  ...
 ```
+
+The seventh, [`migrate`](#templates-migrate), is a one-time converter for directories scaffolded before v0.14.0 — it is not part of the loop.
 
 See **[Custom templates workflow](../guides/custom-templates.md)** for the narrative version.
 
@@ -20,13 +22,14 @@ See **[Custom templates workflow](../guides/custom-templates.md)** for the narra
 Scaffold a custom templates directory from the embedded set, optionally running `git init`. Seeds a `.srekit-embedded/` sidecar that `templates upgrade` uses as the merge base, and best-effort appends `.srekit-embedded/` to `.gitignore`.
 
 ```bash
-srekit templates init                     # resolves templates_dir from config; falls back to ~/.srekit/templates
+srekit templates init                     # resolves templates_dir from config; falls back to $XDG_CONFIG_HOME/srekit/templates
 srekit templates init ./team-templates    # explicit
 srekit templates init --no-git            # skip git init
 srekit templates init --force             # overwrite existing files
+# Templates scaffolded in ./team-templates (9 files + TEMPLATES.md)
 ```
 
-**Flags**: `--force`, `--no-git`. The `[dir]` argument wins over config; omit it to use `--templates-dir` / `SREKIT_TEMPLATES_DIR` / yaml; fallback is `~/.srekit/templates`.
+**Flags**: `--force`, `--no-git`. The `[dir]` argument wins over config; omit it to use `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` in the config file. The fallback is `$XDG_CONFIG_HOME/srekit/templates`, or the pre-XDG `~/.srekit/templates` when that directory already exists.
 
 ---
 
@@ -143,7 +146,7 @@ srekit templates migrate ./team-templates --apply   # write <name>.yaml files
 
 - Template expressions inside section bodies are passed through verbatim. If the new generator uses a different data shape (e.g. `.Meta.Title` instead of `.Title`), you'll need to update those references manually.
 - Lists with intro text (e.g. `_italic_` followed by `- items`) are kept as `type: text` rather than `type: list` with `default_body`. Refactor manually if you want the typed shape.
-- License templates (`license_*.tmpl`) are skipped — they're inlined in the binary since v0.14.0 and don't migrate.
+- A `.tmpl` for a command that no longer exists (`capacity`, `retro`, `license` — all [removed in v0.30.0](../migration/removed-commands.md)) still converts, but the resulting `.yaml` has no command to render it.
 
 **Flags**: `--apply` (write files; default is dry-run).
 
@@ -153,4 +156,5 @@ srekit templates migrate ./team-templates --apply   # write <name>.yaml files
 
 - [Custom templates workflow](../guides/custom-templates.md) — the full walkthrough.
 - [`jtprogru/sre-templates`](https://github.com/jtprogru/sre-templates) — a ready-to-use templates repo to clone or fork.
-- [`srekit config`](config.md) — point srekit at your templates dir via `~/.srekit.yaml`.
+- [`srekit config`](config.md) — point srekit at your templates dir via the config file.
+- [`srekit doctor`](doctor.md) — reports which templates directory is actually in effect, whether its artifacts parse, and how far they have drifted from this binary.
