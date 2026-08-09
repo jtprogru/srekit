@@ -9,6 +9,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-08-09
+
 ### Added
 
 - **`srekit changelog release --version X.Y.Z`** — cutting a release stops being four manual edits. Everything under `## [Unreleased]` moves into a new `## [X.Y.Z] - YYYY-MM-DD` heading placed directly beneath it, `[Unreleased]` is left present and empty, and the link reference block is rewritten so `[Unreleased]` compares the new tag against `HEAD` with the new version's definition inserted above the previously newest one. Change-type subsections holding nothing but the scaffold's bare `-` are dropped, so a released version never ships an empty `### Deprecated`. `--date` dates a release other than today (backfilling history, releasing across a timezone boundary) and is rejected unless it is `YYYY-MM-DD`, checked before the file is read. The target is `CHANGELOG.md` in the working directory, or a path given as the single positional argument. This is the first `srekit` command that edits a document the user already owns, so the rewrite is conservative by construction: it splices at byte offsets rather than reserializing a parsed model, and hand-written preamble, blank-line style, previously released versions and trailing content come out byte-identical. Link conventions — host, repository path, URL shape, whether tags carry a `v` prefix — are read back out of the document's own `[Unreleased]` definition rather than re-derived from the git remote, so a self-hosted GitLab or a project with bare `1.2.0` tags keeps its convention; the slug is resolved from git only when the document has no link block at all. It refuses, non-zero and without touching the file, when the target does not exist, when there is no `## [Unreleased]` heading, when `[Unreleased]` has no entries, and when the requested version already has a heading — re-running a release is a mistake, not an idempotent no-op, since the entries it would move are no longer the ones that shipped. It does not commit, tag or push. No new dependency.
@@ -21,6 +23,7 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 - **The generated changelog's link reference block is now a document footer.** `[Unreleased]: …` and `[<version>]: …` used to live at the tail of the `initial_release` section's body, because the artifact format had nowhere else to put them. They now render from `footer_body`, which means they survive a `--from` payload that replaces that section and are addressable as a block in their own right. The rendered document is unchanged apart from the block's position relative to the section body.
 - **Exactly one blank line between document blocks.** Every artifact declaring a `header_body` rendered a stray extra blank line between the H1 and that body, because the title block ended a paragraph and the header body opened another separator. Block separation is now owned by a single composer helper rather than re-derived at each write site, so no combination of present and absent elements can produce two consecutive blank lines. Regenerating an existing document will therefore show a one-line whitespace diff.
+- **CI: pinned `github/codeql-action/upload-sarif` to v4.37.4 in `.github/workflows/security.yaml` (#17).** Dependabot `actions` group; the floating `v4` major tag is now a concrete minor. No source changes.
 
 ## [0.30.0] - 2026-07-31
 
@@ -607,7 +610,8 @@ This release introduces the manifest format on a single command as a prototype. 
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.31.0...HEAD
+[0.31.0]: https://github.com/jtprogru/srekit/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/jtprogru/srekit/compare/v0.29.3...v0.30.0
 [0.29.3]: https://github.com/jtprogru/srekit/compare/v0.29.2...v0.29.3
 [0.29.2]: https://github.com/jtprogru/srekit/compare/v0.29.1...v0.29.2
