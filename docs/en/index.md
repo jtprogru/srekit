@@ -1,5 +1,7 @@
 # srekit
 
+![srekit — generates SRE text artifacts: postmortems, runbooks, SLOs, RFCs, changelogs](../assets/cover.svg){ width="100%" }
+
 **srekit** is a CLI that generates the text artifacts SREs deal with every day — investigation logs, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, and changelogs.
 
 A template is not a Markdown file. It is a **v1 YAML artifact** (`postmortem.yaml`, `slo.yaml`, …) that declares frontmatter, an H1, meta bullets and a list of typed sections; srekit composes the Markdown from that declaration. The shipped set is compiled into the binary, so a fresh install renders everything with no files on disk and no network — and a directory of your own artifacts, kept under your own git remote, overrides it file by file, with anything you have not overridden falling back transparently.
