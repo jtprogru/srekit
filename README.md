@@ -11,6 +11,12 @@
 [![Homebrew](https://img.shields.io/badge/Homebrew-jtprogru%2Ftap-FBB040?logo=homebrew&logoColor=white)](https://github.com/jtprogru/homebrew-tap)
 ![Go LoC](https://img.shields.io/badge/go-11088%20LoC-blueviolet?logo=go)
 
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <img src="assets/cover.svg" alt="srekit — generates SRE text artifacts: postmortems, runbooks, SLOs, RFCs, changelogs" width="900">
+</p>
+<!-- markdownlint-enable MD033 -->
+
 📚 **Documentation:** [jtprogru.github.io/srekit](https://jtprogru.github.io/srekit/) (EN + RU, full command reference, guides, recipes, architecture).
 
 Генератор текстовых артефактов SRE: investigation log'и, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, changelog'и.
