@@ -24,7 +24,7 @@ jobs:
       # The golangci-lint version is pinned in the Makefile, not here, so that
       # `make lint` locally and in CI resolve to the same binary.
       - name: Cache golangci-lint
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ./bin

@@ -25,7 +25,7 @@ jobs:
           cache: true
       # govulncheck is pinned in the Makefile and installed into ./bin by the target.
       - name: Cache govulncheck
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ./bin
           key: govulncheck-${{ runner.os }}-${{ hashFiles('Makefile') }}
@@ -49,7 +49,7 @@ jobs:
           exit-code: "0"
       - name: Upload SARIF to GitHub code scanning
         if: always() && hashFiles('bearer.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4.37.4
+        uses: github/codeql-action/upload-sarif@v4.37.7
         with:
           sarif_file: bearer.sarif
           category: bearer
