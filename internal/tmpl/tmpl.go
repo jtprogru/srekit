@@ -49,6 +49,12 @@ var Funcs = template.FuncMap{
 	"upper":   strings.ToUpper,
 	"lower":   strings.ToLower,
 	"trim":    strings.TrimSpace,
+	// join takes the separator first so it reads naturally in a pipe:
+	// {{ .Meta.Level | join ", " }}. Same argument order as Sprig's, so
+	// muscle memory from other Go template dialects carries over.
+	"join": func(sep string, items []string) string {
+		return strings.Join(items, sep)
+	},
 	"now": func(format ...string) string {
 		f := time.RFC3339
 		if len(format) > 0 && format[0] != "" {

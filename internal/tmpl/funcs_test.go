@@ -98,3 +98,22 @@ func TestValidateAppliesFuncMap(t *testing.T) {
 		t.Fatalf("an unknown helper must fail to parse, got: %v", err)
 	}
 }
+
+// TestJoinFunc covers the helper that lets a template turn a []string
+// meta field into a YAML flow sequence — the tasker artifact's `level`.
+// Separator first, so the pipe form reads naturally.
+func TestJoinFunc(t *testing.T) {
+	fn, ok := Funcs["join"].(func(string, []string) string)
+	if !ok {
+		t.Fatalf("join has an unexpected signature: %T", Funcs["join"])
+	}
+	if got := fn(", ", []string{"middle", "senior"}); got != "middle, senior" {
+		t.Fatalf("join = %q", got)
+	}
+	if got := fn(", ", nil); got != "" {
+		t.Fatalf("join of nothing = %q, want empty", got)
+	}
+	if got := fn(", ", []string{"junior"}); got != "junior" {
+		t.Fatalf("single-item join = %q", got)
+	}
+}
