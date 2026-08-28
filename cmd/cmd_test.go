@@ -1888,3 +1888,126 @@ func TestSretaskAlias(t *testing.T) {
 		t.Fatalf("alias not working")
 	}
 }
+
+// TestTasker renders a card with the shipped defaults and pins the parts
+// of the document the collection it lands in actually reads: a list-typed
+// `level`, a numeric `duration`, the `Tasker - <name>` H1, and the two
+// bilingual headings.
+func TestTasker(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "tasker", "--title", "Каналы и select", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"type: simple_note",
+		"- tasker",
+		`topic: "go"`,
+		"level: [middle, senior]",
+		`format: "code"`,
+		"duration: 30",
+		"# Tasker - Каналы и select",
+		"## Описание (Description)",
+		"## Что хотим услышать (What we want to hear)",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("card is missing %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, `duration: "30"`) {
+		t.Errorf("duration must be a number, not a string:\n%s", out)
+	}
+}
+
+// TestTaskerFlagsReachFrontmatter covers the non-default path, including
+// --level given as a comma-separated value.
+func TestTaskerFlagsReachFrontmatter(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "tasker",
+		"--title", "GOMAXPROCS",
+		"--topic", "runtime",
+		"--level", "junior,middle",
+		"--format", "theory",
+		"--duration", "10",
+		"--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		`topic: "runtime"`,
+		"level: [junior, middle]",
+		`format: "theory"`,
+		"duration: 10",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("card is missing %q:\n%s", want, out)
+		}
+	}
+}
+
+// TestTaskerEmptySections locks in that the two sections ship empty. The
+// card is a slot for a task somebody is about to write; a placeholder
+// here is text they would delete on every single card.
+func TestTaskerEmptySections(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "tasker", "--title", "Worker pool", "--stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "## Описание (Description)\n\n## Что хотим услышать (What we want to hear)\n"
+	if !strings.HasSuffix(out, want) {
+		t.Fatalf("expected two empty sections at the end of the document:\n%s", out)
+	}
+}
+
+// TestTaskerJSON pins the typed halves of the payload: `level` is a JSON
+// array and `duration` a JSON number, matching the frontmatter.
+func TestTaskerJSON(t *testing.T) {
+	t.Parallel()
+	out, err := runCLI(t, "tasker", "--title", "Buffered channel", "--json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload struct {
+		Meta struct {
+			Title    string   `json:"title"`
+			Topic    string   `json:"topic"`
+			Level    []string `json:"level"`
+			Format   string   `json:"format"`
+			Duration int      `json:"duration"`
+		} `json:"meta"`
+		Sections []struct {
+			ID string `json:"id"`
+		} `json:"sections"`
+	}
+	if err := json.Unmarshal([]byte(out), &payload); err != nil {
+		t.Fatalf("payload is not JSON: %v\n%s", err, out)
+	}
+	if payload.Meta.Title != "Buffered channel" || payload.Meta.Duration != 30 {
+		t.Errorf("meta wrong: %+v", payload.Meta)
+	}
+	if len(payload.Meta.Level) != 2 || payload.Meta.Level[0] != "middle" {
+		t.Errorf("level must be a list: %+v", payload.Meta.Level)
+	}
+	if len(payload.Sections) != 2 || payload.Sections[0].ID != "description" || payload.Sections[1].ID != "expectations" {
+		t.Errorf("section ids wrong: %+v", payload.Sections)
+	}
+}
+
+func TestTaskerRejectsBadInput(t *testing.T) {
+	t.Parallel()
+	cases := map[string][]string{
+		"missing title":    {"tasker", "--stdout"},
+		"blank levels":     {"tasker", "--title", "x", "--level", " , ", "--stdout"},
+		"zero duration":    {"tasker", "--title", "x", "--duration", "0", "--stdout"},
+		"negative minutes": {"tasker", "--title", "x", "--duration", "-5", "--stdout"},
+	}
+	for name, args := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			if _, err := runCLI(t, args...); err == nil {
+				t.Fatalf("expected an error for %s", name)
+			}
+		})
+	}
+}
