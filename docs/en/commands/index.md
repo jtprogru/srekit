@@ -7,6 +7,7 @@ srekit's surface is a flat tree of cobra subcommands. Every generator command pr
 | Command | Produces | Required flags |
 |---|---|---|
 | [`srekit task`](task.md) | Investigation log (alias: `sretask`) | `--title` |
+| [`srekit tasker`](tasker.md) | Task card for a collection of engineering tasks | `--title` |
 | [`srekit postmortem`](postmortem.md) | Postmortem (Google SRE-style) | `--title` |
 | [`srekit rfc`](rfc.md) | RFC / ADR | `--title` |
 | [`srekit runbook`](runbook.md) | Operational runbook | `--title` |

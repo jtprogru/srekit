@@ -14,7 +14,7 @@ SRE work produces a lot of structured documents that read 80 % the same and diff
 
 ## What you get
 
-- **8 generator commands** — `task`, `postmortem`, `rfc`, `runbook`, `changelog`, `oncall-report`, `slo`, `ebp`.
+- **9 generator commands** — `task`, `tasker`, `postmortem`, `rfc`, `runbook`, `changelog`, `oncall-report`, `slo`, `ebp`.
 - **Templates as your contract** — every artifact is bilingual (Russian headings + English technical terms), ships compiled into the binary, and is overridable via a custom directory under your own git remote.
 - **Changelog maintenance, not just scaffolding** — `changelog release` cuts a version out of `[Unreleased]` and `changelog validate` lints an existing `CHANGELOG.md` against Keep a Changelog.
 - **Full template lifecycle** — `templates init / pull / list / validate / diff / upgrade / migrate`, with a true 3-way merge on upgrade.

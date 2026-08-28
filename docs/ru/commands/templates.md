@@ -26,7 +26,7 @@ srekit templates init                     # резолвит templates_dir из 
 srekit templates init ./team-templates    # явная директория
 srekit templates init --no-git            # пропустить git init
 srekit templates init --force             # перезаписать существующие
-# Templates scaffolded in ./team-templates (9 files + TEMPLATES.md)
+# Templates scaffolded in ./team-templates (10 files + TEMPLATES.md)
 ```
 
 **Флаги**: `--force`, `--no-git`. Аргумент `[dir]` выигрывает у конфига; без него — резолв через `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` в конфиге. Fallback — `$XDG_CONFIG_HOME/srekit/templates` либо pre-XDG `~/.srekit/templates`, если такая директория уже существует.
