@@ -314,3 +314,99 @@ func TestRenderArtifact_HeaderBodyEvaluated(t *testing.T) {
 		t.Errorf("header_body not expanded:\n%s", body)
 	}
 }
+
+// TestRenderArtifact_TypedFrontmatterValues covers the explicitly tagged
+// frontmatter scalar: a templated value is a Go string, so without a tag
+// it can only come out quoted. `!!int` and `!!seq` say "read what this
+// rendered into", which is what the tools that parse frontmatter care
+// about — `duration: 30` is a number, `duration: "30"` is not.
+func TestRenderArtifact_TypedFrontmatterValues(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version: 1,
+		Frontmatter: mappingNode(t, `
+topic: "{{ .Meta.Topic }}"
+level: !!seq '[{{ .Meta.Level | join ", " }}]'
+duration: !!int "{{ .Meta.Duration }}"
+`),
+		Sections: []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+	}
+	rendered, err := Merge(&Manifest{Version: 1, Sections: a.Sections}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type meta struct {
+		Topic    string
+		Level    []string
+		Duration int
+	}
+	body, err := RenderArtifact(a, rendered, struct{ Meta meta }{
+		Meta: meta{Topic: "go", Level: []string{"middle", "senior"}, Duration: 30},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(body)
+	for _, want := range []string{
+		"level: [middle, senior]",
+		"duration: 30",
+		`topic: "go"`, // untagged: still a quoted string, as before
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("frontmatter missing %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "!!") {
+		t.Errorf("the tag is an authoring instruction, it must not reach the document:\n%s", got)
+	}
+}
+
+// TestRenderArtifact_TypedFrontmatterMismatch pins the diagnostic: a
+// declared type the rendered text does not have fails at render time,
+// with the frontmatter key named — not silently emitted as a string.
+func TestRenderArtifact_TypedFrontmatterMismatch(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:     1,
+		Frontmatter: mappingNode(t, `duration: !!int "{{ .Meta.Duration }}"`),
+		Sections:    []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+	}
+	rendered, err := Merge(&Manifest{Version: 1, Sections: a.Sections}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type meta struct{ Duration string }
+	_, err = RenderArtifact(a, rendered, struct{ Meta meta }{Meta: meta{Duration: "half an hour"}})
+	if err == nil {
+		t.Fatal("expected a type error for a non-numeric !!int value")
+	}
+	for _, want := range []string{"duration", "!!int"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q does not name %q", err, want)
+		}
+	}
+}
+
+// TestRenderArtifact_UnknownTagIsLeftAlone guards the conservative half
+// of the rule: srekit retypes the tags YAML itself defines, and leaves an
+// application tag's payload to the application that put it there.
+func TestRenderArtifact_UnknownTagIsLeftAlone(t *testing.T) {
+	t.Parallel()
+	a := &Artifact{
+		Version:     1,
+		Frontmatter: mappingNode(t, `ref: !Ref "{{ .Meta.Name }}"`),
+		Sections:    []Section{{ID: "x", Title: "X", Type: TypeText, DefaultBody: "b"}},
+	}
+	rendered, err := Merge(&Manifest{Version: 1, Sections: a.Sections}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type meta struct{ Name string }
+	body, err := RenderArtifact(a, rendered, struct{ Meta meta }{Meta: meta{Name: "bucket"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(body), `!Ref "bucket"`) {
+		t.Errorf("custom tag and its rendered payload should survive:\n%s", body)
+	}
+}
