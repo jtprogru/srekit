@@ -31,5 +31,5 @@
 ## 5. Verification
 
 - [x] 5.1 `go build ./... && go test ./...`
-- [ ] 5.2 `golangci-lint run` — blocked locally: the pinned v2.12.2 is built with go1.26.5 and cannot typecheck the go1.27.0 stdlib on this machine, failing on files this change does not touch. `go vet ./...` and `gofmt -l` are clean; CI runs the pinned toolchain
+- [x] 5.2 `make lint` — 0 issues. The pinned v2.12.2 had to be rebuilt with the current toolchain first: the binary cached in `./bin` was built with go1.26.5 and its typechecker could not read the go1.27.0 stdlib. The pin did not move
 - [x] 5.3 `mkdocs build --strict`
