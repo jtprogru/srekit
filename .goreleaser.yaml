@@ -92,9 +92,7 @@ homebrew_casks:
     directory: Casks
     homepage: "https://github.com/jtprogru/srekit"
     description: "Generator of SRE text artifacts: tasks, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, changelogs"
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/srekit"]
-          end
+    custom_block: |
+      postflight_steps do
+        run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{staged_path}}" }}/srekit"]
+      end
