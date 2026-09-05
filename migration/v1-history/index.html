@@ -1,0 +1,2457 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="SRE text artifact generator — investigations, postmortems, RFCs, runbooks, SLOs, error budget policies, on-call reports, changelogs, task cards.">
+      
+      
+      
+        <link rel="canonical" href="https://jtprogru.github.io/srekit/migration/v1-history/">
+      
+      
+        <link rel="prev" href="../removed-commands/">
+      
+      
+        <link rel="next" href="../../recipes/">
+      
+      
+        
+          <link rel="alternate" href="./" hreflang="en">
+        
+          <link rel="alternate" href="../../ru/migration/v1-history/" hreflang="ru">
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>History - srekit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#migration-history-per-release-journal" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="srekit" class="md-header__button md-logo" aria-label="srekit" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            srekit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              History
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="../../ru/migration/v1-history/" hreflang="ru" class="md-select__link">
+              Русский
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jtprogru/srekit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jtprogru/srekit
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../commands/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Commands
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/custom-templates/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../v1/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Migration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../recipes/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Recipes
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="srekit" class="md-nav__button md-logo" aria-label="srekit" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    srekit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jtprogru/srekit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jtprogru/srekit
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../commands/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Commands
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Generators
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Generators
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/task/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/tasker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit tasker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/postmortem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit postmortem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/rfc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit rfc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/runbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/oncall-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit oncall-report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/slo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit slo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/ebp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    srekit ebp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/templates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/doctor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Doctor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commands/completion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Completion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/custom-templates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom templates workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output for pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration & precedence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Migration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../v1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../removed-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Removed commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    History
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#release-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0140" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.14.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.14.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#postmortem-unified-into-a-single-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postmortem unified into a single file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#license-moved-into-the-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License moved into the binary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cosmetic-delta-in-rendered-postmortem-markdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cosmetic delta in rendered postmortem markdown
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0150" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.15.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.15.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        task migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#srekit-templates-migrate-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        srekit templates migrate command
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0160" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.16.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.16.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#retro-and-slo-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        retro and slo migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0170" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.17.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.17.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ebp-and-capacity-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ebp and capacity migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.18.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.18.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#incident-and-rfc-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        incident and rfc migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0190" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.19.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.19.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#runbook-and-oncall-report-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        runbook and oncall-report migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-template-file-is-now-a-no-op-for-every-migrated-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --template FILE is now a no-op for every migrated command
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0200" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.20.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.20.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changelog-migrated-migration-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        changelog migrated — migration complete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-titles-are-now-template-evaluated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section titles are now template-evaluated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-infra-decoupled-from-embedded-tmpl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test infra decoupled from embedded .tmpl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-shape-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON shape migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-template-file-is-now-a-no-op-everywhere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --template FILE is now a no-op everywhere
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0210" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.21.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0220" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.22.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0230" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.23.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recipes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#release-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0140" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.14.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.14.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#postmortem-unified-into-a-single-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postmortem unified into a single file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#license-moved-into-the-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License moved into the binary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cosmetic-delta-in-rendered-postmortem-markdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cosmetic delta in rendered postmortem markdown
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0150" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.15.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.15.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        task migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#srekit-templates-migrate-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        srekit templates migrate command
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0160" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.16.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.16.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#retro-and-slo-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        retro and slo migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0170" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.17.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.17.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ebp-and-capacity-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ebp and capacity migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.18.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.18.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#incident-and-rfc-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        incident and rfc migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0190" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.19.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.19.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#runbook-and-oncall-report-migrated-to-the-v1-artifact-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        runbook and oncall-report migrated to the v1 artifact format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-template-file-is-now-a-no-op-for-every-migrated-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --template FILE is now a no-op for every migrated command
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0200" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.20.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What changed in v0.20.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changelog-migrated-migration-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        changelog migrated — migration complete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-titles-are-now-template-evaluated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section titles are now template-evaluated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-infra-decoupled-from-embedded-tmpl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test infra decoupled from embedded .tmpl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-shape-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON shape migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-template-file-is-now-a-no-op-everywhere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --template FILE is now a no-op everywhere
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0210" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.21.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0220" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.22.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-in-v0230" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed in v0.23.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="migration-history-per-release-journal">Migration history (per-release journal)<a class="headerlink" href="#migration-history-per-release-journal" title="Permanent link">&para;</a></h1>
+<p>This page is the chronological record of the YAML-first migration that ran across v0.14.0 → v0.20.0. For the practical upgrade recipe, see the <a href="../v1/">migration guide</a>. Use this page when you need to know exactly what shipped in which release — for context on a specific commit, for reviewing how a generator was migrated, or to find the right <code>jq</code> snippet for a binary version you're stuck on.</p>
+<h2 id="release-sequence">Release sequence<a class="headerlink" href="#release-sequence" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Release</th>
+<th>Generators migrated</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>v0.14.0</strong></td>
+<td><code>postmortem</code> (refactor from v0.13.x sidecar format), <code>license</code> (inlined as Go constants)</td>
+<td>Format defined; first artifact migrated.</td>
+</tr>
+<tr>
+<td><strong>v0.15.0</strong></td>
+<td><code>task</code>, <code>srekit templates migrate</code> command</td>
+<td>First <strong>fresh</strong> migration; auto-converter for user <code>.tmpl</code> → <code>.yaml</code>.</td>
+</tr>
+<tr>
+<td><strong>v0.16.0</strong></td>
+<td><code>retro</code>, <code>slo</code></td>
+<td>Two more simple-subst migrations; <code>templates migrate</code> proven on real artifacts.</td>
+</tr>
+<tr>
+<td><strong>v0.17.0</strong></td>
+<td><code>ebp</code>, <code>capacity</code></td>
+<td>Two more simple-subst migrations; half the generator set is now on v1.</td>
+</tr>
+<tr>
+<td><strong>v0.18.0</strong></td>
+<td><code>incident</code>, <code>rfc</code></td>
+<td>Trickier: <code>rfc</code> uses <code>{{ shortID .ID 8 }}</code> — needs a separate sed for the function-call form.</td>
+</tr>
+<tr>
+<td><strong>v0.19.0</strong></td>
+<td><code>runbook</code>, <code>oncall-report</code></td>
+<td>10 of 11 done; only <code>changelog</code> remains. <code>--template FILE</code> is now a no-op for every migrated command.</td>
+</tr>
+<tr>
+<td><strong>v0.20.0</strong></td>
+<td><code>changelog</code></td>
+<td>All 11 generators on v1. Section titles are now template-evaluated. Tests decoupled from embedded <code>.tmpl</code>.</td>
+</tr>
+<tr>
+<td><strong>v0.21.0</strong></td>
+<td>(none)</td>
+<td>Cleanup: removed dead <code>LoadManifestBytes</code> / <code>ManifestNameFor</code>, shrunk <code>tmpl.Samples</code> to empty, updated stale doc comments. No breaking changes.</td>
+</tr>
+<tr>
+<td><strong>v0.22.0</strong></td>
+<td>(none)</td>
+<td><code>--template FILE</code> removed from every generator except <code>license</code>. Silent no-op → honest "unknown flag" error.</td>
+</tr>
+<tr>
+<td><strong>v0.23.0</strong></td>
+<td>(none)</td>
+<td>Doc audit: aligned user-facing docs (EN+RU) with the v0.20-v0.22 state.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-changed-in-v0140">What changed in v0.14.0<a class="headerlink" href="#what-changed-in-v0140" title="Permanent link">&para;</a></h2>
+<h3 id="postmortem-unified-into-a-single-file">Postmortem unified into a single file<a class="headerlink" href="#postmortem-unified-into-a-single-file" title="Permanent link">&para;</a></h3>
+<p>The v0.13.x layout shipped postmortem as <code>postmortem.md.tmpl</code> (header template) + <code>postmortem.sections.yaml</code> (sections manifest). v0.14.0 unifies both into <code>postmortem.yaml</code> — see the <a href="../../commands/postmortem/"><code>srekit postmortem</code> reference</a> for the full schema.</p>
+<p><strong>If you have a <code>templates_dir</code></strong> (<code>sre-templates</code> repo or similar), run:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>srekit<span class="w"> </span>templates<span class="w"> </span>upgrade<span class="w"> </span>&lt;your-templates-dir&gt;
+</span></code></pre></div>
+<p>This scaffolds <code>postmortem.yaml</code> from embed and seeds its <code>.srekit-embedded/</code> snapshot. The orphaned snapshots for the old <code>postmortem.md.tmpl</code> and <code>postmortem.sections.yaml</code> are garbage-collected automatically.</p>
+<p><strong>Customizations from your old <code>postmortem.md.tmpl</code></strong> (e.g. a blameless callout block) need to be moved into <code>postmortem.yaml</code>. The schema offers four customization points:</p>
+<ul>
+<li><code>frontmatter:</code> — free-form map; values run through Go templates.</li>
+<li><code>title:</code> — the H1 line.</li>
+<li><code>meta_bullets:</code> — the bullet list after H1.</li>
+<li><code>header_body:</code> — freeform Markdown escape hatch (your custom blockquote, policy text, etc.).</li>
+<li><code>sections:</code> — the section list (same as v0.13.x <code>.sections.yaml</code>).</li>
+</ul>
+<p>The pre-v0.14.0 files (<code>postmortem.md.tmpl</code>, <code>postmortem.sections.yaml</code>) in your user dir are <strong>ignored</strong> in favor of the v1 <code>postmortem.yaml</code>. The loader prints a stderr WARN listing each stale file on every postmortem invocation until you remove them or run <code>templates upgrade</code> (which leaves them in place but seeds the v1 file alongside — manual cleanup of the old files is on you).</p>
+<h3 id="license-moved-into-the-binary">License moved into the binary<a class="headerlink" href="#license-moved-into-the-binary" title="Permanent link">&para;</a></h3>
+<p>The three license templates (<code>license_mit.tmpl</code>, <code>license_apache2.tmpl</code>, <code>license_wtfpl.tmpl</code>) are now Go-string constants in the binary. They are <strong>no longer shipped via embed FS</strong>, no longer scaffolded by <code>templates init</code>, and no longer appear in <code>templates list</code> / <code>validate</code>.</p>
+<p>If you customized a license body in your <code>templates_dir</code>:
+- Your file is silently ignored (license cmd renders from the inlined Go constants).
+- Use <code>--template /path/to/your.tmpl</code> to keep using a custom body (this flag already exists).</p>
+<h3 id="cosmetic-delta-in-rendered-postmortem-markdown">Cosmetic delta in rendered postmortem markdown<a class="headerlink" href="#cosmetic-delta-in-rendered-postmortem-markdown" title="Permanent link">&para;</a></h3>
+<p>The frontmatter block now emits string values <strong>quoted</strong> (e.g. <code>id: "abc"</code>) where v0.13.x emitted some unquoted (e.g. <code>id: abc</code>). This is because <code>yaml.v3</code> preserves the quoting style of the source YAML; our v1 <code>postmortem.yaml</code> has quoted scalars with template syntax (<code>"{{ .Meta.ID }}"</code>), and the quoting is retained after substitution. Functionally identical YAML; visually a one-character-per-line diff vs v0.13.x output.</p>
+<h2 id="what-changed-in-v0150">What changed in v0.15.0<a class="headerlink" href="#what-changed-in-v0150" title="Permanent link">&para;</a></h2>
+<h3 id="task-migrated-to-the-v1-artifact-format"><code>task</code> migrated to the v1 artifact format<a class="headerlink" href="#task-migrated-to-the-v1-artifact-format" title="Permanent link">&para;</a></h3>
+<p><code>task.md.tmpl</code> is removed from embed; <code>task.yaml</code> ships in its place. The task command now uses the artifact render path with structured <code>--json</code> (same contract as postmortem) — output is <code>{meta, sections: [...]}</code> instead of the bootstrap envelope.</p>
+<p><strong>JSON shape migration:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># before (v0.14.x)</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>srekit<span class="w"> </span>task<span class="w"> </span>-T<span class="w"> </span><span class="s2">"X"</span><span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[0].body'</span><span class="w">   </span><span class="c1"># bootstrap envelope: one synthetic section</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># after (v0.15.0)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>srekit<span class="w"> </span>task<span class="w"> </span>-T<span class="w"> </span><span class="s2">"X"</span><span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[] | select(.id=="context").body'</span><span class="w">   </span><span class="c1"># structured: per-section access</span>
+</span></code></pre></div>
+<p>Anyone with a customized <code>task.md.tmpl</code> in <code>templates_dir</code> will see a stderr WARN; run <code>srekit templates upgrade</code> to get <code>task.yaml</code>, then move customizations into it (use the <code>header_body</code> field for any blameless-style callouts).</p>
+<h3 id="srekit-templates-migrate-command"><code>srekit templates migrate</code> command<a class="headerlink" href="#srekit-templates-migrate-command" title="Permanent link">&para;</a></h3>
+<p>New subcommand: best-effort <code>.tmpl</code> → <code>.yaml</code> converter. Defaults to <code>--dry-run</code>; pass <code>--apply</code> to write files. Sections with Go-template control flow (<code>{{ if }}</code> / <code>{{ range }}</code>) are wrapped in <code>git merge</code>-style diff markers for human review. See the <a href="../../commands/templates/#templates-migrate"><code>templates migrate</code> reference</a> for full mechanics.</p>
+<p><strong>Note on data-shape changes</strong>: the converter copies template expressions verbatim. If a migrated generator uses a different data root (e.g. task moved from <code>.Title</code> to <code>.Meta.Title</code>), the converted YAML will reference the old paths. Update them manually or by <code>sed</code> to match the new root.</p>
+<h2 id="what-changed-in-v0160">What changed in v0.16.0<a class="headerlink" href="#what-changed-in-v0160" title="Permanent link">&para;</a></h2>
+<h3 id="retro-and-slo-migrated-to-the-v1-artifact-format"><code>retro</code> and <code>slo</code> migrated to the v1 artifact format<a class="headerlink" href="#retro-and-slo-migrated-to-the-v1-artifact-format" title="Permanent link">&para;</a></h3>
+<p>Both followed the same dogfooded recipe as task in v0.15.0:</p>
+<ol>
+<li><code>srekit templates migrate &lt;dir&gt; --apply</code> produces a starter <code>&lt;name&gt;.yaml</code>.</li>
+<li><code>sed -E 's/{{ \.([A-Z][a-zA-Z]*)/{{ .Meta.\1/g'</code> rewrites the flat field references to the new <code>.Meta.X</code> data root.</li>
+<li>Ship the result in embed; delete the old <code>&lt;name&gt;.md.tmpl</code>.</li>
+</ol>
+<p>Both commands now use the artifact render path with structured <code>--json</code> (per-section access via <code>jq '.sections[] | select(.id=="...").body'</code>).</p>
+<p><strong>JSON shape migration</strong> (same pattern as task in v0.15.0):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># before</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>srekit<span class="w"> </span>retro<span class="w"> </span>--team<span class="w"> </span>platform<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[0].body'</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># after</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>srekit<span class="w"> </span>retro<span class="w"> </span>--team<span class="w"> </span>platform<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[] | select(.id=="action_items").body'</span>
+</span></code></pre></div>
+<p>Users with customized <code>retro.md.tmpl</code> / <code>slo.md.tmpl</code> in <code>templates_dir</code> get stderr WARN on every invocation. To migrate: <code>srekit templates upgrade</code> (scaffolds the new <code>.yaml</code>), then either move customizations manually or run <code>srekit templates migrate &lt;dir&gt; --apply</code> to auto-convert the legacy <code>.tmpl</code>. After migration, manually rewrite any <code>{{ .Field }}</code> → <code>{{ .Meta.Field }}</code> in the resulting YAML (the converter copies template expressions verbatim).</p>
+<h2 id="what-changed-in-v0170">What changed in v0.17.0<a class="headerlink" href="#what-changed-in-v0170" title="Permanent link">&para;</a></h2>
+<h3 id="ebp-and-capacity-migrated-to-the-v1-artifact-format"><code>ebp</code> and <code>capacity</code> migrated to the v1 artifact format<a class="headerlink" href="#ebp-and-capacity-migrated-to-the-v1-artifact-format" title="Permanent link">&para;</a></h3>
+<p>Same dogfooded recipe as retro + slo in v0.16.0:</p>
+<ol>
+<li><code>srekit templates migrate &lt;dir&gt; --apply</code> produces a starter <code>&lt;name&gt;.yaml</code>.</li>
+<li><code>sed -E 's/{{ \.([A-Z][a-zA-Z]*)/{{ .Meta.\1/g'</code> rewrites flat field references to <code>.Meta.X</code>.</li>
+<li>Ship the result in embed; delete the old <code>&lt;name&gt;.md.tmpl</code>.</li>
+</ol>
+<p>Both commands now use the artifact render path with structured <code>--json</code> (per-section access).</p>
+<p><strong>JSON shape migration</strong> (same pattern as retro / slo):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># before</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>srekit<span class="w"> </span>ebp<span class="w"> </span>--service<span class="w"> </span>api-gw<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[0].body'</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># after</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>srekit<span class="w"> </span>ebp<span class="w"> </span>--service<span class="w"> </span>api-gw<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[] | select(.id=="tiered_actions").body'</span>
+</span></code></pre></div>
+<p>Users with customized <code>ebp.md.tmpl</code> / <code>capacity.md.tmpl</code> in <code>templates_dir</code> get stderr WARN. Migrate the usual way: <code>templates upgrade</code> (scaffolds the new <code>.yaml</code>) or <code>templates migrate &lt;dir&gt; --apply</code> (auto-converts the legacy <code>.tmpl</code>), then manually rewrite <code>{{ .Field }}</code> → <code>{{ .Meta.Field }}</code>.</p>
+<h2 id="what-changed-in-v0180">What changed in v0.18.0<a class="headerlink" href="#what-changed-in-v0180" title="Permanent link">&para;</a></h2>
+<h3 id="incident-and-rfc-migrated-to-the-v1-artifact-format"><code>incident</code> and <code>rfc</code> migrated to the v1 artifact format<a class="headerlink" href="#incident-and-rfc-migrated-to-the-v1-artifact-format" title="Permanent link">&para;</a></h3>
+<p>Same dogfooded recipe as ebp + capacity in v0.17.0, with one extra twist for rfc:</p>
+<ol>
+<li><code>srekit templates migrate &lt;dir&gt; --apply</code> produces a starter <code>&lt;name&gt;.yaml</code>.</li>
+<li><code>sed -E 's/{{ \.([A-Z][a-zA-Z]*)/{{ .Meta.\1/g'</code> rewrites flat field references to <code>.Meta.X</code>.</li>
+<li><strong>For rfc only</strong>: additionally <code>sed -E 's/shortID \.ID/shortID .Meta.ID/g'</code> — the function-call form (<code>{{ shortID .ID 8 }}</code> in the H1) isn't covered by the main regex.</li>
+<li>Ship the result in embed; delete the old <code>&lt;name&gt;.md.tmpl</code>.</li>
+</ol>
+<p>Both commands now use the artifact render path with structured <code>--json</code> (per-section access).</p>
+<p><strong>JSON shape migration</strong> (same pattern as ebp / capacity):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># before</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>srekit<span class="w"> </span>incident<span class="w"> </span>--title<span class="w"> </span>X<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[0].body'</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># after</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>srekit<span class="w"> </span>incident<span class="w"> </span>--title<span class="w"> </span>X<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[] | select(.id=="current_impact").body'</span>
+</span></code></pre></div>
+<p>Users with customized <code>incident.md.tmpl</code> / <code>rfc.md.tmpl</code> in <code>templates_dir</code> get stderr WARN. If your custom template uses <code>{{ shortID .ID … }}</code> or other function-call forms with <code>.Field</code>, rewrite them to <code>.Meta.Field</code> by hand after <code>templates migrate</code>.</p>
+<h2 id="what-changed-in-v0190">What changed in v0.19.0<a class="headerlink" href="#what-changed-in-v0190" title="Permanent link">&para;</a></h2>
+<h3 id="runbook-and-oncall-report-migrated-to-the-v1-artifact-format"><code>runbook</code> and <code>oncall-report</code> migrated to the v1 artifact format<a class="headerlink" href="#runbook-and-oncall-report-migrated-to-the-v1-artifact-format" title="Permanent link">&para;</a></h3>
+<p>Same dogfooded recipe as the prior releases. After v0.19.0 <strong>only <code>changelog</code></strong> remains on the legacy <code>.tmpl</code> path — v0.20.0 closes out the migration.</p>
+<p><strong>Hand-fixes applied at ship time</strong> (the auto-converter is heuristic, not 100%):</p>
+<ul>
+<li><code>oncall.yaml</code> "Pages" section: in the legacy <code>.tmpl</code> the GFM table was followed by a prose line tallying the pages. The converter classified the section as <code>type: table</code> and dropped the trailing prose. The shipped version makes the section <code>type: text</code> with the table inlined as <code>default_body</code>, preserving the original layout 1:1.</li>
+<li><code>runbook.yaml</code> "Severity &amp; SLO impact" section: the slugifier produced <code>slo_severity_slo_impact</code> (the bilingual heading double-counted "SLO"). Renamed to <code>severity_slo_impact</code>. Section IDs are part of the structured-JSON contract, so manual cleanup is worth the diff churn.</li>
+</ul>
+<p><strong>JSON shape migration</strong> (same pattern):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># before</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>srekit<span class="w"> </span>runbook<span class="w"> </span>--title<span class="w"> </span>X<span class="w"> </span>--service<span class="w"> </span>api-gw<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[0].body'</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># after</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>srekit<span class="w"> </span>runbook<span class="w"> </span>--title<span class="w"> </span>X<span class="w"> </span>--service<span class="w"> </span>api-gw<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[] | select(.id=="diagnose").body'</span>
+</span></code></pre></div>
+<h3 id="-template-file-is-now-a-no-op-for-every-migrated-command"><code>--template FILE</code> is now a no-op for every migrated command<a class="headerlink" href="#-template-file-is-now-a-no-op-for-every-migrated-command" title="Permanent link">&para;</a></h3>
+<p><code>--template FILE</code> was originally a one-shot escape hatch for the legacy <code>text/template</code> rendering path. Once a command migrates to the artifact path, the loader resolves <code>&lt;name&gt;.yaml</code> from embed / <code>templates_dir</code> before any TemplatePath check, so the flag silently does nothing. Affected: postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall (everything except <code>changelog</code>).</p>
+<p>The v1.x customization model for per-artifact tweaks is dropping a <code>&lt;name&gt;.yaml</code> into <code>templates_dir</code> (via <code>templates init</code> / <code>upgrade</code>). For <code>changelog</code> (the last bootstrap-envelope command) <code>--template</code> still works; it will become a no-op after v0.20.0 as well.</p>
+<p>Users with customized <code>runbook.md.tmpl</code> / <code>oncall.md.tmpl</code> in <code>templates_dir</code> get stderr WARN. Migrate the usual way: <code>templates upgrade</code> or <code>templates migrate &lt;dir&gt; --apply</code>, then rewrite <code>{{ .Field }}</code> → <code>{{ .Meta.Field }}</code>.</p>
+<h2 id="what-changed-in-v0200">What changed in v0.20.0<a class="headerlink" href="#what-changed-in-v0200" title="Permanent link">&para;</a></h2>
+<h3 id="changelog-migrated-migration-complete"><code>changelog</code> migrated — migration complete<a class="headerlink" href="#changelog-migrated-migration-complete" title="Permanent link">&para;</a></h3>
+<p>The final <code>.tmpl</code> moved to YAML. <strong>All 11 generators are on v1.</strong> The embed FS now contains only <code>.yaml</code> files; the <code>//go:embed templates/*.tmpl</code> half of the pattern was dropped (Go requires ≥1 match per glob).</p>
+<h3 id="section-titles-are-now-template-evaluated">Section titles are now template-evaluated<a class="headerlink" href="#section-titles-are-now-template-evaluated" title="Permanent link">&para;</a></h3>
+<p>Previously <code>RenderedSection.Title</code> and the <code>## &lt;title&gt;</code> heading in markdown were emitted verbatim — if an author put <code>{{ .Meta.X }}</code> in a section title the template syntax leaked into the output. changelog.yaml needs this for a dynamic heading: <code>[{{ .Meta.InitialVersion }}] - {{ .Meta.Today }}</code>. Now:</p>
+<ul>
+<li><code>sections.Merge</code> runs the title through the FuncMap.</li>
+<li><code>RenderArtifact</code> uses the already-rendered title (no double eval).</li>
+<li>Structured <code>--json</code> and the markdown heading agree.</li>
+</ul>
+<h3 id="test-infra-decoupled-from-embedded-tmpl">Test infra decoupled from embedded <code>.tmpl</code><a class="headerlink" href="#test-infra-decoupled-from-embedded-tmpl" title="Permanent link">&para;</a></h3>
+<p>After v0.20.0 there's no <code>.tmpl</code> in embed — render/tmpl tests that depended on a specific <code>&lt;name&gt;.md.tmpl</code> shipping in embed moved to a <code>newFixtureLoader(t)</code> helper (writes a per-test fixture into a temp dir, returns a <code>*tmpl.Loader</code> over <code>DirSource</code>). CLI tests in <code>cmd/cmd_test.go</code> swapped the embed-target reference from the (now-gone) <code>changelog.md.tmpl</code> to <code>postmortem.yaml</code>. <code>TestPerCommandTemplateOverride</code> was deleted (no command honors <code>--template</code>). <code>TestChangelogJSONBootstrap</code> was rewritten as <code>TestChangelogJSONStructured</code>.</p>
+<h3 id="json-shape-migration">JSON shape migration<a class="headerlink" href="#json-shape-migration" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># before</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>srekit<span class="w"> </span>changelog<span class="w"> </span>--repo<span class="w"> </span>o/r<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[0].body'</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># after</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>srekit<span class="w"> </span>changelog<span class="w"> </span>--repo<span class="w"> </span>o/r<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.sections[] | select(.id=="initial_release").body'</span>
+</span></code></pre></div>
+<p>Users with a customized <code>changelog.md.tmpl</code> in <code>templates_dir</code>: stderr WARN. Run <code>templates upgrade</code> to scaffold <code>changelog.yaml</code>.</p>
+<h3 id="-template-file-is-now-a-no-op-everywhere"><code>--template FILE</code> is now a no-op everywhere<a class="headerlink" href="#-template-file-is-now-a-no-op-everywhere" title="Permanent link">&para;</a></h3>
+<p>In v0.19.0 it still worked for changelog (the last bootstrap-envelope command). With changelog on the artifact path too, <code>--template</code> does nothing for any command. The flag stays on the CLI surface for backwards compatibility. Per-artifact customization is via dropping <code>&lt;name&gt;.yaml</code> into <code>templates_dir</code>.</p>
+<h2 id="what-changed-in-v0210">What changed in v0.21.0<a class="headerlink" href="#what-changed-in-v0210" title="Permanent link">&para;</a></h2>
+<p>Cleanup pass. No code-behavior changes for users. Removed dead <code>LoadManifestBytes</code> / <code>ManifestNameFor</code> (last shipped caller retired in v0.14.0), shrunk <code>tmpl.Samples</code> to an empty map (the <code>.tmpl</code> typo-detection fixture registry — every shipped artifact is YAML now), updated stale doc comments, narrowed the legacy WARN wording from "pre-v0.14.0 format" to "legacy pre-v1.0 format".</p>
+<h2 id="what-changed-in-v0220">What changed in v0.22.0<a class="headerlink" href="#what-changed-in-v0220" title="Permanent link">&para;</a></h2>
+<p><strong>Breaking — <code>--template FILE</code> removed from every generator except <code>license</code>.</strong> The flag was a silent no-op on every artifact-path command (postmortem, task, retro, slo, ebp, capacity, incident, rfc, runbook, oncall-report, changelog) because the loader resolves <code>&lt;name&gt;.yaml</code> before any TemplatePath check. Now those commands reject <code>--template</code> with <code>Error: unknown flag: --template</code> — an honest error instead of a silent no-op. The flag still works on <code>srekit license</code>, which is the only command whose render path genuinely honors <code>opts.TemplatePath</code>.</p>
+<h2 id="what-changed-in-v0230">What changed in v0.23.0<a class="headerlink" href="#what-changed-in-v0230" title="Permanent link">&para;</a></h2>
+<p>Doc-only release. Aligned user-facing docs (EN+RU) with the v0.20-v0.22 state: removed bootstrap-envelope examples from <code>json-output.md</code>, dropped <code>--template FILE</code> from the shared-flags tables, updated architecture/recipes/custom-templates/templates/task docs.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/jtprogru/srekit" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.tracking", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.tabs.link", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

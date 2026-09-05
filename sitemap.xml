@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://jtprogru.github.io/srekit/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/architecture/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/architecture/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/architecture/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/contributing/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/contributing/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/contributing/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/getting-started/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/getting-started/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/getting-started/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/recipes/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/recipes/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/recipes/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/changelog/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/changelog/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/changelog/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/completion/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/completion/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/completion/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/config/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/config/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/config/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/doctor/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/doctor/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/doctor/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/ebp/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/ebp/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/ebp/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/oncall-report/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/oncall-report/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/oncall-report/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/postmortem/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/postmortem/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/postmortem/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/rfc/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/rfc/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/rfc/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/runbook/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/runbook/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/runbook/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/slo/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/slo/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/slo/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/task/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/task/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/task/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/tasker/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/tasker/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/tasker/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/commands/templates/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/templates/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/templates/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/guides/configuration/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/guides/configuration/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/guides/configuration/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/guides/custom-templates/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/guides/custom-templates/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/guides/custom-templates/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/guides/json-output/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/guides/json-output/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/guides/json-output/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/migration/removed-commands/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/migration/removed-commands/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/migration/removed-commands/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/migration/v1-history/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/migration/v1-history/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/migration/v1-history/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/migration/v1/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/migration/v1/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/migration/v1/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/architecture/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/architecture/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/architecture/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/contributing/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/contributing/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/contributing/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/getting-started/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/getting-started/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/getting-started/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/recipes/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/recipes/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/recipes/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/changelog/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/changelog/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/changelog/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/completion/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/completion/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/completion/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/config/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/config/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/config/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/doctor/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/doctor/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/doctor/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/ebp/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/ebp/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/ebp/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/oncall-report/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/oncall-report/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/oncall-report/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/postmortem/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/postmortem/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/postmortem/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/rfc/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/rfc/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/rfc/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/runbook/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/runbook/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/runbook/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/slo/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/slo/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/slo/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/task/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/task/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/task/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/tasker/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/tasker/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/tasker/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/commands/templates/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/commands/templates/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/commands/templates/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/guides/configuration/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/guides/configuration/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/guides/configuration/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/guides/custom-templates/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/guides/custom-templates/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/guides/custom-templates/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/guides/json-output/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/guides/json-output/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/guides/json-output/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/migration/removed-commands/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/migration/removed-commands/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/migration/removed-commands/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/migration/v1-history/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/migration/v1-history/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/migration/v1-history/"/>
+    </url>
+    <url>
+        <loc>https://jtprogru.github.io/srekit/ru/migration/v1/</loc>
+        <lastmod>2026-09-05</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://jtprogru.github.io/srekit/ru/migration/v1/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://jtprogru.github.io/srekit/migration/v1/"/>
+    </url>
+</urlset>
