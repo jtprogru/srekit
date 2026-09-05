@@ -91,7 +91,7 @@ homebrew_casks:
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Casks
     homepage: "https://github.com/jtprogru/srekit"
-    description: "Generator of SRE text artifacts: tasks, postmortems, runbooks, RFCs, on-call reports, SLOs, error budget policies, changelogs"
+    description: "Generator of SRE text artifacts: postmortems, runbooks, RFCs, SLOs"
     custom_block: |
       postflight_steps do
         run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{staged_path}}" }}/srekit"]
