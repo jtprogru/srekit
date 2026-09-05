@@ -33,7 +33,7 @@ The `.srekit-embedded/` sidecar inside your templates dir holds a byte-exact cop
 
 ```bash
 srekit templates init ~/.config/srekit/templates
-# Templates scaffolded in /Users/you/.config/srekit/templates (9 files + TEMPLATES.md)
+# Templates scaffolded in /Users/you/.config/srekit/templates (10 files + TEMPLATES.md)
 #
 # Next steps — connect a remote (SSH recommended) and push:
 #   cd /Users/you/.config/srekit/templates
@@ -69,6 +69,20 @@ git commit -am "runbook: add 'communications' section"
 ```
 
 Anything you change is yours. Embedded fallback only kicks in for files you haven't created (e.g. a new template added in a future binary that isn't in your dir yet). The v1 artifact schema (frontmatter / title / meta_bullets / header_body / sections / footer_body) is documented in the [postmortem reference](../commands/postmortem.md). Blocks are separated by exactly one blank line, and `footer_body` is trailing document-level material — the changelog's link reference definitions are the canonical use — with no id and no place in the `sections` array.
+
+### Typed front matter values {#typed-front-matter-values}
+
+Everything a template substitutes is a string, so by default it reaches the document as one: `duration: "30"`. To the tools that read front matter — Obsidian, dataview, a static site generator — that is not the same value as `duration: 30`. Put an explicit YAML tag on the value and the rendered text is read back as that type:
+
+```yaml
+frontmatter:
+  duration: !!int "{{ .Meta.Duration }}"              # → duration: 30
+  level: !!seq '[{{ .Meta.Level | join ", " }}]'      # → level: [middle, senior]
+```
+
+`!!int`, `!!float`, `!!bool`, `!!null`, `!!timestamp`, `!!seq` and `!!map` are recognized. The tag is an instruction to the renderer and never reaches the document. When the text does not read as the declared type — an `!!int` that rendered to `abc` — rendering fails naming the front matter key, rather than quietly emitting a string.
+
+`!!str` and application tags (`!Ref`, …) are left alone: an explicit `!!str` is what the untagged path already does, and somebody else's tag belongs to the tool that reads it. [`tasker`](../commands/tasker.md) is the shipped artifact that uses this.
 
 ### 4. Validate
 

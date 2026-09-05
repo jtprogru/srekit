@@ -14,7 +14,7 @@ SRE-работа порождает массу структурированны�
 
 ## Что внутри
 
-- **8 команд-генераторов** — `task`, `postmortem`, `rfc`, `runbook`, `changelog`, `oncall-report`, `slo`, `ebp`.
+- **9 команд-генераторов** — `task`, `tasker`, `postmortem`, `rfc`, `runbook`, `changelog`, `oncall-report`, `slo`, `ebp`.
 - **Шаблоны как контракт** — каждый артефакт билингвальный (русские заголовки + английские технические термины), вкомпилирован в бинарник и переопределяется кастомной директорией под твоим git-remote'ом.
 - **Не только скаффолд changelog'а** — `changelog release` вырезает версию из `[Unreleased]`, `changelog validate` линтит существующий `CHANGELOG.md` против Keep a Changelog.
 - **Полный жизненный цикл шаблонов** — `templates init / pull / list / validate / diff / upgrade / migrate`, с настоящим 3-way merge на upgrade.

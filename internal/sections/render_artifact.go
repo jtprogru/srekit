@@ -173,7 +173,7 @@ func evalMappingValues(n *yaml.Node, ctx any) error {
 		// Content is [key0, val0, key1, val1, ...]; only walk values.
 		for i := 1; i < len(n.Content); i += 2 {
 			if err := evalMappingValues(n.Content[i], ctx); err != nil {
-				return err
+				return fmt.Errorf("%s: %w", n.Content[i-1].Value, err)
 			}
 		}
 	case yaml.SequenceNode:
@@ -190,6 +190,9 @@ func evalMappingValues(n *yaml.Node, ctx any) error {
 		if err != nil {
 			return err
 		}
+		if retypes(n) {
+			return retypeScalar(n, rendered)
+		}
 		n.Value = rendered
 	case yaml.DocumentNode, yaml.AliasNode:
 		// Documents wrap a single child; aliases are by-reference (skip).
@@ -199,6 +202,69 @@ func evalMappingValues(n *yaml.Node, ctx any) error {
 			}
 		}
 	}
+	return nil
+}
+
+// retypedTags are the YAML tags an author may put on a templated
+// frontmatter scalar to say "the text this renders to is not a string".
+//
+// `!!str` is deliberately absent: an explicit string tag means the author
+// wants the rendered text as-is, which is what the untagged path already
+// does. Custom application tags (`!Ref`, …) are absent for the same
+// reason — they belong to whatever tool reads the document, and srekit
+// has no business reinterpreting their payload.
+//
+//nolint:gochecknoglobals // immutable lookup table, not mutable state
+var retypedTags = map[string]bool{
+	"!!int":       true,
+	"!!float":     true,
+	"!!bool":      true,
+	"!!null":      true,
+	"!!timestamp": true,
+	"!!seq":       true,
+	"!!map":       true,
+}
+
+// retypes reports whether a scalar carries an explicit tag from the
+// retyped set. The tag has to be explicit — every decoded scalar carries
+// a resolved tag, so `"{{ .Meta.N }}"` is `!!str` without the author
+// having said anything, and only yaml.TaggedStyle distinguishes the two.
+func retypes(n *yaml.Node) bool {
+	return n.Style&yaml.TaggedStyle != 0 && retypedTags[n.Tag]
+}
+
+// retypeScalar replaces an explicitly tagged scalar with the YAML value
+// its rendered text denotes, so a template can produce a frontmatter
+// value that is not a string:
+//
+//	duration: !!int "{{ .Meta.Duration }}"      → duration: 30
+//	level:    !!seq '[{{ .Meta.Level | join ", " }}]' → level: [middle, senior]
+//
+// Without this, everything a template touches comes out quoted, because
+// the rendered value is a Go string and the encoder has no reason to
+// believe otherwise. Frontmatter is the part of the document other tools
+// parse (Obsidian, dataview, static site generators), and to them
+// `duration: "30"` and `duration: 30` are different values.
+//
+// The declared tag is checked against what the text actually parses as,
+// so a template that renders `abc` into an `!!int` fails with the key
+// named rather than silently emitting a string. This is the
+// "frontmatter scalar-type problem" the format spec defers to render
+// time: authors see it when the value exists.
+func retypeScalar(n *yaml.Node, rendered string) error {
+	want := n.Tag
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(rendered), &doc); err != nil {
+		return fmt.Errorf("declared %s but %q is not valid YAML: %w", want, rendered, err)
+	}
+	if len(doc.Content) == 0 {
+		return fmt.Errorf("declared %s but rendered empty", want)
+	}
+	got := doc.Content[0]
+	if got.Tag != want {
+		return fmt.Errorf("declared %s but %q reads as %s", want, rendered, got.Tag)
+	}
+	*n = *got
 	return nil
 }
 

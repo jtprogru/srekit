@@ -26,7 +26,7 @@ srekit templates init                     # resolves templates_dir from config; 
 srekit templates init ./team-templates    # explicit
 srekit templates init --no-git            # skip git init
 srekit templates init --force             # overwrite existing files
-# Templates scaffolded in ./team-templates (9 files + TEMPLATES.md)
+# Templates scaffolded in ./team-templates (10 files + TEMPLATES.md)
 ```
 
 **Flags**: `--force`, `--no-git`. The `[dir]` argument wins over config; omit it to use `--templates-dir` / `SREKIT_TEMPLATES_DIR` / `templates_dir:` in the config file. The fallback is `$XDG_CONFIG_HOME/srekit/templates`, or the pre-XDG `~/.srekit/templates` when that directory already exists.

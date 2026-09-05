@@ -1,0 +1,22 @@
+version: 1
+
+frontmatter:
+  id: "{{ .Meta.ID }}"
+  creation_date: "{{ .Meta.Now }}"
+  type: simple_note
+  tags:
+    - tasker
+  topic: "{{ .Meta.Topic }}"
+  level: !!seq '[{{ .Meta.Level | join ", " }}]'
+  format: "{{ .Meta.Format }}"
+  duration: !!int "{{ .Meta.Duration }}"
+
+title: "Tasker - {{ .Meta.Title }}"
+
+sections:
+  - id: description
+    title: Описание (Description)
+    type: text
+  - id: expectations
+    title: Что хотим услышать (What we want to hear)
+    type: text

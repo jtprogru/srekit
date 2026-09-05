@@ -9,7 +9,7 @@
 [![security](https://github.com/jtprogru/srekit/actions/workflows/security.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/security.yaml)
 [![goreleaser](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml/badge.svg)](https://github.com/jtprogru/srekit/actions/workflows/goreleaser.yaml)
 [![Homebrew](https://img.shields.io/badge/Homebrew-jtprogru%2Ftap-FBB040?logo=homebrew&logoColor=white)](https://github.com/jtprogru/homebrew-tap)
-![Go LoC](https://img.shields.io/badge/go-11088%20LoC-blueviolet?logo=go)
+![Go LoC](https://img.shields.io/badge/go-11439%20LoC-blueviolet?logo=go)
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
@@ -19,7 +19,7 @@
 
 📚 **Documentation:** [jtprogru.github.io/srekit](https://jtprogru.github.io/srekit/) (EN + RU, full command reference, guides, recipes, architecture).
 
-Генератор текстовых артефактов SRE: investigation log'и, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, changelog'и.
+Генератор текстовых артефактов SRE: investigation log'и, постмортемы, runbook'и, RFC, on-call report'ы, SLO, error budget policies, changelog'и, карточки задач.
 
 Шаблон здесь — не markdown-файл, а v1 YAML-артефакт (`postmortem.yaml`, `slo.yaml`, …), который декларирует frontmatter, H1, meta-буллеты и список типизированных секций; markdown srekit собирает из этой декларации. Поставочный набор вкомпилирован в бинарник, а директория с твоими артефактами переопределяет его пофайлово — то, чего у тебя нет, прозрачно берётся из встроенного.
 
@@ -100,6 +100,20 @@ srekit task --title "Tail latency on api-gw" --path ./tasks
 ```
 
 Шаблон с секциями Context / Hypothesis / Evidence / Findings / Action items / References. Алиас `srekit sretask` оставлен для совместимости (исторически команда заменяла `gch sretask`).
+
+### `srekit tasker` — карточка задачи
+
+```bash
+srekit tasker --title "Каналы и select"                       # → tasker-select.md
+srekit tasker -T "Что делает GOMAXPROCS" --topic go \
+  --level junior --format theory --duration 10
+```
+
+Карточка для коллекции инженерных задач: frontmatter (`topic`, `level`, `format`, `duration`), H1 `Tasker - <название>` и две пустые секции — сама задача и то, что хочется услышать в ответ. Пустые намеренно: содержимое пишет тот, кто задачу добавляет.
+
+`level` уезжает в документ списком, `duration` — числом: frontmatter карточки читает коллекция, в которой она лежит, и `level: [middle, senior]` фильтруется, а `level: "middle, senior"` — нет. В своих артефактах то же самое делается явным YAML-тегом на значении (`!!int`, `!!seq`) — см. [Кастомные шаблоны](https://jtprogru.github.io/srekit/ru/guides/custom-templates/#typed-front-matter-values).
+
+Имя `task` рядом занято другим документом: `task` — это investigation log, ход разбирательства; `tasker` — задача, которую будет решать кто-то другой.
 
 ### `srekit postmortem` — шаблон постмортема (Google SRE-style)
 

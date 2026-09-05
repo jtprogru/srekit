@@ -7,6 +7,7 @@
 | Команда | Что генерирует | Обязательные флаги |
 |---|---|---|
 | [`srekit task`](task.md) | Investigation log (alias: `sretask`) | `--title` |
+| [`srekit tasker`](tasker.md) | Карточка задачи для коллекции инженерных задач | `--title` |
 | [`srekit postmortem`](postmortem.md) | Постмортем (Google SRE-style) | `--title` |
 | [`srekit rfc`](rfc.md) | RFC / ADR | `--title` |
 | [`srekit runbook`](runbook.md) | Operational runbook | `--title` |

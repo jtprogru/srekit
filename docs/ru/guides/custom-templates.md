@@ -33,7 +33,7 @@
 
 ```bash
 srekit templates init ~/.config/srekit/templates
-# Templates scaffolded in /Users/you/.config/srekit/templates (9 files + TEMPLATES.md)
+# Templates scaffolded in /Users/you/.config/srekit/templates (10 files + TEMPLATES.md)
 #
 # Next steps — connect a remote (SSH recommended) and push:
 #   cd /Users/you/.config/srekit/templates
@@ -69,6 +69,20 @@ git commit -am "runbook: add 'communications' section"
 ```
 
 Всё что ты меняешь — твоё. Embedded запасной вариант срабатывает только для файлов, которых у тебя нет (например, новый шаблон, добавленный в будущем бинаре, которого у тебя в dir ещё нет). Схема v1-артефакта (frontmatter / title / meta_bullets / header_body / sections / footer_body) описана в [postmortem reference](../commands/postmortem.md). Блоки разделяются ровно одной пустой строкой, а `footer_body` — хвостовой материал уровня документа (канонический пример — блок link reference definitions в changelog): у него нет id и нет места в массиве `sections`.
+
+### Не-строковые значения frontmatter {#typed-front-matter-values}
+
+Шаблон подставляет строку, поэтому по умолчанию значение так и уезжает в документ строкой: `duration: "30"`. Инструментам, которые читают frontmatter — Obsidian, dataview, генератор статики — это не то же самое, что `duration: 30`. Повесь на значение явный YAML-тег, и отрендеренный текст будет прочитан как значение этого типа:
+
+```yaml
+frontmatter:
+  duration: !!int "{{ .Meta.Duration }}"              # → duration: 30
+  level: !!seq '[{{ .Meta.Level | join ", " }}]'      # → level: [middle, senior]
+```
+
+Работают `!!int`, `!!float`, `!!bool`, `!!null`, `!!timestamp`, `!!seq` и `!!map`. Тег — инструкция рендеру, в документ он не попадает. Если текст не читается как заявленный тип (`!!int`, отрендеренный в `abc`), рендер падает с ошибкой и именем ключа frontmatter, а не выдаёт молча строку.
+
+`!!str` и прикладные теги (`!Ref`, …) не трогаются: явный `!!str` — это и есть поведение по умолчанию, а чужой тег принадлежит тому инструменту, который его читает. Из поставочных артефактов это использует [`tasker`](../commands/tasker.md).
 
 ### 4. Провалидировать
 

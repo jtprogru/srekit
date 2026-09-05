@@ -106,7 +106,7 @@ func TestCatalogIsExactlyTheSurvivingGenerators(t *testing.T) {
 	}
 
 	want := []string{
-		"task", "postmortem", "rfc", "runbook",
+		"task", "tasker", "postmortem", "rfc", "runbook",
 		"changelog", "oncall-report", "slo", "ebp",
 		// management and diagnostic commands, not generators
 		"templates", "config", "doctor",

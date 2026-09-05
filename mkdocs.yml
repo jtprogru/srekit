@@ -1,5 +1,5 @@
 site_name: srekit
-site_description: SRE text artifact generator — investigations, postmortems, RFCs, runbooks, SLOs, error budget policies, on-call reports, changelogs.
+site_description: SRE text artifact generator — investigations, postmortems, RFCs, runbooks, SLOs, error budget policies, on-call reports, changelogs, task cards.
 site_url: https://jtprogru.github.io/srekit/
 repo_url: https://github.com/jtprogru/srekit
 repo_name: jtprogru/srekit
@@ -104,6 +104,7 @@ nav:
       - Overview: commands/index.md
       - Generators:
           - srekit task: commands/task.md
+          - srekit tasker: commands/tasker.md
           - srekit postmortem: commands/postmortem.md
           - srekit rfc: commands/rfc.md
           - srekit runbook: commands/runbook.md
