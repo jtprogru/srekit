@@ -25,3 +25,7 @@ plans/
 .venv/
 venv/
 
+
+# Claude Code: personal permissions and local worktrees stay local
+.claude/settings.local.json
+.claude/worktrees/
