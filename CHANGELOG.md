@@ -9,12 +9,6 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [Unreleased]
 
-### Added
-
-- **`srekit tasker` — a task card for a collection of engineering tasks.** Front matter (`type: simple_note`, `tags: [tasker]`, `topic`, `level`, `format`, `duration`), an H1 reading `Tasker - <name>`, and two sections — `description` and `expectations` — both empty. Empty on purpose: the content is written by the person adding the task, and a placeholder would be text they delete on every single card. Flags: `--title` (required), `--topic` (default `go`), `--level` (repeatable or comma-separated, default `middle,senior`), `--format` (default `code`), `--duration` in minutes (default `30`). Default filename `tasker-<slug>.md`. This widens the catalog past "artifacts an on-call engineer owns": it is the first shipped document that describes a task for another engineer rather than work on production. `srekit task` (the investigation log) is untouched — similar names, unrelated documents.
-- **Non-string front matter values in v1 artifacts.** An explicit YAML tag on a value (`!!int`, `!!float`, `!!bool`, `!!null`, `!!timestamp`, `!!seq`, `!!map`) tells the renderer to read the rendered text back as a value of that type instead of leaving it a string: `duration: !!int "{{ .Meta.Duration }}"` emits `duration: 30`, not `duration: "30"`. The tag never reaches the document. When the text does not read as the declared type, rendering fails naming the front matter key. `!!str` and application tags (`!Ref`, …) are left alone. Until now everything a template touched came out quoted, and to the tools that parse front matter — Obsidian, dataview — those are different values.
-- **`join` in the template FuncMap.** `{{ .Meta.Level | join ", " }}`, separator first, same argument order as Sprig's. Added for `!!seq` values, where a list has to be assembled into a flow sequence.
-
 ### Fixed
 
 - **Homebrew cask: the quarantine `postflight_steps` moved from `custom_block` to `hooks.post.install_steps`.** goreleaser 2.19 renders `custom_block` at the top of the cask, so the stanza landed before `version` and `brew style` failed the tap with `Cask/StanzaOrder`. `install_steps` renders the same `postflight_steps` after `binary`, where Homebrew expects it. Installing the cask does exactly what it did before.
