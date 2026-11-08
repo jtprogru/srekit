@@ -105,7 +105,7 @@ If the cask push fails anyway, re-running the job does not help: the rerun repla
 
 `golangci-lint` is pinned in the Makefile (`GOLANGCI_LINT_VERSION`) and installed into `./bin`, so `make lint` resolves to the same binary locally and in CI. Running a system-wide `golangci-lint` directly bypasses that pin — on an older version, gosec rules `G703` (path traversal taint) and `G705` (XSS taint) fire false positives on the config init code path. Use `make lint`.
 
-The Go toolchain is not pinned by the Makefile — match `go.mod` and the `GO_VERSION` in the workflows.
+Make selects the Go version from `go.mod` by default. Keep `GO_VERSION` in the workflows aligned with it; an explicit `GOTOOLCHAIN` overrides the Make default.
 
 ### Global state in tests
 

@@ -105,7 +105,7 @@ go test ./cmd/ -run TestTemplates -v
 
 `golangci-lint` запинен в Makefile (`GOLANGCI_LINT_VERSION`) и ставится в `./bin`, поэтому `make lint` резолвится в один и тот же бинарь локально и в CI. Запуск системного `golangci-lint` напрямую обходит пин — на старой версии gosec правила `G703` (path traversal taint) и `G705` (XSS taint) дают false positive на коде config init. Используй `make lint`.
 
-Go-тулчейн Makefile не пиннит — сверяйся с `go.mod` и `GO_VERSION` в workflow'ах.
+Make по умолчанию выбирает версию Go из `go.mod`. Поддерживай `GO_VERSION` в workflow'ах в соответствии с ней; явный `GOTOOLCHAIN` переопределяет выбор Make.
 
 ### Глобальное состояние в тестах
 

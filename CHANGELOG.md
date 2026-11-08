@@ -9,6 +9,13 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 
 ## [Unreleased]
 
+## [0.32.2] - 2026-11-08
+
+### Changed
+
+- Local development and CI now share Make targets instead of Taskfile commands. The Makefile installs pinned versions of golangci-lint and govulncheck and remains compatible with GNU Make 3.81.
+- Updated `go.yaml.in/yaml/v3` from v3.0.5 to v3.0.6 and refreshed GitHub Actions dependencies.
+
 ### Fixed
 
 - **Local Make checks select the Go toolchain declared in `go.mod`.** A newer globally installed Go could make the pinned analyzers fail with an unsupported export-data version. An explicit `GOTOOLCHAIN` still overrides the default. Analyzer installation stamps now include the selected Go version so changing toolchains rebuilds cached tools.
@@ -628,7 +635,8 @@ This file was scaffolded with `srekit changelog --out CHANGELOG.md` and is maint
 - Shared output flags across every command: `--out`, `--stdout`, `--force`, `--dry-run`.
 - GoReleaser pipeline producing Linux/macOS/FreeBSD × amd64/arm64 builds, GPG-signed checksums, and a Homebrew cask in `jtprogru/homebrew-tap`.
 
-[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.32.1...HEAD
+[Unreleased]: https://github.com/jtprogru/srekit/compare/v0.32.2...HEAD
+[0.32.2]: https://github.com/jtprogru/srekit/compare/v0.32.1...v0.32.2
 [0.32.1]: https://github.com/jtprogru/srekit/compare/v0.32.0...v0.32.1
 [0.32.0]: https://github.com/jtprogru/srekit/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/jtprogru/srekit/compare/v0.30.0...v0.31.0
