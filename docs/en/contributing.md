@@ -12,7 +12,7 @@ make ci      # runs lint + race tests
 
 Required:
 
-- Go **1.26.4** (must match CI — see [the version-skew lesson](#version-skew) below)
+- Go with toolchain selection support. Make defaults to **1.26.4** from `go.mod`, matching CI, and Go downloads that toolchain if needed. An explicit `GOTOOLCHAIN` overrides this choice; newer versions may be unsupported by the pinned analyzers. See [version skew](#version-skew).
 - GNU Make **3.81+** — the system `make` on macOS and every Linux distro qualifies, nothing to install
 - git, bash, and the usual POSIX utilities
 
@@ -20,6 +20,8 @@ Everything else is installed by the Makefile on first use, at a version pinned i
 
 - `golangci-lint` and `govulncheck` → `./bin` (via `go install`, which does not touch `go.mod`)
 - MkDocs and its plugins → `./.venv` (needs Python 3 with `venv`)
+
+Cached Go tools are rebuilt when either their pinned version or the selected Go toolchain version changes.
 
 Optional: `goreleaser` for `make release-dry`, `tokei` for the LoC-badge pre-commit hook.
 
