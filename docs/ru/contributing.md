@@ -12,7 +12,7 @@ make ci      # запускает lint + race tests
 
 Требуется:
 
-- Go **1.26.4** (должен совпадать с CI; см. [урок про расхождение версий](#version-skew) ниже)
+- Go с поддержкой выбора toolchain. Make по умолчанию выбирает **1.26.4** из `go.mod`, как в CI; при необходимости Go скачивает эту версию. Явный `GOTOOLCHAIN` переопределяет выбор, но закреплённые анализаторы могут не поддерживать более новые версии. См. [расхождение версий](#version-skew).
 - GNU Make **3.81+** — системный `make` на macOS и в любом Linux-дистрибутиве подходит, ставить нечего
 - git, bash и обычные POSIX-утилиты
 
@@ -20,6 +20,8 @@ make ci      # запускает lint + race tests
 
 - `golangci-lint` и `govulncheck` → `./bin` (через `go install`, `go.mod` при этом не трогается)
 - MkDocs и плагины → `./.venv` (нужен Python 3 с `venv`)
+
+Инструменты Go пересобираются при изменении их закреплённой версии или выбранной версии Go toolchain.
 
 Опционально: `goreleaser` для `make release-dry`, `tokei` для pre-commit хука с LoC-бейджем.
 
@@ -103,7 +105,7 @@ go test ./cmd/ -run TestTemplates -v
 
 `golangci-lint` запинен в Makefile (`GOLANGCI_LINT_VERSION`) и ставится в `./bin`, поэтому `make lint` резолвится в один и тот же бинарь локально и в CI. Запуск системного `golangci-lint` напрямую обходит пин — на старой версии gosec правила `G703` (path traversal taint) и `G705` (XSS taint) дают false positive на коде config init. Используй `make lint`.
 
-Go-тулчейн Makefile не пиннит — сверяйся с `go.mod` и `GO_VERSION` в workflow'ах.
+Make по умолчанию выбирает версию Go из `go.mod`. Поддерживай `GO_VERSION` в workflow'ах в соответствии с ней; явный `GOTOOLCHAIN` переопределяет выбор Make.
 
 ### Глобальное состояние в тестах
 

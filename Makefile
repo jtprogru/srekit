@@ -25,6 +25,11 @@ SITE_DIR     ?= $(CURDIR)/site
 LOCALBIN     ?= $(CURDIR)/bin
 VENV         ?= $(CURDIR)/.venv
 GO           ?= go
+# Use the project's Go version even when a newer Go is installed globally.
+# The pinned analyzers may not understand that newer Go's export data.
+# An explicit environment/command-line GOTOOLCHAIN still takes precedence.
+export GOTOOLCHAIN ?= $(shell awk '$$1 == "go" { print "go" $$2; exit }' go.mod)
+GO_TOOLCHAIN_VERSION := $(shell GOTOOLCHAIN=$(GOTOOLCHAIN) $(GO) env GOVERSION)
 PYTHON       ?= python3
 COVERPROFILE ?= cover.out
 GOTEST_FLAGS ?= -v
@@ -36,8 +41,9 @@ GOLANGCI_LINT := $(LOCALBIN)/golangci-lint
 GOVULNCHECK   := $(LOCALBIN)/govulncheck
 MKDOCS        := $(VENV)/bin/mkdocs
 
-GOLANGCI_LINT_STAMP := $(LOCALBIN)/.golangci-lint-$(GOLANGCI_LINT_VERSION)
-GOVULNCHECK_STAMP   := $(LOCALBIN)/.govulncheck-$(GOVULNCHECK_VERSION)
+# Rebuild cached analyzers when the selected Go toolchain changes as well.
+GOLANGCI_LINT_STAMP := $(LOCALBIN)/.golangci-lint-$(GOLANGCI_LINT_VERSION)-$(GO_TOOLCHAIN_VERSION)
+GOVULNCHECK_STAMP   := $(LOCALBIN)/.govulncheck-$(GOVULNCHECK_VERSION)-$(GO_TOOLCHAIN_VERSION)
 
 # --- meta -------------------------------------------------------------------
 
