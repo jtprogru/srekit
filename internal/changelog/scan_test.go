@@ -82,6 +82,7 @@ func TestScanHandEditedDocument(t *testing.T) {
 	v110 := doc.FindVersion("1.10.0")
 	if v110 == nil {
 		t.Fatal("1.10.0 not found")
+		return
 	}
 	if !v110.WellFormed || v110.Date != "2026-05-02" || v110.Yanked {
 		t.Errorf("1.10.0 parsed wrong: %+v", v110)
@@ -96,6 +97,7 @@ func TestScanHandEditedDocument(t *testing.T) {
 	v19 := doc.FindVersion("1.9.0")
 	if v19 == nil {
 		t.Fatal("1.9.0 not found")
+		return
 	}
 	if len(v19.Changes) != 0 {
 		t.Errorf("1.9.0 should have no change subsections, got %d", len(v19.Changes))
